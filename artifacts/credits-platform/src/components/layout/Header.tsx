@@ -1,4 +1,5 @@
 import { Bell, ChevronDown, User } from "lucide-react";
+import CompanySelector from "./CompanySelector";
 
 const HEADER_HEIGHT = 68;
 
@@ -17,7 +18,7 @@ export default function Header({ sidebarCollapsed }: HeaderProps) {
       }}
     >
       <div className="flex items-center gap-3">
-        <span className="text-sm text-gray-400 font-medium">Plataforma Credits</span>
+        <CompanySelector />
       </div>
 
       <div className="flex items-center gap-3">
