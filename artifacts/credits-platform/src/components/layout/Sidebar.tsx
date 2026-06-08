@@ -105,12 +105,16 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
         }}
       >
         {collapsed ? (
-          <div
-            className="flex items-center justify-center rounded-md text-white font-bold text-sm flex-shrink-0"
-            style={{ width: "30px", height: "30px", backgroundColor: SIDEBAR_BADGE }}
-          >
-            C
-          </div>
+          <img
+            src="/credits-icon.png"
+            alt="Credits"
+            style={{
+              height: "32px",
+              width: "auto",
+              filter: "brightness(0) invert(1)",
+              objectFit: "contain",
+            }}
+          />
         ) : (
           <img
             src="/credits-logo.png"
