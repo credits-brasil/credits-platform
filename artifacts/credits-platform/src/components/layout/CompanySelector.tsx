@@ -25,7 +25,7 @@ export default function CompanySelector() {
       <button
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
-        style={{ minWidth: "280px" }}
+        style={{ minWidth: "380px" }}
       >
         <div
           className="flex items-center justify-center rounded-md flex-shrink-0"
