@@ -115,10 +115,10 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
               src="/credits-icon.png"
               alt="Credits"
               style={{
-                height: "32px",
-                width: "auto",
-                filter: "brightness(0) invert(1)",
-                objectFit: "contain",
+                height: "36px",
+                width: "36px",
+                objectFit: "cover",
+                borderRadius: "8px",
               }}
             />
           </button>
