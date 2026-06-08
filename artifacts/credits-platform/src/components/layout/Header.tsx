@@ -23,7 +23,7 @@ export default function Header({ sidebarCollapsed }: HeaderProps) {
         <img
           src="/partner-logos.png"
           alt="CDL São Paulo / SPC Brasil"
-          style={{ height: "32px", width: "auto", objectFit: "contain" }}
+          style={{ height: "44px", width: "auto", objectFit: "contain" }}
         />
       </div>
 
