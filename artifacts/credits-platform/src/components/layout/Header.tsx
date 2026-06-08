@@ -17,8 +17,14 @@ export default function Header({ sidebarCollapsed }: HeaderProps) {
         transition: "left 0.3s ease",
       }}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         <CompanySelector />
+        <div className="h-8 w-px bg-gray-200 flex-shrink-0" />
+        <img
+          src="/partner-logos.png"
+          alt="CDL São Paulo / SPC Brasil"
+          style={{ height: "32px", width: "auto", objectFit: "contain" }}
+        />
       </div>
 
       <div className="flex items-center gap-3">
