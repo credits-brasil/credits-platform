@@ -93,39 +93,69 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
         overflow: "hidden",
       }}
     >
-      {/* Logo area */}
+      {/* Logo area + toggle */}
       <div
-        className="flex items-center justify-center border-b overflow-hidden"
+        className="flex items-center border-b overflow-hidden"
         style={{
           height: `${headerHeight}px`,
           borderColor: SIDEBAR_BORDER,
-          padding: collapsed ? "0 12px" : "0 20px",
+          padding: collapsed ? "0 12px" : "0 12px 0 20px",
           transition: "padding 0.3s ease",
           flexShrink: 0,
+          justifyContent: collapsed ? "center" : "space-between",
         }}
       >
         {collapsed ? (
-          <img
-            src="/credits-icon.png"
-            alt="Credits"
-            style={{
-              height: "32px",
-              width: "auto",
-              filter: "brightness(0) invert(1)",
-              objectFit: "contain",
-            }}
-          />
+          <button
+            onClick={onToggle}
+            title="Expandir menu"
+            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center" }}
+          >
+            <img
+              src="/credits-icon.png"
+              alt="Credits"
+              style={{
+                height: "32px",
+                width: "auto",
+                filter: "brightness(0) invert(1)",
+                objectFit: "contain",
+              }}
+            />
+          </button>
         ) : (
-          <img
-            src="/credits-logo.png"
-            alt="Credits"
-            style={{
-              height: "22px",
-              width: "auto",
-              filter: "brightness(0) invert(1)",
-              objectFit: "contain",
-            }}
-          />
+          <>
+            <img
+              src="/credits-logo.png"
+              alt="Credits"
+              style={{
+                height: "22px",
+                width: "auto",
+                filter: "brightness(0) invert(1)",
+                objectFit: "contain",
+              }}
+            />
+            <button
+              onClick={onToggle}
+              title="Recolher menu"
+              className="flex items-center justify-center rounded-md flex-shrink-0"
+              style={{
+                width: "28px",
+                height: "28px",
+                color: "rgba(255,255,255,0.6)",
+                transition: "background 0.15s, color 0.15s",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = SIDEBAR_HOVER;
+                (e.currentTarget as HTMLButtonElement).style.color = "white";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
+                (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.6)";
+              }}
+            >
+              <ChevronLeft size={16} />
+            </button>
+          </>
         )}
       </div>
 
@@ -238,38 +268,6 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
         })}
       </nav>
 
-      {/* Collapse toggle button */}
-      <div
-        className="flex items-center border-t"
-        style={{
-          height: "48px",
-          borderColor: SIDEBAR_BORDER,
-          padding: collapsed ? "0 0 0 14px" : "0 12px",
-          justifyContent: collapsed ? "flex-start" : "flex-end",
-        }}
-      >
-        <button
-          onClick={onToggle}
-          title={collapsed ? "Expandir menu" : "Recolher menu"}
-          className="flex items-center justify-center rounded-md"
-          style={{
-            width: "32px",
-            height: "32px",
-            color: "rgba(255,255,255,0.6)",
-            transition: "background 0.15s, color 0.15s",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.backgroundColor = SIDEBAR_HOVER;
-            (e.currentTarget as HTMLButtonElement).style.color = "white";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
-            (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.6)";
-          }}
-        >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </button>
-      </div>
     </aside>
   );
 }
