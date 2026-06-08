@@ -138,9 +138,9 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 style={{
                   height: "40px",
                   padding: collapsed ? "0 0 0 18px" : "0 12px",
-                  color: active ? ACTIVE_ORANGE : "rgba(255,255,255,0.85)",
-                  backgroundColor: active ? "rgba(237,136,74,0.12)" : "transparent",
-                  borderLeft: active ? `3px solid ${ACTIVE_ORANGE}` : "3px solid transparent",
+                  color: "rgba(255,255,255,0.85)",
+                  backgroundColor: active ? ACTIVE_ORANGE : "transparent",
+                  borderLeft: "3px solid transparent",
                   fontWeight: active ? 600 : 400,
                   transition: "background 0.15s, color 0.15s",
                 }}
@@ -160,7 +160,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 <Icon
                   size={17}
                   className="flex-shrink-0"
-                  style={{ minWidth: "17px", color: active ? ACTIVE_ORANGE : undefined }}
+                  style={{ minWidth: "17px" }}
                 />
                 {!collapsed && (
                   <>
@@ -193,12 +193,12 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                         style={{
                           height: "36px",
                           padding: "0 12px 0 40px",
-                          color: subActive ? ACTIVE_ORANGE : "rgba(255,255,255,0.65)",
+                          color: subActive ? "white" : "rgba(255,255,255,0.65)",
                           fontSize: "13px",
                           fontWeight: subActive ? 600 : 400,
                           textDecoration: "none",
-                          backgroundColor: subActive ? "rgba(237,136,74,0.10)" : "transparent",
-                          borderLeft: subActive ? `3px solid ${ACTIVE_ORANGE}` : "3px solid transparent",
+                          backgroundColor: subActive ? ACTIVE_ORANGE : "transparent",
+                          borderLeft: "3px solid transparent",
                           transition: "background 0.15s, color 0.15s",
                         }}
                         onMouseEnter={(e) => {
@@ -217,7 +217,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                         <FileText
                           size={13}
                           className="flex-shrink-0 mr-2"
-                          style={{ opacity: subActive ? 1 : 0.7, color: subActive ? ACTIVE_ORANGE : undefined }}
+                          style={{ opacity: subActive ? 1 : 0.7 }}
                         />
                         <span className="whitespace-nowrap overflow-hidden text-ellipsis">{sub.label}</span>
                       </a>
