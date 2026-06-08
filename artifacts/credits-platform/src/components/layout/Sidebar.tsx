@@ -116,7 +116,7 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
             src="/credits-logo.png"
             alt="Credits"
             style={{
-              height: "28px",
+              height: "22px",
               width: "auto",
               filter: "brightness(0) invert(1)",
               objectFit: "contain",
