@@ -160,7 +160,7 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3">
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const hasSubItems = item.subItems && item.subItems.length > 0;
@@ -168,17 +168,16 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
           const active = isItemActive(item);
 
           return (
-            <div key={item.id}>
+            <div key={item.id} className="mb-0.5">
               <button
                 onClick={() => hasSubItems ? toggleExpand(item.id) : undefined}
                 title={collapsed ? item.label : undefined}
-                className="w-full flex items-center text-left relative"
+                className="w-full flex items-center text-left relative rounded-md"
                 style={{
                   height: "40px",
-                  padding: collapsed ? "0 0 0 18px" : "0 12px",
+                  padding: collapsed ? "0 0 0 14px" : "0 10px",
                   color: "rgba(255,255,255,0.85)",
                   backgroundColor: active ? ACTIVE_ORANGE : "transparent",
-                  borderLeft: "3px solid transparent",
                   fontWeight: active ? 600 : 400,
                   transition: "background 0.15s, color 0.15s",
                 }}
@@ -220,23 +219,22 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
 
               {/* Sub-items */}
               {hasSubItems && !collapsed && isExpanded && (
-                <div style={{ backgroundColor: SIDEBAR_SUB_BG }}>
+                <div className="px-1 pb-1" style={{ backgroundColor: SIDEBAR_SUB_BG, borderRadius: "0 0 6px 6px", marginTop: "1px" }}>
                   {item.subItems!.map((sub) => {
                     const subActive = location === sub.path;
                     return (
                       <a
                         key={sub.path}
                         href={sub.path}
-                        className="flex items-center"
+                        className="flex items-center rounded-md mx-1"
                         style={{
-                          height: "36px",
-                          padding: "0 12px 0 40px",
+                          height: "34px",
+                          padding: "0 10px 0 32px",
                           color: subActive ? "white" : "rgba(255,255,255,0.65)",
                           fontSize: "13px",
                           fontWeight: subActive ? 600 : 400,
                           textDecoration: "none",
                           backgroundColor: subActive ? ACTIVE_ORANGE : "transparent",
-                          borderLeft: "3px solid transparent",
                           transition: "background 0.15s, color 0.15s",
                         }}
                         onMouseEnter={(e) => {
