@@ -25,7 +25,7 @@ export default function CompanySelector() {
       <button
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
-        style={{ minWidth: "380px" }}
+        style={{ minWidth: "320px" }}
       >
         <span className="text-sm font-semibold text-gray-800 truncate flex-1 text-left">
           {selected.name}
