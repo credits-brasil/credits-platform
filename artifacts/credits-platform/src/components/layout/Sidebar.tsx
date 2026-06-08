@@ -10,6 +10,13 @@ import {
   FileText,
 } from "lucide-react";
 
+const SIDEBAR_BG = "#243871";
+const SIDEBAR_BORDER = "#1a2a56";
+const SIDEBAR_HOVER = "#2e4590";
+const SIDEBAR_SUB_BG = "#1c2d5e";
+const SIDEBAR_SUB_HOVER = "#243070";
+const SIDEBAR_BADGE = "#4a7fd4";
+
 interface SubItem {
   label: string;
   path: string;
@@ -71,7 +78,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       style={{
         width: collapsed ? "64px" : "240px",
         height: "100vh",
-        backgroundColor: "hsl(220, 55%, 18%)",
+        backgroundColor: SIDEBAR_BG,
         transition: "width 0.3s ease",
         overflow: "hidden",
       }}
@@ -81,7 +88,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         className="flex items-center border-b"
         style={{
           height: "56px",
-          borderColor: "hsl(220, 45%, 14%)",
+          borderColor: SIDEBAR_BORDER,
           padding: collapsed ? "0 0 0 18px" : "0 16px",
           transition: "padding 0.3s ease",
         }}
@@ -92,7 +99,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             style={{
               width: "28px",
               height: "28px",
-              backgroundColor: "hsl(213, 90%, 55%)",
+              backgroundColor: SIDEBAR_BADGE,
             }}
           >
             C
@@ -125,7 +132,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   transition: "background 0.15s, color 0.15s",
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = "hsl(220, 50%, 25%)";
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = SIDEBAR_HOVER;
                   (e.currentTarget as HTMLButtonElement).style.color = "white";
                 }}
                 onMouseLeave={(e) => {
@@ -154,11 +161,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
               {/* Sub-items */}
               {hasSubItems && !collapsed && isExpanded && (
-                <div
-                  style={{
-                    backgroundColor: "hsl(220, 60%, 14%)",
-                  }}
-                >
+                <div style={{ backgroundColor: SIDEBAR_SUB_BG }}>
                   {item.subItems!.map((sub) => (
                     <a
                       key={sub.path}
@@ -173,7 +176,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                         transition: "background 0.15s, color 0.15s",
                       }}
                       onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "hsl(220, 50%, 20%)";
+                        (e.currentTarget as HTMLAnchorElement).style.backgroundColor = SIDEBAR_SUB_HOVER;
                         (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.95)";
                       }}
                       onMouseLeave={(e) => {
@@ -197,7 +200,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         className="flex items-center border-t"
         style={{
           height: "48px",
-          borderColor: "hsl(220, 45%, 14%)",
+          borderColor: SIDEBAR_BORDER,
           padding: collapsed ? "0 0 0 14px" : "0 12px",
           justifyContent: collapsed ? "flex-start" : "flex-end",
         }}
@@ -213,7 +216,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             transition: "background 0.15s, color 0.15s",
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.backgroundColor = "hsl(220, 50%, 25%)";
+            (e.currentTarget as HTMLButtonElement).style.backgroundColor = SIDEBAR_HOVER;
             (e.currentTarget as HTMLButtonElement).style.color = "white";
           }}
           onMouseLeave={(e) => {

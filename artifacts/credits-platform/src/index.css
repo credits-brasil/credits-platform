@@ -81,20 +81,20 @@
   --card-foreground: 215 25% 20%;
   --card-border: 214 20% 90%;
 
-  --sidebar: 220 55% 18%;
+  --sidebar: 224 52% 29%;
   --sidebar-foreground: 0 0% 98%;
-  --sidebar-border: 220 45% 14%;
-  --sidebar-primary: 213 90% 55%;
+  --sidebar-border: 224 52% 20%;
+  --sidebar-primary: 213 90% 60%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 220 50% 25%;
+  --sidebar-accent: 224 45% 38%;
   --sidebar-accent-foreground: 0 0% 95%;
-  --sidebar-ring: 213 90% 55%;
+  --sidebar-ring: 213 90% 60%;
 
   --popover: 0 0% 100%;
   --popover-foreground: 215 25% 20%;
   --popover-border: 214 20% 88%;
 
-  --primary: 213 90% 48%;
+  --primary: 224 52% 29%;
   --primary-foreground: 0 0% 100%;
 
   --secondary: 214 20% 93%;
