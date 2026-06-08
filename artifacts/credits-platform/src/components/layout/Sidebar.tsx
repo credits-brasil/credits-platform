@@ -102,12 +102,7 @@ interface SidebarProps {
 
 export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: SidebarProps) {
   const [location] = useLocation();
-  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
-    catalogo: true,
-    "pessoa-fisica": true,
-    "pessoa-juridica": false,
-    credito: false,
-  });
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
 
   const toggleExpand = (id: string) => {
     if (collapsed) return;
