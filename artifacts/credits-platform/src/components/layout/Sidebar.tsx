@@ -71,11 +71,12 @@ const menuGroups: MenuGroup[] = [
     ],
   },
   {
-    id: "catalogo-credito",
+    id: "catalogo-grupo",
+    label: "Catálogo",
     items: [
       {
-        id: "catalogo",
-        label: "Catálogo",
+        id: "credito-risco",
+        label: "Crédito e Risco",
         icon: BookOpen,
         subItems: [
           { label: "Relatório 1", path: "/catalogo/relatorio-1" },
@@ -83,8 +84,8 @@ const menuGroups: MenuGroup[] = [
         ],
       },
       {
-        id: "credito",
-        label: "Crédito",
+        id: "cobranca",
+        label: "Cobrança",
         icon: CreditCard,
         subItems: [
           { label: "Relatório A", path: "/credito/relatorio-a" },
