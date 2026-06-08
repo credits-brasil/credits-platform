@@ -1,5 +1,7 @@
 import { Bell, ChevronDown, User } from "lucide-react";
 
+const HEADER_HEIGHT = 68;
+
 interface HeaderProps {
   sidebarCollapsed: boolean;
 }
@@ -10,12 +12,12 @@ export default function Header({ sidebarCollapsed }: HeaderProps) {
       className="fixed top-0 right-0 z-30 flex items-center justify-between bg-white border-b border-gray-200 shadow-sm px-6"
       style={{
         left: sidebarCollapsed ? "64px" : "240px",
-        height: "56px",
+        height: `${HEADER_HEIGHT}px`,
         transition: "left 0.3s ease",
       }}
     >
       <div className="flex items-center gap-3">
-        <span className="text-sm text-gray-500 font-medium">Plataforma Credits</span>
+        <span className="text-sm text-gray-400 font-medium">Plataforma Credits</span>
       </div>
 
       <div className="flex items-center gap-3">
@@ -25,8 +27,8 @@ export default function Header({ sidebarCollapsed }: HeaderProps) {
         </button>
 
         <div className="flex items-center gap-2 pl-3 border-l border-gray-200 cursor-pointer hover:bg-gray-50 rounded-lg px-2 py-1 transition-colors group">
-          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold">
-            <User size={16} />
+          <div className="w-9 h-9 rounded-full bg-[#243871] flex items-center justify-center text-white text-sm font-semibold">
+            <User size={17} />
           </div>
           <div className="flex flex-col leading-tight">
             <span className="text-sm font-semibold text-gray-800">Usuário</span>

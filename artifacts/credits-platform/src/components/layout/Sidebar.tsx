@@ -61,9 +61,10 @@ const menuItems: MenuItem[] = [
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
+  headerHeight?: number;
 }
 
-export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
+export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: SidebarProps) {
   const [location] = useLocation();
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
     catalogo: true,
@@ -94,31 +95,34 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
     >
       {/* Logo area */}
       <div
-        className="flex items-center border-b"
+        className="flex items-center justify-center border-b overflow-hidden"
         style={{
-          height: "56px",
+          height: `${headerHeight}px`,
           borderColor: SIDEBAR_BORDER,
-          padding: collapsed ? "0 0 0 18px" : "0 16px",
+          padding: collapsed ? "0 12px" : "0 20px",
           transition: "padding 0.3s ease",
+          flexShrink: 0,
         }}
       >
-        <div className="flex items-center gap-2 min-w-0">
+        {collapsed ? (
           <div
             className="flex items-center justify-center rounded-md text-white font-bold text-sm flex-shrink-0"
-            style={{
-              width: "28px",
-              height: "28px",
-              backgroundColor: SIDEBAR_BADGE,
-            }}
+            style={{ width: "30px", height: "30px", backgroundColor: SIDEBAR_BADGE }}
           >
             C
           </div>
-          {!collapsed && (
-            <span className="text-white font-bold text-base tracking-wide whitespace-nowrap overflow-hidden">
-              Credits
-            </span>
-          )}
-        </div>
+        ) : (
+          <img
+            src="/credits-logo.png"
+            alt="Credits"
+            style={{
+              height: "28px",
+              width: "auto",
+              filter: "brightness(0) invert(1)",
+              objectFit: "contain",
+            }}
+          />
+        )}
       </div>
 
       {/* Navigation */}
