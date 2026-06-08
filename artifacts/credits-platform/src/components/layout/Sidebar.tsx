@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import {
   Home,
   BookOpen,
@@ -16,6 +17,7 @@ const SIDEBAR_HOVER = "#2e4590";
 const SIDEBAR_SUB_BG = "#1c2d5e";
 const SIDEBAR_SUB_HOVER = "#243070";
 const SIDEBAR_BADGE = "#4a7fd4";
+const ACTIVE_ORANGE = "#ED884A";
 
 interface SubItem {
   label: string;
@@ -62,6 +64,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
+  const [location] = useLocation();
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
     catalogo: true,
     credito: false,
@@ -70,6 +73,12 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const toggleExpand = (id: string) => {
     if (collapsed) return;
     setExpandedItems((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const isItemActive = (item: MenuItem): boolean => {
+    if (item.path) return location === item.path;
+    if (item.subItems) return item.subItems.some((sub) => location === sub.path);
+    return false;
   };
 
   return (
@@ -118,32 +127,44 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           const Icon = item.icon;
           const hasSubItems = item.subItems && item.subItems.length > 0;
           const isExpanded = expandedItems[item.id];
+          const active = isItemActive(item);
 
           return (
             <div key={item.id}>
               <button
                 onClick={() => hasSubItems ? toggleExpand(item.id) : undefined}
                 title={collapsed ? item.label : undefined}
-                className="w-full flex items-center group text-left"
+                className="w-full flex items-center text-left relative"
                 style={{
                   height: "40px",
                   padding: collapsed ? "0 0 0 18px" : "0 12px",
-                  color: "rgba(255,255,255,0.85)",
+                  color: active ? ACTIVE_ORANGE : "rgba(255,255,255,0.85)",
+                  backgroundColor: active ? "rgba(237,136,74,0.12)" : "transparent",
+                  borderLeft: active ? `3px solid ${ACTIVE_ORANGE}` : "3px solid transparent",
+                  fontWeight: active ? 600 : 400,
                   transition: "background 0.15s, color 0.15s",
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = SIDEBAR_HOVER;
-                  (e.currentTarget as HTMLButtonElement).style.color = "white";
+                  if (!active) {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = SIDEBAR_HOVER;
+                    (e.currentTarget as HTMLButtonElement).style.color = "white";
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
-                  (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.85)";
+                  if (!active) {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
+                    (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.85)";
+                  }
                 }}
               >
-                <Icon size={17} className="flex-shrink-0" style={{ minWidth: "17px" }} />
+                <Icon
+                  size={17}
+                  className="flex-shrink-0"
+                  style={{ minWidth: "17px", color: active ? ACTIVE_ORANGE : undefined }}
+                />
                 {!collapsed && (
                   <>
-                    <span className="ml-3 text-sm font-medium whitespace-nowrap flex-1 overflow-hidden text-ellipsis">
+                    <span className="ml-3 text-sm whitespace-nowrap flex-1 overflow-hidden text-ellipsis">
                       {item.label}
                     </span>
                     {hasSubItems && (
@@ -162,32 +183,46 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
               {/* Sub-items */}
               {hasSubItems && !collapsed && isExpanded && (
                 <div style={{ backgroundColor: SIDEBAR_SUB_BG }}>
-                  {item.subItems!.map((sub) => (
-                    <a
-                      key={sub.path}
-                      href={sub.path}
-                      className="flex items-center"
-                      style={{
-                        height: "36px",
-                        padding: "0 12px 0 40px",
-                        color: "rgba(255,255,255,0.65)",
-                        fontSize: "13px",
-                        textDecoration: "none",
-                        transition: "background 0.15s, color 0.15s",
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLAnchorElement).style.backgroundColor = SIDEBAR_SUB_HOVER;
-                        (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.95)";
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "transparent";
-                        (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.65)";
-                      }}
-                    >
-                      <FileText size={13} className="flex-shrink-0 mr-2" style={{ opacity: 0.7 }} />
-                      <span className="whitespace-nowrap overflow-hidden text-ellipsis">{sub.label}</span>
-                    </a>
-                  ))}
+                  {item.subItems!.map((sub) => {
+                    const subActive = location === sub.path;
+                    return (
+                      <a
+                        key={sub.path}
+                        href={sub.path}
+                        className="flex items-center"
+                        style={{
+                          height: "36px",
+                          padding: "0 12px 0 40px",
+                          color: subActive ? ACTIVE_ORANGE : "rgba(255,255,255,0.65)",
+                          fontSize: "13px",
+                          fontWeight: subActive ? 600 : 400,
+                          textDecoration: "none",
+                          backgroundColor: subActive ? "rgba(237,136,74,0.10)" : "transparent",
+                          borderLeft: subActive ? `3px solid ${ACTIVE_ORANGE}` : "3px solid transparent",
+                          transition: "background 0.15s, color 0.15s",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!subActive) {
+                            (e.currentTarget as HTMLAnchorElement).style.backgroundColor = SIDEBAR_SUB_HOVER;
+                            (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.95)";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!subActive) {
+                            (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "transparent";
+                            (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.65)";
+                          }
+                        }}
+                      >
+                        <FileText
+                          size={13}
+                          className="flex-shrink-0 mr-2"
+                          style={{ opacity: subActive ? 1 : 0.7, color: subActive ? ACTIVE_ORANGE : undefined }}
+                        />
+                        <span className="whitespace-nowrap overflow-hidden text-ellipsis">{sub.label}</span>
+                      </a>
+                    );
+                  })}
                 </div>
               )}
             </div>
