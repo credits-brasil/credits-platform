@@ -219,7 +219,7 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
 
               {/* Sub-items */}
               {hasSubItems && !collapsed && isExpanded && (
-                <div className="px-1 pb-1" style={{ backgroundColor: SIDEBAR_SUB_BG, borderRadius: "0 0 6px 6px", marginTop: "1px" }}>
+                <div className="px-1 pb-1" style={{ backgroundColor: SIDEBAR_BG, borderRadius: "0 0 6px 6px", marginTop: "1px" }}>
                   {item.subItems!.map((sub) => {
                     const subActive = location === sub.path;
                     return (
@@ -228,8 +228,8 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
                         href={sub.path}
                         className="flex items-center rounded-md mx-1"
                         style={{
-                          height: "34px",
-                          padding: "0 10px 0 32px",
+                          height: "36px",
+                          padding: "4px 10px 4px 32px",
                           color: subActive ? "white" : "rgba(255,255,255,0.65)",
                           fontSize: "13px",
                           fontWeight: subActive ? 600 : 400,
