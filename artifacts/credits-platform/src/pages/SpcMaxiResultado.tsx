@@ -157,8 +157,8 @@ export default function SpcMaxiResultadoPage() {
                   ) : (
                     <button
                       type="button"
-                      className="self-start rounded-md px-2.5 py-1 text-[11px] font-semibold text-white transition-colors"
-                      style={{ backgroundColor: "#243871" }}
+                      className="self-start rounded-md px-2 py-0.5 text-[10px] font-semibold transition-colors"
+                      style={{ backgroundColor: "#EEF2FF", color: "#243871" }}
                     >
                       Consultar
                     </button>
