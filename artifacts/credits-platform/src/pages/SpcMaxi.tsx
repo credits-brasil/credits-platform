@@ -28,10 +28,9 @@ function formatCnpj(value: string) {
 }
 
 function cnpjCharValue(ch: string): number {
-  const code = ch.toUpperCase().charCodeAt(0);
-  if (code >= 48 && code <= 57) return code - 48;       // '0'–'9' → 0–9
-  if (code >= 65 && code <= 90) return code - 65 + 10;  // 'A'–'Z' → 10–35
-  return -1;
+  // Receita Federal spec: use charCode - 48 for all chars
+  // digits: '0'=0 … '9'=9 | letters: 'A'=17 … 'Z'=42
+  return ch.toUpperCase().charCodeAt(0) - 48;
 }
 
 function validateCpf(cpf: string): boolean {
