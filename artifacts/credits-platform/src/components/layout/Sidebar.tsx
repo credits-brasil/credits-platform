@@ -12,6 +12,9 @@ import {
   User,
   Building2,
   Star,
+  BarChart2,
+  ShieldCheck,
+  Settings,
 } from "lucide-react";
 
 const SIDEBAR_BG = "#243871";
@@ -91,6 +94,37 @@ const menuGroups: MenuGroup[] = [
         icon: CreditCard,
         subItems: [
           { label: "Relatório A", path: "/credito/relatorio-a" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "relatorios-analise",
+    label: "Relatórios e Análise",
+    items: [
+      {
+        id: "relatorios",
+        label: "Relatórios",
+        icon: BarChart2,
+        subItems: [
+          { label: "Extrato Sintético", path: "/relatorios/extrato-sintetico" },
+          { label: "Extrato Analítico", path: "/relatorios/extrato-analitico" },
+        ],
+      },
+      {
+        id: "auditoria",
+        label: "Auditoria",
+        icon: ShieldCheck,
+        path: "/auditoria",
+      },
+      {
+        id: "configuracoes",
+        label: "Configurações",
+        icon: Settings,
+        subItems: [
+          { label: "Empresas", path: "/configuracoes/empresas" },
+          { label: "Operadores", path: "/configuracoes/operadores" },
+          { label: "Permissões", path: "/configuracoes/permissoes" },
         ],
       },
     ],
