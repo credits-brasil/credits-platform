@@ -142,9 +142,9 @@ export default function SpcMaxiResultadoPage() {
             <div className="grid grid-cols-2 gap-2">
               {[
                 { label: "Renda Presumida", value: "R$ 4.200" },
-                { label: "Capacidade de Pag.", value: "R$ 1.260" },
-                { label: "Dívida Total", value: "R$ 3.800" },
+                { label: "Limite Sugerido", value: "R$ 1.260" },
                 { label: "Comprometimento", value: "42%" },
+                { label: "Valor SCR", value: "R$ 3.800" },
               ].map(({ label, value }) => (
                 <div
                   key={label}
