@@ -296,7 +296,7 @@ export default function SpcMaxiPage() {
                 </div>
               </div>
               <hr className="border-gray-100 mb-3" />
-              <div className="space-y-2.5">
+              <div className="space-y-3.5">
                 {group.items.map((item) => {
                   const checked = selected.has(item.id);
                   return (
