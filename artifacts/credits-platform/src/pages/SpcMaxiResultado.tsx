@@ -70,13 +70,14 @@ export default function SpcMaxiResultadoPage() {
           <div className="w-px self-stretch bg-gray-100" />
 
           {/* Col 3: risco */}
-          <div className="flex-1">
+          <div className="flex flex-col gap-1.5 flex-1">
             <span
-              className="rounded-full px-2.5 py-1 text-xs font-semibold"
+              className="rounded-full px-2.5 py-1 text-xs font-semibold self-start"
               style={{ backgroundColor: "#FEF3C7", color: "#D97706" }}
             >
               Risco Médio
             </span>
+            <span className="text-xs text-gray-400">Perfil com histórico de atrasos pontuais, sem restrições ativas.</span>
           </div>
         </div>
       </div>
