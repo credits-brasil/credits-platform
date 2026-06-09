@@ -224,9 +224,19 @@ export default function SpcMaxiResultadoPage() {
               </div>
             </div>
 
-            {/* Col 3: placeholder */}
+            {/* Col 3: SCR */}
             <div className="flex flex-col gap-3">
-              <span className="text-xs text-gray-500 font-medium">—</span>
+              <span className="text-xs text-gray-500 font-medium">SCR</span>
+              <div className="flex gap-4">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Operações</span>
+                  <span className="text-base font-bold text-gray-800">4</span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Contratado</span>
+                  <span className="text-base font-bold text-gray-800">R$ 45.000,00</span>
+                </div>
+              </div>
             </div>
 
           </div>
