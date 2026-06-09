@@ -53,6 +53,7 @@ export default function SpcMaxiResultadoPage() {
   const [expanded, setExpanded] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [singleDate, setSingleDate] = useState(false);
 
   function handleSort(key: SortKey) {
     if (sortKey === key) {
@@ -86,8 +87,9 @@ export default function SpcMaxiResultadoPage() {
       .filter(r => r.vencimento !== "–" && r.valor !== "–")
       .sort((a, b) => parseBRDate(a.vencimento) - parseBRDate(b.vencimento))
       .map(r => ({ data: r.vencimento, valor: parseBRValue(r.valor) }));
+    const capped = singleDate ? rows.slice(0, 1) : rows;
     let acc = 0;
-    return rows.map(r => { acc += r.valor; return { ...r, acumulado: acc }; });
+    return capped.map(r => { acc += r.valor; return { ...r, acumulado: acc }; });
   })();
 
   return (
@@ -459,7 +461,25 @@ export default function SpcMaxiResultadoPage() {
 
         {/* Debt trend chart */}
         <div className="mt-8 pt-6 border-t border-gray-100">
-          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-4">Variação de Endividamento</p>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Variação de Endividamento</p>
+            <button
+              type="button"
+              onClick={() => setSingleDate(v => !v)}
+              className="flex items-center gap-1.5 text-[10px] font-medium px-2.5 py-1 rounded-full border transition-colors"
+              style={{
+                borderColor: singleDate ? "#ED884A" : "#E5E7EB",
+                backgroundColor: singleDate ? "#FFFBF7" : "#F9FAFB",
+                color: singleDate ? "#ED884A" : "#6B7280",
+              }}
+            >
+              <span
+                className="inline-block w-2 h-2 rounded-full"
+                style={{ backgroundColor: singleDate ? "#ED884A" : "#D1D5DB" }}
+              />
+              {singleDate ? "1 data (simulando)" : "Todas as datas"}
+            </button>
+          </div>
           <ResponsiveContainer width="100%" height={220}>
             <ComposedChart data={chartData} margin={{ top: 4, right: 88, left: 8, bottom: 4 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
