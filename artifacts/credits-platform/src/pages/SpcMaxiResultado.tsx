@@ -207,9 +207,21 @@ export default function SpcMaxiResultadoPage() {
               </div>
             </div>
 
-            {/* Col 2: placeholder */}
+            {/* Col 2: Comprometimento de Gastos */}
             <div className="flex flex-col gap-3">
-              <span className="text-xs text-gray-500 font-medium">—</span>
+              <span className="text-xs text-gray-500 font-medium">Comprometimento de Gastos</span>
+              <div className="relative">
+                <div className="h-3 w-full rounded-full" style={{ backgroundColor: "#E5E7EB" }}>
+                  <div
+                    className="h-3 rounded-full"
+                    style={{ width: "72%", backgroundColor: "#5B8DB8" }}
+                  />
+                </div>
+                <div className="absolute top-0 flex flex-col items-center" style={{ left: "72%" }}>
+                  <div className="mt-3.5" style={{ borderLeft: "1.5px dashed #5B8DB8", height: "14px" }} />
+                  <span className="text-[11px] font-semibold mt-0.5" style={{ color: "#5B8DB8" }}>72%</span>
+                </div>
+              </div>
             </div>
 
             {/* Col 3: placeholder */}
