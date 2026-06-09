@@ -191,7 +191,7 @@ export default function SpcMaxiResultadoPage() {
                     style={{ width: "93%", backgroundColor: "#7EC8E3" }}
                   />
                 </div>
-                <span className="absolute right-0 text-[11px] font-semibold text-gray-700 mt-4">93%</span>
+                <span className="absolute right-0 text-[11px] font-semibold text-gray-700 mt-1">93%</span>
               </div>
             </div>
 
@@ -205,7 +205,7 @@ export default function SpcMaxiResultadoPage() {
                     style={{ width: "72%", backgroundColor: "#5B8DB8" }}
                   />
                 </div>
-                <span className="absolute right-0 text-[11px] font-semibold text-gray-700 mt-4">72%</span>
+                <span className="absolute right-0 text-[11px] font-semibold text-gray-700 mt-1">72%</span>
               </div>
             </div>
 
