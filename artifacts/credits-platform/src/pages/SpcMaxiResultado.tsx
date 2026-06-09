@@ -13,7 +13,7 @@ export default function SpcMaxiResultadoPage() {
         <span className="text-gray-200">|</span>
         <span><span className="text-gray-500 font-medium">Data/Hora:</span> 09/06/2026 às 14:32</span>
         <span className="text-gray-200">|</span>
-        <span><span className="text-gray-500 font-medium">Operador:</span> usuario@credits.com</span>
+        <span><span className="text-gray-500 font-medium">Operador:</span> Leonardo Lima</span>
       </div>
 
       {/* Identificação do Consumidor */}
