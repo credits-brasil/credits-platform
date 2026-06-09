@@ -20,12 +20,12 @@ export default function Layout({ children }: LayoutProps) {
       />
       <Header sidebarCollapsed={collapsed} />
       <main
+        className="px-6 py-6 xl:px-12 2xl:px-20"
         style={{
           marginLeft: collapsed ? "64px" : "240px",
           marginTop: `${HEADER_HEIGHT}px`,
           transition: "margin-left 0.3s ease",
           minHeight: `calc(100vh - ${HEADER_HEIGHT}px)`,
-          padding: "24px",
         }}
       >
         {children}
