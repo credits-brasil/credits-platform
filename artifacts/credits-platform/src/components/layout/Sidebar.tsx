@@ -81,8 +81,8 @@ const menuGroups: MenuGroup[] = [
         label: "Crédito e Risco",
         icon: BookOpen,
         subItems: [
-          { label: "Relatório 1", path: "/catalogo/relatorio-1" },
-          { label: "Relatório 2", path: "/catalogo/relatorio-2" },
+          { label: "SPC Relatório Completo", path: "/catalogo/relatorio-1" },
+          { label: "SPC MAXI", path: "/catalogo/relatorio-2" },
         ],
       },
       {
