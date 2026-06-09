@@ -136,9 +136,26 @@ export default function SpcMaxiResultadoPage() {
           {/* Divider */}
           <div className="w-px self-stretch bg-gray-100" />
 
-          {/* Right: placeholder */}
-          <div className="w-1/2 flex items-center justify-center">
-            <span className="text-xs text-gray-300">— em breve —</span>
+          {/* Right: Resumo Financeiro */}
+          <div className="w-1/2 flex flex-col gap-2">
+            <p className="text-xs font-semibold text-gray-500 mb-1">Resumo Financeiro</p>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { label: "Renda Presumida", value: "R$ 4.200" },
+                { label: "Capacidade de Pag.", value: "R$ 1.260" },
+                { label: "Dívida Total", value: "R$ 3.800" },
+                { label: "Comprometimento", value: "42%" },
+              ].map(({ label, value }) => (
+                <div
+                  key={label}
+                  className="flex flex-col gap-1 rounded-lg px-3 py-2.5"
+                  style={{ backgroundColor: "#F8F9FB" }}
+                >
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">{label}</span>
+                  <span className="text-base font-bold text-gray-800">{value}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
         </div>
