@@ -315,7 +315,7 @@ export default function SpcMaxiResultadoPage() {
         </div>
 
         {/* Table summary bar */}
-        <div className="flex items-center gap-3 text-xs text-gray-500 mt-6 mb-3 pb-3 border-b border-gray-100">
+        <div className="flex items-center gap-3 text-xs text-gray-500 mt-10 mb-3 pb-3 border-b border-gray-100">
           <span>Total: <span className="font-semibold text-gray-800">{filtered.length} registros</span></span>
           <span className="text-gray-300">|</span>
           <span>Valor: <span className="font-semibold" style={{ color: "#ED884A" }}>R$ 40.130,50</span></span>
