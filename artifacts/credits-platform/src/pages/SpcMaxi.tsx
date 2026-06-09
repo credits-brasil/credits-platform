@@ -262,7 +262,7 @@ export default function SpcMaxiPage() {
                   </svg>
                 )}
               </span>
-              <span className="text-sm text-gray-700">Lembrar Insumos</span>
+              <span className="text-sm text-gray-700">Lembrar Insumos na Próxima Consulta</span>
             </label>
 
             {/* Warning */}
