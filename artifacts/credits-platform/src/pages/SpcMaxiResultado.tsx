@@ -175,7 +175,49 @@ export default function SpcMaxiResultadoPage() {
 
         {/* Comportamento Financeiro */}
         <div>
-          <p className="text-xs font-semibold text-gray-500 mb-3">Comportamento Financeiro</p>
+          <p className="text-xs font-semibold text-gray-500 mb-4">Comportamento Financeiro</p>
+          <div className="grid grid-cols-3 gap-6">
+
+            {/* Col 1: Pontualidade de Pagamento */}
+            <div className="flex flex-col gap-3">
+              <span className="text-xs text-gray-500 font-medium">Pontualidade de Pagamento</span>
+              {/* Progress bar */}
+              <div className="relative">
+                {/* Track */}
+                <div className="h-3 w-full rounded-full" style={{ backgroundColor: "#E5E7EB" }}>
+                  {/* Fill */}
+                  <div
+                    className="h-3 rounded-full"
+                    style={{ width: "93%", backgroundColor: "#7EC8E3" }}
+                  />
+                </div>
+                {/* Dashed indicator + label */}
+                <div className="absolute top-0 flex flex-col items-center" style={{ left: "93%" }}>
+                  <div
+                    className="mt-3.5"
+                    style={{
+                      borderLeft: "1.5px dashed #7EC8E3",
+                      height: "14px",
+                    }}
+                  />
+                  <span className="text-[11px] font-semibold mt-0.5" style={{ color: "#7EC8E3" }}>
+                    93%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Col 2: placeholder */}
+            <div className="flex flex-col gap-3">
+              <span className="text-xs text-gray-500 font-medium">—</span>
+            </div>
+
+            {/* Col 3: placeholder */}
+            <div className="flex flex-col gap-3">
+              <span className="text-xs text-gray-500 font-medium">—</span>
+            </div>
+
+          </div>
         </div>
 
       </div>
