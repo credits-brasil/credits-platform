@@ -115,7 +115,7 @@ export default function SpcMaxiPage() {
       </div>
 
       {/* Query block */}
-      <form onSubmit={handleConsultar} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6">
+      <form onSubmit={handleConsultar} className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
         <p className="text-sm font-medium text-gray-700 mb-2">Documento</p>
         <div className="flex items-center gap-2">
           {/* CPF / CNPJ toggle */}
@@ -167,7 +167,7 @@ export default function SpcMaxiPage() {
           return (
             <div
               key={group.id}
-              className="bg-white rounded-xl border border-gray-200 shadow-sm p-4"
+              className="bg-white rounded-xl border border-gray-200 p-4"
             >
               {/* Card header */}
               <div className="flex items-center justify-between mb-3">
