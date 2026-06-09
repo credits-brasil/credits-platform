@@ -105,7 +105,7 @@ export default function SpcMaxiResultadoPage() {
                 <circle
                   cx="60" cy="60" r="50"
                   fill="none"
-                  stroke="#D97706"
+                  stroke="#ED884A"
                   strokeWidth="9"
                   strokeDasharray="151.27 163"
                   strokeLinecap="round"
@@ -114,7 +114,7 @@ export default function SpcMaxiResultadoPage() {
               </svg>
               {/* Center label */}
               <div className="absolute flex flex-col items-center leading-none">
-                <span className="text-3xl font-bold" style={{ color: "#D97706" }}>642</span>
+                <span className="text-3xl font-bold" style={{ color: "#ED884A" }}>642</span>
               </div>
             </div>
 
