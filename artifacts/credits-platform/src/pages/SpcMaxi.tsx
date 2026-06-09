@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, ShieldCheck, TrendingUp, Users, Network, Info, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Search, ShieldCheck, TrendingUp, Users, Network, Info, AlertCircle, CheckCircle2, AlertTriangle } from "lucide-react";
 
 type DocType = "cpf" | "cnpj";
 
@@ -111,6 +111,7 @@ export default function SpcMaxiPage() {
   const [documento, setDocumento] = useState("");
   const [touched, setTouched] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set(DEFAULT_SELECTED));
+  const [rememberInsumos, setRememberInsumos] = useState(false);
 
   const rawClean = docType === "cpf"
     ? documento.replace(/\D/g, "")
@@ -161,73 +162,118 @@ export default function SpcMaxiPage() {
 
       {/* Query block */}
       <form onSubmit={handleConsultar} className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
-        <p className="text-sm font-medium text-gray-700 mb-2">Documento</p>
-        <div className="flex items-center gap-2">
-          {/* CPF / CNPJ toggle */}
-          <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-100 p-0.5 flex-shrink-0">
-            {(["cpf", "cnpj"] as DocType[]).map((type) => (
+        <div className="flex gap-6">
+          {/* ── Left: Documento ── */}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-700 mb-2">Documento</p>
+            <div className="flex items-center gap-2">
+              {/* CPF / CNPJ toggle */}
+              <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-100 p-0.5 flex-shrink-0">
+                {(["cpf", "cnpj"] as DocType[]).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => handleDocTypeChange(type)}
+                    className="rounded-md px-3 py-1.5 text-xs font-semibold transition-all"
+                    style={{
+                      backgroundColor: docType === type ? "#243871" : "transparent",
+                      color: docType === type ? "white" : "#6b7280",
+                    }}
+                  >
+                    {type.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+
+              {/* Input + validation icon */}
+              <div className="relative">
+                <input
+                  type="text"
+                  value={documento}
+                  onChange={handleDocumento}
+                  onBlur={() => setTouched(true)}
+                  placeholder={docType === "cpf" ? "000.000.000-00" : "AB.CDE.FGH/0001-00"}
+                  className="w-56 rounded-lg border px-3.5 py-2 pr-9 text-sm text-gray-800 placeholder-gray-400 outline-none transition"
+                  style={{
+                    borderColor: showError ? "#ef4444" : showSuccess ? "#22c55e" : "#d1d5db",
+                    boxShadow: showError
+                      ? "0 0 0 2px rgba(239,68,68,0.12)"
+                      : showSuccess
+                      ? "0 0 0 2px rgba(34,197,94,0.12)"
+                      : undefined,
+                  }}
+                />
+                {showError && (
+                  <AlertCircle size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 pointer-events-none" />
+                )}
+                {showSuccess && (
+                  <CheckCircle2 size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 pointer-events-none" />
+                )}
+              </div>
+
               <button
-                key={type}
-                type="button"
-                onClick={() => handleDocTypeChange(type)}
-                className="rounded-md px-3 py-1.5 text-xs font-semibold transition-all"
+                type="submit"
+                disabled={!canSubmit}
+                className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition whitespace-nowrap"
                 style={{
-                  backgroundColor: docType === type ? "#243871" : "transparent",
-                  color: docType === type ? "white" : "#6b7280",
+                  backgroundColor: canSubmit ? "#243871" : "#9ca3af",
+                  cursor: canSubmit ? "pointer" : "not-allowed",
+                  opacity: canSubmit ? 1 : 0.7,
                 }}
               >
-                {type.toUpperCase()}
+                <Search size={14} />
+                Consultar
               </button>
-            ))}
-          </div>
+            </div>
 
-          {/* Input + validation icon */}
-          <div className="relative">
-            <input
-              type="text"
-              value={documento}
-              onChange={handleDocumento}
-              onBlur={() => setTouched(true)}
-              placeholder={docType === "cpf" ? "000.000.000-00" : "AB.CDE.FGH/0001-00"}
-              className="w-56 rounded-lg border px-3.5 py-2 pr-9 text-sm text-gray-800 placeholder-gray-400 outline-none transition"
-              style={{
-                borderColor: showError ? "#ef4444" : showSuccess ? "#22c55e" : "#d1d5db",
-                boxShadow: showError
-                  ? "0 0 0 2px rgba(239,68,68,0.12)"
-                  : showSuccess
-                  ? "0 0 0 2px rgba(34,197,94,0.12)"
-                  : undefined,
-              }}
-            />
             {showError && (
-              <AlertCircle size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 pointer-events-none" />
-            )}
-            {showSuccess && (
-              <CheckCircle2 size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 pointer-events-none" />
+              <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1">
+                <AlertCircle size={11} />
+                {docType === "cpf" ? "CPF inválido. Verifique os dígitos informados." : "CNPJ inválido. Verifique os dígitos informados."}
+              </p>
             )}
           </div>
 
-          <button
-            type="submit"
-            disabled={!canSubmit}
-            className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition whitespace-nowrap"
-            style={{
-              backgroundColor: canSubmit ? "#243871" : "#9ca3af",
-              cursor: canSubmit ? "pointer" : "not-allowed",
-              opacity: canSubmit ? 1 : 0.7,
-            }}
-          >
-            <Search size={14} />
-            Consultar
-          </button>
-        </div>
+          {/* ── Divider ── */}
+          <div className="w-px bg-gray-200 self-stretch" />
 
-        {showError && (
-          <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1">
-            <AlertCircle size={11} />
-            {docType === "cpf" ? "CPF inválido. Verifique os dígitos informados." : "CNPJ inválido. Verifique os dígitos informados."}
-          </p>
-        )}
+          {/* ── Right: Insumos ── */}
+          <div className="w-64 flex-shrink-0">
+            <p className="text-sm font-medium text-gray-700 mb-2">Insumos</p>
+
+            {/* Checkbox row */}
+            <label className="flex items-center gap-2 cursor-pointer select-none mb-3">
+              <input
+                type="checkbox"
+                className="sr-only peer"
+                checked={rememberInsumos}
+                onChange={(e) => setRememberInsumos(e.target.checked)}
+              />
+              <span
+                className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border transition peer-checked:border-transparent"
+                style={{
+                  borderColor: rememberInsumos ? "#243871" : "#d1d5db",
+                  backgroundColor: rememberInsumos ? "#243871" : "white",
+                }}
+              >
+                {rememberInsumos && (
+                  <svg viewBox="0 0 10 8" fill="none" className="w-2.5 h-2.5">
+                    <path d="M1 4l2.5 2.5L9 1" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </span>
+              <span className="text-sm text-gray-700">Lembrar Insumos</span>
+            </label>
+
+            {/* Warning */}
+            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5">
+              <AlertTriangle size={13} className="flex-shrink-0 mt-0.5 text-amber-500" />
+              <p className="text-xs text-amber-700 leading-snug">
+                Ao selecionar a função Lembrar Insumos, a seleção de Insumos para uma nova consulta, será automaticamente habilitada conforme a última consulta. Insumos podem gerar custos adicionais.
+              </p>
+            </div>
+          </div>
+        </div>
       </form>
 
       {/* Insumos Opcionais */}
