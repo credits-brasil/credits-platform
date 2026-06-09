@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/layout/Layout";
 import HomePage from "@/pages/Home";
+import SpcMaxiPage from "@/pages/SpcMaxi";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -13,6 +14,7 @@ function Router() {
     <Layout>
       <Switch>
         <Route path="/" component={HomePage} />
+        <Route path="/verticais/credito-risco/spc-maxi" component={SpcMaxiPage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

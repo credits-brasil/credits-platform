@@ -90,7 +90,7 @@ const menuGroups: MenuGroup[] = [
         label: "Crédito e Risco",
         icon: BookOpen,
         subItems: [
-          { label: "SPC MAXI", path: "/catalogo/relatorio-2" },
+          { label: "SPC MAXI", path: "/verticais/credito-risco/spc-maxi" },
           { label: "SPC Relatório Completo", path: "/catalogo/relatorio-1" },
         ],
       },
