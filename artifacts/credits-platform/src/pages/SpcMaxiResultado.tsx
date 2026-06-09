@@ -57,15 +57,12 @@ export default function SpcMaxiResultadoPage() {
 
           {/* Col 2: status + complementar */}
           <div className="flex flex-col gap-0.5 flex-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-gray-400">Status:</span>
-              <span
-                className="rounded-full px-2 py-0.5 text-xs font-semibold"
-                style={{ backgroundColor: "#DCFCE7", color: "#15803D" }}
-              >
-                REGULAR
-              </span>
-            </div>
+            <span
+              className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
+              style={{ backgroundColor: "#DCFCE7", color: "#15803D" }}
+            >
+              REGULAR
+            </span>
             <span className="text-xs text-gray-400">41 anos · Feminino · São Paulo/SP</span>
           </div>
 
