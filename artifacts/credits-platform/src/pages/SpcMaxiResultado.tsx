@@ -61,7 +61,7 @@ export default function SpcMaxiResultadoPage() {
               className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
               style={{ backgroundColor: "#DCFCE7", color: "#15803D" }}
             >
-              REGULAR
+              Regular
             </span>
             <span className="text-xs text-gray-400 whitespace-nowrap">41 anos · Feminino · São Paulo/SP</span>
           </div>
