@@ -511,9 +511,9 @@ export default function SpcMaxiResultadoPage() {
               <Line
                 type="monotone"
                 dataKey="acumulado"
-                stroke="#13BEE6"
+                stroke="#243871"
                 strokeWidth={2}
-                dot={{ r: 3, fill: "#13BEE6", strokeWidth: 0 }}
+                dot={{ r: 3, fill: "#243871", strokeWidth: 0 }}
                 activeDot={{ r: 5 }}
               />
             </ComposedChart>
