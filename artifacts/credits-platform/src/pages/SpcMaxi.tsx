@@ -343,7 +343,7 @@ export default function SpcMaxiPage() {
             onClick={() => setActiveModal(null)}
           >
             <div
-              className="bg-white rounded-xl shadow-xl w-full max-w-xl mx-4 overflow-hidden"
+              className="bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4 overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
