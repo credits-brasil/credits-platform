@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, ShieldCheck, TrendingUp, Users, Network, Info } from "lucide-react";
 
 type DocType = "cpf" | "cnpj";
 
@@ -22,9 +22,64 @@ function formatCnpj(value: string) {
     .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
 }
 
+interface Insumo {
+  id: string;
+  label: string;
+}
+
+interface InsumoGroup {
+  id: string;
+  title: string;
+  icon: React.ElementType;
+  items: Insumo[];
+}
+
+const insumoGroups: InsumoGroup[] = [
+  {
+    id: "risco-credito",
+    title: "Risco de Crédito",
+    icon: ShieldCheck,
+    items: [
+      { id: "score-12m", label: "Score 12 meses" },
+      { id: "limite-credito", label: "Limite de Crédito sugerido" },
+      { id: "scr", label: "SCR — Sistema de Informações de Crédito" },
+    ],
+  },
+  {
+    id: "informacoes-positivas",
+    title: "Informações Positivas",
+    icon: TrendingUp,
+    items: [
+      { id: "renda-presumida", label: "Renda presumida" },
+      { id: "pontualidade", label: "Pontualidade de pagamento" },
+    ],
+  },
+  {
+    id: "comportamentais",
+    title: "Comportamentais & Cadastrais",
+    icon: Users,
+    items: [
+      { id: "dados-cadastrais", label: "Dados cadastrais completos" },
+      { id: "consultas-mercado", label: "Consultas de mercado (12m)" },
+    ],
+  },
+  {
+    id: "vinculos",
+    title: "Vínculos & Relacionamentos",
+    icon: Network,
+    items: [
+      { id: "parentes-vinculos", label: "Parentes e vínculos" },
+      { id: "empresas-relacionadas", label: "Empresas relacionadas" },
+    ],
+  },
+];
+
+const DEFAULT_SELECTED = new Set(["score-12m", "renda-presumida", "dados-cadastrais", "parentes-vinculos"]);
+
 export default function SpcMaxiPage() {
   const [docType, setDocType] = useState<DocType>("cpf");
   const [documento, setDocumento] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set(DEFAULT_SELECTED));
 
   const handleDocTypeChange = (type: DocType) => {
     setDocType(type);
@@ -34,6 +89,15 @@ export default function SpcMaxiPage() {
   const handleDocumento = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
     setDocumento(docType === "cpf" ? formatCpf(raw) : formatCnpj(raw));
+  };
+
+  const toggleInsumo = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
 
   const handleConsultar = (e: React.FormEvent) => {
@@ -51,12 +115,9 @@ export default function SpcMaxiPage() {
       </div>
 
       {/* Query block */}
-      <form onSubmit={handleConsultar} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+      <form onSubmit={handleConsultar} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6">
         <p className="text-sm font-medium text-gray-700 mb-2">Documento</p>
-
-        {/* Single row: toggle | input | button */}
         <div className="flex items-center gap-2">
-
           {/* CPF / CNPJ toggle */}
           <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-100 p-0.5 flex-shrink-0">
             {(["cpf", "cnpj"] as DocType[]).map((type) => (
@@ -74,8 +135,6 @@ export default function SpcMaxiPage() {
               </button>
             ))}
           </div>
-
-          {/* Input */}
           <input
             type="text"
             value={documento}
@@ -83,8 +142,6 @@ export default function SpcMaxiPage() {
             placeholder={docType === "cpf" ? "000.000.000-00" : "00.000.000/0000-00"}
             className="w-56 rounded-lg border border-gray-300 px-3.5 py-2 text-sm text-gray-800 placeholder-gray-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           />
-
-          {/* Consultar */}
           <button
             type="submit"
             className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 active:scale-95 whitespace-nowrap"
@@ -93,9 +150,75 @@ export default function SpcMaxiPage() {
             <Search size={14} />
             Consultar
           </button>
-
         </div>
       </form>
+
+      {/* Insumos Opcionais */}
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-gray-700">Insumos Opcionais</h2>
+        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
+          {selected.size} selecionada{selected.size !== 1 ? "s" : ""}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {insumoGroups.map((group) => {
+          const Icon = group.icon;
+          return (
+            <div
+              key={group.id}
+              className="bg-white rounded-xl border border-gray-200 shadow-sm p-4"
+            >
+              {/* Card header */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Icon size={15} className="text-gray-500" />
+                  <span className="text-sm font-semibold text-gray-700">{group.title}</span>
+                </div>
+                <Info size={14} className="text-gray-300 cursor-pointer hover:text-gray-400" />
+              </div>
+
+              {/* Checkboxes */}
+              <div className="space-y-2.5">
+                {group.items.map((item) => {
+                  const checked = selected.has(item.id);
+                  return (
+                    <label
+                      key={item.id}
+                      className="flex items-center gap-2.5 cursor-pointer group"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleInsumo(item.id)}
+                        className="hidden"
+                      />
+                      {/* Custom checkbox */}
+                      <span
+                        className="flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-all"
+                        style={{
+                          backgroundColor: checked ? "#243871" : "white",
+                          borderColor: checked ? "#243871" : "#d1d5db",
+                        }}
+                      >
+                        {checked && (
+                          <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                            <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </span>
+                      <span className="text-sm text-gray-600 group-hover:text-gray-800 transition-colors flex items-center gap-1.5">
+                        {item.label}
+                        <Info size={12} className="text-gray-300 hover:text-gray-400 cursor-pointer flex-shrink-0" />
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
