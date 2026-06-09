@@ -293,10 +293,10 @@ export default function SpcMaxiResultadoPage() {
                   backgroundColor: isActive ? "#FFFBF7" : "#fff",
                 }}
               >
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">{g.label}</p>
-                <div className="flex items-baseline gap-2 mb-2">
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">{g.label}</p>
+                <div className="flex items-baseline justify-between mb-2">
                   <span className="text-2xl font-bold" style={{ color: isActive ? "#ED884A" : "#1F2937" }}>{g.count}</span>
-                  <span className="text-xs text-gray-500">{g.valor}</span>
+                  <span className="text-sm font-semibold" style={{ color: isActive ? "#ED884A" : "#374151" }}>{g.valor}</span>
                 </div>
                 <div className="flex justify-between">
                   <div>
