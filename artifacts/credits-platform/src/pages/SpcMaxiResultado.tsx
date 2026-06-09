@@ -176,7 +176,7 @@ export default function SpcMaxiResultadoPage() {
         {/* Comportamento Financeiro */}
         <div>
           <p className="text-xs font-semibold text-gray-500 mb-4">Comportamento Financeiro</p>
-          <div className="grid grid-cols-3 gap-10">
+          <div className="grid grid-cols-3 gap-10 pb-5">
 
             {/* Col 1: Pontualidade de Pagamento */}
             <div className="flex flex-col gap-3">
