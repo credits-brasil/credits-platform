@@ -76,9 +76,15 @@ const menuGroups: MenuGroup[] = [
   },
   {
     id: "catalogo-grupo",
-    label: "Catálogo",
+    label: "Verticais",
     labelIcon: "apps",
     items: [
+      {
+        id: "catalogo-item",
+        label: "Catálogo",
+        icon: BookOpen,
+        path: "/catalogo",
+      },
       {
         id: "credito-risco",
         label: "Crédito e Risco",
