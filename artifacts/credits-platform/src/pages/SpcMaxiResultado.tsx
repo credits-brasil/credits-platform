@@ -18,18 +18,19 @@ export default function SpcMaxiResultadoPage() {
           </div>
 
           <div className="flex flex-col gap-0.5">
-            <h2 className="text-base font-semibold text-gray-800">
+            <h2 className="text-sm font-semibold text-gray-800">
               Maria Helena Santos da Silva
             </h2>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">CPF: 529.982.247-25</span>
+              <span className="text-xs text-gray-500">CPF: 529.982.247-25</span>
               <span
-                className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                className="rounded-full px-2 py-0.5 text-xs font-semibold"
                 style={{ backgroundColor: "#DCFCE7", color: "#15803D" }}
               >
                 REGULAR
               </span>
             </div>
+            <span className="text-xs text-gray-400">41 anos · Feminino · São Paulo/SP</span>
           </div>
         </div>
       </div>
