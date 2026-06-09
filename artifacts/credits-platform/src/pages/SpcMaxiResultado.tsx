@@ -9,8 +9,8 @@ const ALL_RECORDS = [
   { inclusao: "05/03/2025", vencimento: "05/03/2025", valor: "R$ 7.500,00", credor: "Banco Santander",             cidade: "São Paulo/SP", origem: "São Paulo", fonte: "SPC + Serasa", grupo: "SPC + SERASA" },
   { inclusao: "15/02/2025", vencimento: "15/02/2025", valor: "R$ 2.100,00", credor: "Claro S/A",                   cidade: "São Paulo/SP", origem: "São Paulo", fonte: "SPC + Serasa", grupo: "SPC + SERASA" },
   { inclusao: "28/01/2025", vencimento: "28/01/2025", valor: "R$ 1.850,00", credor: "3° Tabelionato de Protestos", cidade: "São Paulo/SP", origem: "Protesto",  fonte: "Protesto",     grupo: "PROTESTOS"    },
-  { inclusao: "05/11/2025", vencimento: "–",          valor: "–",           credor: "Tim S/A",                     cidade: "São Paulo/SP", origem: "São Paulo", fonte: "Alerta",       grupo: "ALERTAS"      },
-  { inclusao: "10/01/2026", vencimento: "–",          valor: "–",           credor: "Vivo S/A",                    cidade: "São Paulo/SP", origem: "São Paulo", fonte: "Alerta",       grupo: "ALERTAS"      },
+  { inclusao: "05/11/2025", vencimento: "–",          valor: "–",           credor: "Tim S/A",                     cidade: "São Paulo/SP", origem: "São Paulo", fonte: "CCF",          grupo: "CCF"          },
+  { inclusao: "10/01/2026", vencimento: "–",          valor: "–",           credor: "Vivo S/A",                    cidade: "São Paulo/SP", origem: "São Paulo", fonte: "CCF",          grupo: "CCF"          },
   { inclusao: "10/09/2024", vencimento: "03/09/2024", valor: "R$ 9.960,00", credor: "Banco Bradesco",              cidade: "São Paulo/SP", origem: "CDL SP",   fonte: "SPC + Serasa", grupo: "SPC + SERASA" },
   { inclusao: "03/09/2024", vencimento: "03/09/2024", valor: "R$ 7.000,00", credor: "Banco do Brasil",             cidade: "São Paulo/SP", origem: "São Paulo", fonte: "SPC + Serasa", grupo: "SPC + SERASA" },
 ];
@@ -19,14 +19,14 @@ const GROUPS = [
   { key: "TODOS",       label: "TODOS",        count: 11, valor: "R$ 40.130,50", antiga: "03/09/2024", recente: "10/01/2026" },
   { key: "SPC + SERASA", label: "SPC + SERASA", count: 7,  valor: "R$ 34.080,50", antiga: "03/09/2024", recente: "15/08/2025" },
   { key: "PROTESTOS",  label: "PROTESTOS",    count: 2,  valor: "R$ 6.050,00",  antiga: "28/01/2025", recente: "12/06/2025" },
-  { key: "ALERTAS",    label: "ALERTAS",      count: 2,  valor: "–",            antiga: "05/11/2025", recente: "10/01/2026" },
+  { key: "CCF",        label: "CCF",          count: 2,  valor: "–",            antiga: "05/11/2025", recente: "10/01/2026" },
 ];
 
 function FonteBadge({ fonte }: { fonte: string }) {
   if (fonte === "Protesto")
     return <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: "#FEF3C7", color: "#D97706" }}>{fonte}</span>;
-  if (fonte === "Alerta")
-    return <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: "#FEE2E2", color: "#DC2626" }}>{fonte}</span>;
+  if (fonte === "CCF")
+    return <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: "#F3E8FF", color: "#7C3AED" }}>{fonte}</span>;
   return <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: "#EEF2FF", color: "#4338CA" }}>{fonte}</span>;
 }
 
