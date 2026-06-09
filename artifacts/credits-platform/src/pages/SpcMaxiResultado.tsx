@@ -142,17 +142,27 @@ export default function SpcMaxiResultadoPage() {
             <div className="grid grid-cols-2 gap-2">
               {[
                 { label: "Renda Presumida", value: "R$ 4.200" },
-                { label: "Limite Sugerido", value: "R$ 1.260" },
+                { label: "Limite Sugerido", value: null },
                 { label: "Comprometimento", value: "42%" },
                 { label: "Valor SCR", value: "R$ 3.800" },
               ].map(({ label, value }) => (
                 <div
                   key={label}
-                  className="flex flex-col gap-1 rounded-lg px-3 py-2.5"
+                  className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
                   style={{ backgroundColor: "#F8F9FB" }}
                 >
                   <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">{label}</span>
-                  <span className="text-base font-bold text-gray-800">{value}</span>
+                  {value !== null ? (
+                    <span className="text-base font-bold text-gray-800">{value}</span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="self-start rounded-md px-2.5 py-1 text-[11px] font-semibold text-white transition-colors"
+                      style={{ backgroundColor: "#243871" }}
+                    >
+                      Consultar
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
