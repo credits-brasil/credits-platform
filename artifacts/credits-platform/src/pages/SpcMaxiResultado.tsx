@@ -56,10 +56,10 @@ export default function SpcMaxiResultadoPage() {
           <div className="w-px self-stretch bg-gray-100" />
 
           {/* Col 2: status + complementar */}
-          <div className="flex flex-col gap-0.5 flex-1">
+          <div className="flex flex-col gap-1.5 flex-1">
             <span
-              className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
-              style={{ backgroundColor: "#DCFCE7", color: "#15803D" }}
+              className="rounded-full px-1.5 py-px text-xs font-semibold self-start"
+              style={{ backgroundColor: "#DCFCE7", color: "#15803D", fontSize: "10px" }}
             >
               REGULAR
             </span>
