@@ -302,11 +302,11 @@ export default function SpcMaxiResultadoPage() {
                 <div className="flex justify-between">
                   <div>
                     <p className="text-[9px] text-gray-400 uppercase tracking-wide">Antiga</p>
-                    <p className="text-[10px] font-medium text-gray-600">{g.antiga}</p>
+                    <p className="text-xs font-medium text-gray-600">{g.antiga}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-[9px] text-gray-400 uppercase tracking-wide">Recente</p>
-                    <p className="text-[10px] font-medium text-gray-600">{g.recente}</p>
+                    <p className="text-xs font-medium text-gray-600">{g.recente}</p>
                   </div>
                 </div>
               </button>
