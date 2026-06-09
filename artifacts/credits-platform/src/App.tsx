@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/layout/Layout";
 import HomePage from "@/pages/Home";
 import SpcMaxiPage from "@/pages/SpcMaxi";
+import SpcMaxiResultadoPage from "@/pages/SpcMaxiResultado";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -15,6 +16,7 @@ function Router() {
       <Switch>
         <Route path="/" component={HomePage} />
         <Route path="/verticais/credito-risco/spc-maxi" component={SpcMaxiPage} />
+        <Route path="/verticais/credito-risco/spc-maxi/resultado" component={SpcMaxiResultadoPage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

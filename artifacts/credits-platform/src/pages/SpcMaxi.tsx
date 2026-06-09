@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useLocation } from "wouter";
 import { Search, ShieldCheck, TrendingUp, Users, Network, AlertCircle, CheckCircle2, AlertTriangle, Info, X } from "lucide-react";
 
 type DocType = "cpf" | "cnpj";
@@ -147,9 +148,14 @@ export default function SpcMaxiPage() {
     });
   };
 
+  const [, navigate] = useLocation();
+
   const handleConsultar = (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
+    if (canSubmit) {
+      navigate("/verticais/credito-risco/spc-maxi/resultado");
+    }
   };
 
   return (
