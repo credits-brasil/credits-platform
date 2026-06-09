@@ -69,8 +69,15 @@ export default function SpcMaxiResultadoPage() {
           {/* Divider */}
           <div className="w-px self-stretch bg-gray-100" />
 
-          {/* Col 3: vazio */}
-          <div className="flex-1" />
+          {/* Col 3: risco */}
+          <div className="flex-1">
+            <span
+              className="rounded-full px-1.5 py-px text-xs font-semibold"
+              style={{ backgroundColor: "#FEF3C7", color: "#D97706", fontSize: "10px" }}
+            >
+              Risco Médio
+            </span>
+          </div>
         </div>
       </div>
     </div>
