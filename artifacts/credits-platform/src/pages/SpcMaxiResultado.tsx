@@ -228,6 +228,10 @@ export default function SpcMaxiResultadoPage() {
         </div>
 
       </div>
+      {/* Negativos Consolidados */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
+        <h2 className="text-sm font-semibold text-gray-700">Negativos Consolidados</h2>
+      </div>
     </div>
   );
 }
