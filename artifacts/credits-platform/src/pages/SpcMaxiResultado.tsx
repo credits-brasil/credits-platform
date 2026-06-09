@@ -58,8 +58,8 @@ export default function SpcMaxiResultadoPage() {
           {/* Col 2: status + complementar */}
           <div className="flex flex-col gap-1.5 flex-1">
             <span
-              className="rounded-full px-1.5 py-px text-xs font-semibold self-start"
-              style={{ backgroundColor: "#DCFCE7", color: "#15803D", fontSize: "10px" }}
+              className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
+              style={{ backgroundColor: "#DCFCE7", color: "#15803D" }}
             >
               REGULAR
             </span>
@@ -72,7 +72,7 @@ export default function SpcMaxiResultadoPage() {
           {/* Col 3: risco */}
           <div className="flex flex-col gap-1.5 basis-[44%] flex-shrink-0">
             <span
-              className="rounded-full px-2.5 py-1 text-xs font-semibold self-start"
+              className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
               style={{ backgroundColor: "#FEF3C7", color: "#D97706" }}
             >
               Risco Médio
