@@ -20,7 +20,7 @@ export default function Layout({ children }: LayoutProps) {
       />
       <Header sidebarCollapsed={collapsed} />
       <main
-        className="px-6 py-6 xl:px-12 2xl:px-20"
+        className="py-8 px-6 lg:px-10"
         style={{
           marginLeft: collapsed ? "64px" : "240px",
           marginTop: `${HEADER_HEIGHT}px`,
@@ -28,7 +28,9 @@ export default function Layout({ children }: LayoutProps) {
           minHeight: `calc(100vh - ${HEADER_HEIGHT}px)`,
         }}
       >
-        {children}
+        <div className="w-full max-w-5xl xl:max-w-6xl mx-auto">
+          {children}
+        </div>
       </main>
     </div>
   );
