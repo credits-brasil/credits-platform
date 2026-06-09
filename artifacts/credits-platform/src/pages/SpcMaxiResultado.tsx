@@ -1,5 +1,19 @@
 import { useState } from "react";
-import { User, Printer, Search, Eye } from "lucide-react";
+import { User, Printer, Search, Eye, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+
+type SortKey = "inclusao" | "vencimento" | "valor" | "credor" | "cidade" | "origem" | "fonte";
+type SortDir = "asc" | "desc";
+
+function parseBRDate(s: string): number {
+  if (!s || s === "–") return 0;
+  const [d, m, y] = s.split("/");
+  return new Date(`${y}-${m}-${d}`).getTime();
+}
+
+function parseBRValue(s: string): number {
+  if (!s || s === "–") return -Infinity;
+  return parseFloat(s.replace("R$", "").replace(/\./g, "").replace(",", ".").trim());
+}
 
 const ALL_RECORDS = [
   { inclusao: "15/08/2025", vencimento: "10/06/2025", valor: "R$ 3.450,00", credor: "Magazine Luiza S/A",           cidade: "São Paulo/SP", origem: "CDL SP",   fonte: "SPC + Serasa", grupo: "SPC + SERASA" },
@@ -33,8 +47,32 @@ function FonteBadge({ fonte }: { fonte: string }) {
 export default function SpcMaxiResultadoPage() {
   const [activeGroup, setActiveGroup] = useState("TODOS");
   const [expanded, setExpanded] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
 
-  const filtered = activeGroup === "TODOS" ? ALL_RECORDS : ALL_RECORDS.filter(r => r.grupo === activeGroup);
+  function handleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  }
+
+  const base = activeGroup === "TODOS" ? ALL_RECORDS : ALL_RECORDS.filter(r => r.grupo === activeGroup);
+  const filtered = sortKey ? [...base].sort((a, b) => {
+    let va: string | number = a[sortKey];
+    let vb: string | number = b[sortKey];
+    if (sortKey === "inclusao" || sortKey === "vencimento") {
+      va = parseBRDate(a[sortKey]); vb = parseBRDate(b[sortKey]);
+    } else if (sortKey === "valor") {
+      va = parseBRValue(a[sortKey]); vb = parseBRValue(b[sortKey]);
+    }
+    if (va < vb) return sortDir === "asc" ? -1 : 1;
+    if (va > vb) return sortDir === "asc" ? 1 : -1;
+    return 0;
+  }) : base;
+
   const PAGE = 5;
   const visible = expanded ? filtered : filtered.slice(0, PAGE);
   const remaining = filtered.length - PAGE;
@@ -339,8 +377,33 @@ export default function SpcMaxiResultadoPage() {
           </colgroup>
           <thead>
             <tr className="border-b border-gray-100">
-              {["Inclusão","Vencimento","Valor","Credor","Cidade","Origem","Fonte",""].map(h => (
-                <th key={h} className="text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide pb-2 pr-4 last:pr-0">{h}</th>
+              {([ 
+                { label: "Inclusão",   key: "inclusao"   },
+                { label: "Vencimento", key: "vencimento" },
+                { label: "Valor",      key: "valor"      },
+                { label: "Credor",     key: "credor"     },
+                { label: "Cidade",     key: "cidade"     },
+                { label: "Origem",     key: "origem"     },
+                { label: "Fonte",      key: "fonte"      },
+                { label: "",           key: null         },
+              ] as { label: string; key: SortKey | null }[]).map(({ label, key }) => (
+                <th key={label} className="text-left pb-2 pr-4 last:pr-0">
+                  {key ? (
+                    <button
+                      type="button"
+                      onClick={() => handleSort(key)}
+                      className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide transition-colors"
+                      style={{ color: sortKey === key ? "#243871" : "#9CA3AF" }}
+                    >
+                      {label}
+                      {sortKey === key
+                        ? sortDir === "asc"
+                          ? <ArrowUp size={10} />
+                          : <ArrowDown size={10} />
+                        : <ArrowUpDown size={10} className="text-gray-300" />}
+                    </button>
+                  ) : null}
+                </th>
               ))}
             </tr>
           </thead>
