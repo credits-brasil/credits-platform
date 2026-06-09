@@ -36,6 +36,7 @@ interface MenuItem {
 interface MenuGroup {
   id: string;
   label?: string;
+  labelIcon?: "star" | "apps";
   items: MenuItem[];
 }
 
@@ -73,6 +74,7 @@ const menuGroups: MenuGroup[] = [
   {
     id: "catalogo-grupo",
     label: "Catálogo",
+    labelIcon: "apps",
     items: [
       {
         id: "credito-risco",
@@ -284,7 +286,16 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
                 className="flex items-center gap-1.5 px-2 mb-1"
                 style={{ marginTop: groupIndex > 0 ? "4px" : 0 }}
               >
-                <Star size={10} style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }} />
+                {group.labelIcon === "apps" ? (
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", flexShrink: 0, lineHeight: 1 }}
+                  >
+                    apps
+                  </span>
+                ) : (
+                  <Star size={10} style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }} />
+                )}
                 <span
                   style={{
                     fontSize: "10px",
