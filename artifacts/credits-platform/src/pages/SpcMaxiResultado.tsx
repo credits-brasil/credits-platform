@@ -169,6 +169,15 @@ export default function SpcMaxiResultadoPage() {
           </div>
 
         </div>
+
+        {/* Divisor */}
+        <div className="border-t border-gray-100 my-4" />
+
+        {/* Comportamento Financeiro */}
+        <div>
+          <p className="text-xs font-semibold text-gray-500 mb-3">Comportamento Financeiro</p>
+        </div>
+
       </div>
     </div>
   );
