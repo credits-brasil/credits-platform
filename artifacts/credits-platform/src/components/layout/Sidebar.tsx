@@ -180,45 +180,81 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
 
     return (
       <div key={item.id} className="mb-0.5">
-        <button
-          onClick={() => hasSubItems ? toggleExpand(item.id) : undefined}
-          title={collapsed ? item.label : undefined}
-          className="w-full flex items-center text-left relative rounded-md"
-          style={{
-            height: "40px",
-            padding: collapsed ? "0 0 0 14px" : "0 10px",
-            color: "rgba(255,255,255,0.85)",
-            backgroundColor: active ? ACTIVE_ORANGE : "transparent",
-            fontWeight: (active || childActive) ? 600 : 400,
-            transition: "background 0.15s, color 0.15s",
-          }}
-          onMouseEnter={(e) => {
-            if (!active) {
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor = SIDEBAR_HOVER;
-              (e.currentTarget as HTMLButtonElement).style.color = "white";
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!active) {
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
-              (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.85)";
-            }
-          }}
-        >
-          <Icon size={17} className="flex-shrink-0" style={{ minWidth: "17px" }} />
-          {!collapsed && (
-            <>
+        {item.path && !hasSubItems ? (
+          <a
+            href={item.path}
+            title={collapsed ? item.label : undefined}
+            className="w-full flex items-center rounded-md"
+            style={{
+              height: "40px",
+              padding: collapsed ? "0 0 0 14px" : "0 10px",
+              color: "rgba(255,255,255,0.85)",
+              backgroundColor: active ? ACTIVE_ORANGE : "transparent",
+              fontWeight: active ? 600 : 400,
+              textDecoration: "none",
+              transition: "background 0.15s, color 0.15s",
+            }}
+            onMouseEnter={(e) => {
+              if (!active) {
+                (e.currentTarget as HTMLAnchorElement).style.backgroundColor = SIDEBAR_HOVER;
+                (e.currentTarget as HTMLAnchorElement).style.color = "white";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!active) {
+                (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "transparent";
+                (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.85)";
+              }
+            }}
+          >
+            <Icon size={17} className="flex-shrink-0" style={{ minWidth: "17px" }} />
+            {!collapsed && (
               <span className="ml-3 text-sm whitespace-nowrap flex-1 overflow-hidden text-ellipsis">
                 {item.label}
               </span>
-              {hasSubItems && (
-                <span className="ml-auto flex-shrink-0">
-                  {isExpanded ? <ChevronDown size={14} /> : <ChevronRightSm size={14} />}
+            )}
+          </a>
+        ) : (
+          <button
+            onClick={() => hasSubItems ? toggleExpand(item.id) : undefined}
+            title={collapsed ? item.label : undefined}
+            className="w-full flex items-center text-left relative rounded-md"
+            style={{
+              height: "40px",
+              padding: collapsed ? "0 0 0 14px" : "0 10px",
+              color: "rgba(255,255,255,0.85)",
+              backgroundColor: active ? ACTIVE_ORANGE : "transparent",
+              fontWeight: (active || childActive) ? 600 : 400,
+              transition: "background 0.15s, color 0.15s",
+            }}
+            onMouseEnter={(e) => {
+              if (!active) {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = SIDEBAR_HOVER;
+                (e.currentTarget as HTMLButtonElement).style.color = "white";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!active) {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
+                (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.85)";
+              }
+            }}
+          >
+            <Icon size={17} className="flex-shrink-0" style={{ minWidth: "17px" }} />
+            {!collapsed && (
+              <>
+                <span className="ml-3 text-sm whitespace-nowrap flex-1 overflow-hidden text-ellipsis">
+                  {item.label}
                 </span>
-              )}
-            </>
-          )}
-        </button>
+                {hasSubItems && (
+                  <span className="ml-auto flex-shrink-0">
+                    {isExpanded ? <ChevronDown size={14} /> : <ChevronRightSm size={14} />}
+                  </span>
+                )}
+              </>
+            )}
+          </button>
+        )}
 
         {hasSubItems && !collapsed && isExpanded && (
           <div className="px-1 pb-1" style={{ backgroundColor: SIDEBAR_BG, borderRadius: "0 0 6px 6px", marginTop: "1px" }}>
