@@ -193,14 +193,7 @@ export default function SpcMaxiResultadoPage() {
                 </div>
                 {/* Dashed indicator + label */}
                 <div className="absolute top-0 flex flex-col items-center" style={{ left: "93%" }}>
-                  <div
-                    className="mt-3.5"
-                    style={{
-                      borderLeft: "1.5px dashed #7EC8E3",
-                      height: "14px",
-                    }}
-                  />
-                  <span className="text-[11px] font-semibold mt-0.5" style={{ color: "#7EC8E3" }}>
+                  <span className="text-[11px] font-semibold mt-4" style={{ color: "#7EC8E3" }}>
                     93%
                   </span>
                 </div>
@@ -218,8 +211,7 @@ export default function SpcMaxiResultadoPage() {
                   />
                 </div>
                 <div className="absolute top-0 flex flex-col items-center" style={{ left: "72%" }}>
-                  <div className="mt-3.5" style={{ borderLeft: "1.5px dashed #5B8DB8", height: "14px" }} />
-                  <span className="text-[11px] font-semibold mt-0.5" style={{ color: "#5B8DB8" }}>72%</span>
+                  <span className="text-[11px] font-semibold mt-4" style={{ color: "#5B8DB8" }}>72%</span>
                 </div>
               </div>
             </div>
