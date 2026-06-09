@@ -47,7 +47,7 @@ export default function SpcMaxiResultadoPage() {
           </div>
 
           {/* Col 1: documento + nome */}
-          <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+          <div className="flex flex-col gap-0.5 min-w-0 basis-[25%] flex-shrink-0">
             <span className="text-xs text-gray-400">CPF: 529.982.247-25</span>
             <span className="text-sm font-semibold text-gray-800 truncate">Maria Helena Santos da Silva</span>
           </div>
@@ -63,14 +63,14 @@ export default function SpcMaxiResultadoPage() {
             >
               REGULAR
             </span>
-            <span className="text-xs text-gray-400">41 anos · Feminino · São Paulo/SP</span>
+            <span className="text-xs text-gray-400 whitespace-nowrap">41 anos · Feminino · São Paulo/SP</span>
           </div>
 
           {/* Divider */}
           <div className="w-px self-stretch bg-gray-100" />
 
           {/* Col 3: risco */}
-          <div className="flex flex-col gap-1.5 flex-1">
+          <div className="flex flex-col gap-1.5 basis-[44%] flex-shrink-0">
             <span
               className="rounded-full px-2.5 py-1 text-xs font-semibold self-start"
               style={{ backgroundColor: "#FEF3C7", color: "#D97706" }}
