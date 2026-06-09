@@ -1,4 +1,4 @@
-import { User } from "lucide-react";
+import { User, Printer, Search } from "lucide-react";
 
 export default function SpcMaxiResultadoPage() {
   return (
@@ -8,12 +8,31 @@ export default function SpcMaxiResultadoPage() {
       </div>
 
       {/* Protocolo */}
-      <div className="flex items-center gap-4 mb-3 px-1 text-xs text-gray-400">
-        <span><span className="text-gray-500 font-medium">Protocolo:</span> 2026060900042</span>
-        <span className="text-gray-200">|</span>
-        <span><span className="text-gray-500 font-medium">Data/Hora:</span> 09/06/2026 às 14:32</span>
-        <span className="text-gray-200">|</span>
-        <span><span className="text-gray-500 font-medium">Operador:</span> Leonardo Lima</span>
+      <div className="flex items-center justify-between mb-3 px-1">
+        <div className="flex items-center gap-4 text-xs text-gray-400">
+          <span><span className="text-gray-500 font-medium">Protocolo:</span> 2026060900042</span>
+          <span className="text-gray-200">|</span>
+          <span><span className="text-gray-500 font-medium">Data/Hora:</span> 09/06/2026 às 14:32</span>
+          <span className="text-gray-200">|</span>
+          <span><span className="text-gray-500 font-medium">Operador:</span> Leonardo Lima</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors"
+          >
+            <Printer size={14} />
+          </button>
+          <button
+            type="button"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-colors"
+            style={{ backgroundColor: "#243871" }}
+          >
+            <Search size={12} />
+            Nova Consulta
+          </button>
+        </div>
       </div>
 
       {/* Identificação do Consumidor */}
