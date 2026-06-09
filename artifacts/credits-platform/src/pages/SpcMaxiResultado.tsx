@@ -28,7 +28,7 @@ export default function SpcMaxiResultadoPage() {
           <div className="w-px self-stretch bg-gray-100" />
 
           {/* Col 2: status + complementar */}
-          <div className="flex flex-col gap-0.5 flex-shrink-0">
+          <div className="flex flex-col gap-0.5 flex-1">
             <div className="flex items-center gap-1.5">
               <span className="text-xs text-gray-400">Status:</span>
               <span
@@ -40,6 +40,12 @@ export default function SpcMaxiResultadoPage() {
             </div>
             <span className="text-xs text-gray-400">41 anos · Feminino · São Paulo/SP</span>
           </div>
+
+          {/* Divider */}
+          <div className="w-px self-stretch bg-gray-100" />
+
+          {/* Col 3: vazio */}
+          <div className="flex-1" />
         </div>
       </div>
     </div>
