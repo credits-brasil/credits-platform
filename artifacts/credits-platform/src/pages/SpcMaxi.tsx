@@ -343,7 +343,7 @@ export default function SpcMaxiPage() {
             onClick={() => setActiveModal(null)}
           >
             <div
-              className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden"
+              className="bg-white rounded-xl shadow-xl w-full max-w-xl mx-4 overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
@@ -361,8 +361,13 @@ export default function SpcMaxiPage() {
                 </button>
               </div>
               {/* Body */}
-              <div className="px-5 py-5">
-                <p className="text-sm text-gray-400 italic">Conteúdo a definir para este bloco de insumos.</p>
+              <div className="px-5 py-5 space-y-3">
+                {group.items.map((item) => (
+                  <div key={item.id} className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+                    <p className="text-sm font-medium text-gray-700">{item.label}</p>
+                    <p className="mt-1 text-xs text-gray-400 italic">Conteúdo a definir.</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
