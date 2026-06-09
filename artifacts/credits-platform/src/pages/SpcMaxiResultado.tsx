@@ -1,6 +1,44 @@
-import { User, Printer, Search } from "lucide-react";
+import { useState } from "react";
+import { User, Printer, Search, Eye } from "lucide-react";
+
+const ALL_RECORDS = [
+  { inclusao: "15/08/2025", vencimento: "10/06/2025", valor: "R$ 3.450,00", credor: "Magazine Luiza S/A",           cidade: "São Paulo/SP", origem: "CDL SP",   fonte: "SPC + Serasa", grupo: "SPC + SERASA" },
+  { inclusao: "20/07/2025", vencimento: "20/07/2025", valor: "R$ 2.890,00", credor: "Banco Itaú",                  cidade: "São Paulo/SP", origem: "São Paulo", fonte: "SPC + Serasa", grupo: "SPC + SERASA" },
+  { inclusao: "12/06/2025", vencimento: "12/06/2025", valor: "R$ 4.200,00", credor: "3° Tabelionato de Protestos", cidade: "São Paulo/SP", origem: "Protesto",  fonte: "Protesto",     grupo: "PROTESTOS"    },
+  { inclusao: "22/05/2025", vencimento: "01/04/2025", valor: "R$ 1.280,50", credor: "Casas Bahia",                 cidade: "São Paulo/SP", origem: "São Paulo", fonte: "SPC + Serasa", grupo: "SPC + SERASA" },
+  { inclusao: "05/03/2025", vencimento: "05/03/2025", valor: "R$ 7.500,00", credor: "Banco Santander",             cidade: "São Paulo/SP", origem: "São Paulo", fonte: "SPC + Serasa", grupo: "SPC + SERASA" },
+  { inclusao: "15/02/2025", vencimento: "15/02/2025", valor: "R$ 2.100,00", credor: "Claro S/A",                   cidade: "São Paulo/SP", origem: "São Paulo", fonte: "SPC + Serasa", grupo: "SPC + SERASA" },
+  { inclusao: "28/01/2025", vencimento: "28/01/2025", valor: "R$ 1.850,00", credor: "3° Tabelionato de Protestos", cidade: "São Paulo/SP", origem: "Protesto",  fonte: "Protesto",     grupo: "PROTESTOS"    },
+  { inclusao: "05/11/2025", vencimento: "–",          valor: "–",           credor: "Tim S/A",                     cidade: "São Paulo/SP", origem: "São Paulo", fonte: "Alerta",       grupo: "ALERTAS"      },
+  { inclusao: "10/01/2026", vencimento: "–",          valor: "–",           credor: "Vivo S/A",                    cidade: "São Paulo/SP", origem: "São Paulo", fonte: "Alerta",       grupo: "ALERTAS"      },
+  { inclusao: "10/09/2024", vencimento: "03/09/2024", valor: "R$ 9.960,00", credor: "Banco Bradesco",              cidade: "São Paulo/SP", origem: "CDL SP",   fonte: "SPC + Serasa", grupo: "SPC + SERASA" },
+  { inclusao: "03/09/2024", vencimento: "03/09/2024", valor: "R$ 7.000,00", credor: "Banco do Brasil",             cidade: "São Paulo/SP", origem: "São Paulo", fonte: "SPC + Serasa", grupo: "SPC + SERASA" },
+];
+
+const GROUPS = [
+  { key: "TODOS",       label: "TODOS",        count: 11, valor: "R$ 40.130,50", antiga: "03/09/2024", recente: "10/01/2026" },
+  { key: "SPC + SERASA", label: "SPC + SERASA", count: 7,  valor: "R$ 34.080,50", antiga: "03/09/2024", recente: "15/08/2025" },
+  { key: "PROTESTOS",  label: "PROTESTOS",    count: 2,  valor: "R$ 6.050,00",  antiga: "28/01/2025", recente: "12/06/2025" },
+  { key: "ALERTAS",    label: "ALERTAS",      count: 2,  valor: "–",            antiga: "05/11/2025", recente: "10/01/2026" },
+];
+
+function FonteBadge({ fonte }: { fonte: string }) {
+  if (fonte === "Protesto")
+    return <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: "#FEF3C7", color: "#D97706" }}>{fonte}</span>;
+  if (fonte === "Alerta")
+    return <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: "#FEE2E2", color: "#DC2626" }}>{fonte}</span>;
+  return <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: "#EEF2FF", color: "#4338CA" }}>{fonte}</span>;
+}
 
 export default function SpcMaxiResultadoPage() {
+  const [activeGroup, setActiveGroup] = useState("TODOS");
+  const [expanded, setExpanded] = useState(false);
+
+  const filtered = activeGroup === "TODOS" ? ALL_RECORDS : ALL_RECORDS.filter(r => r.grupo === activeGroup);
+  const PAGE = 5;
+  const visible = expanded ? filtered : filtered.slice(0, PAGE);
+  const remaining = filtered.length - PAGE;
+
   return (
     <div className="w-full">
       <div className="mb-6">
@@ -230,7 +268,112 @@ export default function SpcMaxiResultadoPage() {
       </div>
       {/* Negativos Consolidados */}
       <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-        <h2 className="text-sm font-semibold text-gray-700">Negativos Consolidados</h2>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold text-gray-700">Negativos Consolidados</h2>
+          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+            <span>Total: <span className="font-semibold text-gray-800">11 registros</span></span>
+            <span className="text-gray-300">|</span>
+            <span>Valor: <span className="font-semibold" style={{ color: "#ED884A" }}>R$ 40.130,50</span></span>
+          </div>
+        </div>
+
+        {/* Group cards */}
+        <div className="grid grid-cols-4 gap-3 mb-5">
+          {GROUPS.map(g => {
+            const isActive = activeGroup === g.key;
+            return (
+              <button
+                key={g.key}
+                type="button"
+                onClick={() => { setActiveGroup(g.key); setExpanded(false); }}
+                className="text-left rounded-xl border p-3 transition-all"
+                style={{
+                  borderColor: isActive ? "#ED884A" : "#E5E7EB",
+                  backgroundColor: isActive ? "#FFFBF7" : "#fff",
+                }}
+              >
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">{g.label}</p>
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-2xl font-bold" style={{ color: isActive ? "#ED884A" : "#1F2937" }}>{g.count}</span>
+                  <span className="text-xs text-gray-500">{g.valor}</span>
+                </div>
+                <div className="flex justify-between">
+                  <div>
+                    <p className="text-[9px] text-gray-400 uppercase tracking-wide">Antiga</p>
+                    <p className="text-[10px] font-medium text-gray-600">{g.antiga}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[9px] text-gray-400 uppercase tracking-wide">Recente</p>
+                    <p className="text-[10px] font-medium text-gray-600">{g.recente}</p>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Table summary bar */}
+        <div className="flex items-center gap-3 text-xs text-gray-500 mb-3 pb-3 border-b border-gray-100">
+          <span>Total: <span className="font-semibold text-gray-800">{filtered.length} registros</span></span>
+          <span className="text-gray-300">|</span>
+          <span>Valor: <span className="font-semibold" style={{ color: "#ED884A" }}>R$ 40.130,50</span></span>
+          <span className="text-gray-300">|</span>
+          <span>Mais antiga: <span className="font-semibold text-gray-700">03/09/2024</span></span>
+          <span className="text-gray-300">|</span>
+          <span>Mais recente: <span className="font-semibold text-gray-700">15/08/2025</span></span>
+        </div>
+
+        {/* Table */}
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b border-gray-100">
+              {["Inclusão","Vencimento","Valor","Credor","Cidade","Origem","Fonte",""].map(h => (
+                <th key={h} className="text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide pb-2 pr-4 last:pr-0">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {visible.map((r, i) => (
+              <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">{r.inclusao}</td>
+                <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">{r.vencimento}</td>
+                <td className="py-2.5 pr-4 text-gray-800 font-medium whitespace-nowrap">{r.valor}</td>
+                <td className="py-2.5 pr-4 text-gray-700">{r.credor}</td>
+                <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">{r.cidade}</td>
+                <td className="py-2.5 pr-4 text-gray-600">{r.origem}</td>
+                <td className="py-2.5 pr-4"><FonteBadge fonte={r.fonte} /></td>
+                <td className="py-2.5">
+                  <button type="button" className="text-gray-400 hover:text-gray-600 transition-colors">
+                    <Eye size={13} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Expand / collapse */}
+        {!expanded && remaining > 0 && (
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className="mt-3 text-xs font-medium transition-colors"
+            style={{ color: "#243871" }}
+          >
+            Exibir mais {remaining} {remaining === 1 ? "registro" : "registros"}...
+          </button>
+        )}
+        {expanded && filtered.length > PAGE && (
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            className="mt-3 text-xs font-medium transition-colors"
+            style={{ color: "#243871" }}
+          >
+            Recolher
+          </button>
+        )}
       </div>
     </div>
   );
