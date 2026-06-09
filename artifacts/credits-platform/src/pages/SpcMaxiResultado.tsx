@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { User, Printer, Search, Eye, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
-  ResponsiveContainer, LineChart, Line, XAxis, YAxis,
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip,
 } from "recharts";
 
@@ -460,8 +460,8 @@ export default function SpcMaxiResultadoPage() {
         <div className="mt-8 pt-6 border-t border-gray-100">
           <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-4">Variação de Endividamento</p>
           <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={chartData} margin={{ top: 4, right: 8, left: 8, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
+            <BarChart data={chartData} margin={{ top: 4, right: 8, left: 8, bottom: 4 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
               <XAxis
                 dataKey="data"
                 tick={{ fontSize: 10, fill: "#9CA3AF" }}
@@ -481,16 +481,10 @@ export default function SpcMaxiResultadoPage() {
                 formatter={(v: number) => [`R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, "Valor"]}
                 labelStyle={{ fontSize: 11, color: "#374151" }}
                 contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #E5E7EB" }}
+                cursor={{ fill: "#F9FAFB" }}
               />
-              <Line
-                type="monotone"
-                dataKey="valor"
-                stroke="#ED884A"
-                strokeWidth={2}
-                dot={{ r: 3, fill: "#ED884A", strokeWidth: 0 }}
-                activeDot={{ r: 5, fill: "#ED884A" }}
-              />
-            </LineChart>
+              <Bar dataKey="valor" fill="#ED884A" radius={[4, 4, 0, 0]} maxBarSize={40} />
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
