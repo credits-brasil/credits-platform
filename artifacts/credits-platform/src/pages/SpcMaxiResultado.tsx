@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { User, Printer, Search, Eye, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import {
+  ResponsiveContainer, LineChart, Line, XAxis, YAxis,
+  CartesianGrid, Tooltip,
+} from "recharts";
 
 type SortKey = "inclusao" | "vencimento" | "valor" | "credor" | "cidade" | "origem" | "fonte";
 type SortDir = "asc" | "desc";
@@ -76,6 +80,14 @@ export default function SpcMaxiResultadoPage() {
   const PAGE = 5;
   const visible = expanded ? filtered : filtered.slice(0, PAGE);
   const remaining = filtered.length - PAGE;
+
+  const chartData = [...ALL_RECORDS]
+    .filter(r => r.vencimento !== "–" && r.valor !== "–")
+    .sort((a, b) => parseBRDate(a.vencimento) - parseBRDate(b.vencimento))
+    .map(r => ({
+      data: r.vencimento,
+      valor: parseBRValue(r.valor),
+    }));
 
   return (
     <div className="w-full">
@@ -443,6 +455,44 @@ export default function SpcMaxiResultadoPage() {
             Recolher
           </button>
         )}
+
+        {/* Debt trend chart */}
+        <div className="mt-8 pt-6 border-t border-gray-100">
+          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-4">Variação de Endividamento</p>
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={chartData} margin={{ top: 4, right: 8, left: 8, bottom: 4 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
+              <XAxis
+                dataKey="data"
+                tick={{ fontSize: 10, fill: "#9CA3AF" }}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                tick={{ fontSize: 10, fill: "#9CA3AF" }}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(v: number) =>
+                  `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+                }
+                width={80}
+              />
+              <Tooltip
+                formatter={(v: number) => [`R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, "Valor"]}
+                labelStyle={{ fontSize: 11, color: "#374151" }}
+                contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #E5E7EB" }}
+              />
+              <Line
+                type="monotone"
+                dataKey="valor"
+                stroke="#ED884A"
+                strokeWidth={2}
+                dot={{ r: 3, fill: "#ED884A", strokeWidth: 0 }}
+                activeDot={{ r: 5, fill: "#ED884A" }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );
