@@ -72,8 +72,8 @@ export default function SpcMaxiResultadoPage() {
           {/* Col 3: risco */}
           <div className="flex-1">
             <span
-              className="rounded-full px-1.5 py-px text-xs font-semibold"
-              style={{ backgroundColor: "#FEF3C7", color: "#D97706", fontSize: "10px" }}
+              className="rounded-full px-2.5 py-1 text-xs font-semibold"
+              style={{ backgroundColor: "#FEF3C7", color: "#D97706" }}
             >
               Risco Médio
             </span>
