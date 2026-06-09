@@ -191,12 +191,7 @@ export default function SpcMaxiResultadoPage() {
                     style={{ width: "93%", backgroundColor: "#7EC8E3" }}
                   />
                 </div>
-                {/* Dashed indicator + label */}
-                <div className="absolute top-0 flex flex-col items-center" style={{ left: "93%" }}>
-                  <span className="text-[11px] font-semibold mt-4" style={{ color: "#7EC8E3" }}>
-                    93%
-                  </span>
-                </div>
+                <span className="absolute right-0 text-[11px] font-semibold text-gray-700 mt-4">93%</span>
               </div>
             </div>
 
@@ -210,9 +205,7 @@ export default function SpcMaxiResultadoPage() {
                     style={{ width: "72%", backgroundColor: "#5B8DB8" }}
                   />
                 </div>
-                <div className="absolute top-0 flex flex-col items-center" style={{ left: "72%" }}>
-                  <span className="text-[11px] font-semibold mt-4" style={{ color: "#5B8DB8" }}>72%</span>
-                </div>
+                <span className="absolute right-0 text-[11px] font-semibold text-gray-700 mt-4">72%</span>
               </div>
             </div>
 
