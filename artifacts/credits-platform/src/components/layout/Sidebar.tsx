@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import {
   Home,
@@ -147,22 +147,36 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
   const [location] = useLocation();
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
 
+  const allItems = menuGroups.flatMap((g) => g.items);
+
+  useEffect(() => {
+    const parentWithActiveChild = allItems.find(
+      (item) => item.subItems?.some((sub) => sub.path === location)
+    );
+    if (parentWithActiveChild) {
+      setExpandedItems({ [parentWithActiveChild.id]: true });
+    }
+  }, [location]);
+
   const toggleExpand = (id: string) => {
     if (collapsed) return;
     setExpandedItems((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const isItemActive = (item: MenuItem): boolean => {
-    if (item.path) return location === item.path;
-    if (item.subItems) return item.subItems.some((sub) => location === sub.path);
-    return false;
+  const isDirectlyActive = (item: MenuItem): boolean => {
+    return !!item.path && location === item.path;
+  };
+
+  const hasActiveChild = (item: MenuItem): boolean => {
+    return !!item.subItems?.some((sub) => sub.path === location);
   };
 
   const renderItem = (item: MenuItem) => {
     const Icon = item.icon;
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isExpanded = expandedItems[item.id];
-    const active = isItemActive(item);
+    const active = isDirectlyActive(item);
+    const childActive = hasActiveChild(item);
 
     return (
       <div key={item.id} className="mb-0.5">
@@ -175,7 +189,7 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
             padding: collapsed ? "0 0 0 14px" : "0 10px",
             color: "rgba(255,255,255,0.85)",
             backgroundColor: active ? ACTIVE_ORANGE : "transparent",
-            fontWeight: active ? 600 : 400,
+            fontWeight: (active || childActive) ? 600 : 400,
             transition: "background 0.15s, color 0.15s",
           }}
           onMouseEnter={(e) => {
