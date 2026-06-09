@@ -87,7 +87,7 @@ export default function SpcMaxiResultadoPage() {
         <div className="flex gap-6">
 
           {/* Left: Gauge + info */}
-          <div className="flex items-center gap-5 w-1/2">
+          <div className="flex items-center justify-center gap-5 w-1/2">
             {/* Circular gauge */}
             <div className="relative flex items-center justify-center flex-shrink-0" style={{ width: 140, height: 140 }}>
               <svg viewBox="0 0 120 120" width="140" height="140">
