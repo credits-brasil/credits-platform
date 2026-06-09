@@ -86,10 +86,10 @@ export default function SpcMaxiResultadoPage() {
         <h2 className="text-sm font-semibold text-gray-700 mb-4">Score &amp; Capacidade</h2>
         <div className="flex gap-6">
 
-          {/* Left: Gauge */}
-          <div className="flex flex-col items-center gap-3 basis-[50%]">
+          {/* Left: Gauge + info */}
+          <div className="flex items-center gap-5 basis-[50%]">
             {/* Circular gauge */}
-            <div className="relative flex items-center justify-center" style={{ width: 140, height: 140 }}>
+            <div className="relative flex items-center justify-center flex-shrink-0" style={{ width: 140, height: 140 }}>
               <svg viewBox="0 0 120 120" width="140" height="140">
                 {/* Track */}
                 <circle
@@ -115,21 +115,22 @@ export default function SpcMaxiResultadoPage() {
               {/* Center label */}
               <div className="absolute flex flex-col items-center leading-none">
                 <span className="text-3xl font-bold" style={{ color: "#ED884A" }}>642</span>
+                <span className="text-[10px] text-gray-400 mt-1">de 1000</span>
               </div>
             </div>
 
-            <span className="text-xs text-gray-400 -mt-2">de 1000</span>
-
-            <span
-              className="rounded-full px-2 py-0.5 text-xs font-semibold"
-              style={{ backgroundColor: "#FEF3C7", color: "#D97706" }}
-            >
-              Risco Médio
-            </span>
-
-            <p className="text-xs text-gray-500">
-              Inadimplência: <span className="font-semibold text-gray-700">18.5%</span>
-            </p>
+            {/* Info ao lado do gauge */}
+            <div className="flex flex-col gap-2">
+              <span
+                className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
+                style={{ backgroundColor: "#FEF3C7", color: "#D97706" }}
+              >
+                Risco Médio
+              </span>
+              <p className="text-xs text-gray-500">
+                Inadimplência: <span className="font-semibold text-gray-700">18.5%</span>
+              </p>
+            </div>
           </div>
 
           {/* Divider */}
