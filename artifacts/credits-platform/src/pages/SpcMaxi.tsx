@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, ShieldCheck, TrendingUp, Users, Network, AlertCircle, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Search, ShieldCheck, TrendingUp, Users, Network, AlertCircle, CheckCircle2, AlertTriangle, Info, X } from "lucide-react";
 
 type DocType = "cpf" | "cnpj";
 
@@ -112,6 +112,7 @@ export default function SpcMaxiPage() {
   const [touched, setTouched] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set(DEFAULT_SELECTED));
   const [rememberInsumos, setRememberInsumos] = useState(false);
+  const [activeModal, setActiveModal] = useState<string | null>(null);
 
   const rawClean = docType === "cpf"
     ? documento.replace(/\D/g, "")
@@ -294,6 +295,13 @@ export default function SpcMaxiPage() {
                   <Icon size={15} className="text-gray-500" />
                   <span className="text-sm font-semibold text-gray-700">{group.title}</span>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(group.id)}
+                  className="text-gray-300 hover:text-gray-500 transition-colors"
+                >
+                  <Info size={15} />
+                </button>
               </div>
               <hr className="border-gray-100 mb-3" />
               <div className="space-y-3.5">
@@ -323,6 +331,43 @@ export default function SpcMaxiPage() {
           );
         })}
       </div>
+
+      {/* ── Info Modal ── */}
+      {activeModal && (() => {
+        const group = insumoGroups.find((g) => g.id === activeModal)!;
+        const GroupIcon = group.icon;
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            style={{ backgroundColor: "rgba(0,0,0,0.35)" }}
+            onClick={() => setActiveModal(null)}
+          >
+            <div
+              className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <GroupIcon size={16} className="text-gray-500" />
+                  <span className="text-sm font-semibold text-gray-800">{group.title}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(null)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              {/* Body */}
+              <div className="px-5 py-5">
+                <p className="text-sm text-gray-400 italic">Conteúdo a definir para este bloco de insumos.</p>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
