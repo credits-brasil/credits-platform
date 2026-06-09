@@ -13,13 +13,25 @@ function formatCpf(value: string) {
 }
 
 function formatCnpj(value: string) {
-  return value
-    .replace(/\D/g, "")
-    .slice(0, 14)
-    .replace(/(\d{2})(\d)/, "$1.$2")
-    .replace(/(\d{3})(\d)/, "$1.$2")
-    .replace(/(\d{3})(\d)/, "$1/$2")
-    .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
+  // Allow alphanumeric: strip everything except letters and digits, uppercase
+  const clean = value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 14);
+  const p1 = clean.slice(0, 2);
+  const p2 = clean.slice(2, 5);
+  const p3 = clean.slice(5, 8);
+  const p4 = clean.slice(8, 12);
+  const p5 = clean.slice(12, 14);
+  if (clean.length <= 2) return p1;
+  if (clean.length <= 5) return `${p1}.${p2}`;
+  if (clean.length <= 8) return `${p1}.${p2}.${p3}`;
+  if (clean.length <= 12) return `${p1}.${p2}.${p3}/${p4}`;
+  return `${p1}.${p2}.${p3}/${p4}-${p5}`;
+}
+
+function cnpjCharValue(ch: string): number {
+  const code = ch.toUpperCase().charCodeAt(0);
+  if (code >= 48 && code <= 57) return code - 48;       // '0'–'9' → 0–9
+  if (code >= 65 && code <= 90) return code - 65 + 10;  // 'A'–'Z' → 10–35
+  return -1;
 }
 
 function validateCpf(cpf: string): boolean {
@@ -39,17 +51,23 @@ function validateCpf(cpf: string): boolean {
 }
 
 function validateCnpj(cnpj: string): boolean {
-  const digits = cnpj.replace(/\D/g, "");
-  if (digits.length !== 14) return false;
-  if (/^(\d)\1+$/.test(digits)) return false;
-  const calc = (d: string, weights: number[]) => {
-    const sum = weights.reduce((acc, w, i) => acc + parseInt(d[i]) * w, 0);
+  const clean = cnpj.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+  if (clean.length !== 14) return false;
+  // Reject all-same sequences
+  if (/^(.)\1+$/.test(clean)) return false;
+  // Last 2 must be digits (check digits)
+  if (!/^\d$/.test(clean[12]) || !/^\d$/.test(clean[13])) return false;
+
+  const w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  const w2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+
+  const calcDigit = (weights: number[]) => {
+    const sum = weights.reduce((acc, w, i) => acc + cnpjCharValue(clean[i]) * w, 0);
     const rest = sum % 11;
     return rest < 2 ? 0 : 11 - rest;
   };
-  const w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-  const w2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-  return calc(digits, w1) === parseInt(digits[12]) && calc(digits, w2) === parseInt(digits[13]);
+
+  return calcDigit(w1) === parseInt(clean[12]) && calcDigit(w2) === parseInt(clean[13]);
 }
 
 interface Insumo { id: string; label: string; }
@@ -95,8 +113,10 @@ export default function SpcMaxiPage() {
   const [touched, setTouched] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set(DEFAULT_SELECTED));
 
-  const rawDigits = documento.replace(/\D/g, "");
-  const isComplete = docType === "cpf" ? rawDigits.length === 11 : rawDigits.length === 14;
+  const rawClean = docType === "cpf"
+    ? documento.replace(/\D/g, "")
+    : documento.replace(/[^a-zA-Z0-9]/g, "");
+  const isComplete = docType === "cpf" ? rawClean.length === 11 : rawClean.length === 14;
   const isValid = useMemo(() => {
     if (!isComplete) return null;
     return docType === "cpf" ? validateCpf(documento) : validateCnpj(documento);
@@ -169,7 +189,7 @@ export default function SpcMaxiPage() {
               value={documento}
               onChange={handleDocumento}
               onBlur={() => setTouched(true)}
-              placeholder={docType === "cpf" ? "000.000.000-00" : "00.000.000/0000-00"}
+              placeholder={docType === "cpf" ? "000.000.000-00" : "AB.CDE.FGH/0001-00"}
               className="w-56 rounded-lg border px-3.5 py-2 pr-9 text-sm text-gray-800 placeholder-gray-400 outline-none transition"
               style={{
                 borderColor: showError ? "#ef4444" : showSuccess ? "#22c55e" : "#d1d5db",
