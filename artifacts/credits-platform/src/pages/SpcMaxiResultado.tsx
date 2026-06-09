@@ -326,7 +326,17 @@ export default function SpcMaxiResultadoPage() {
         </div>
 
         {/* Table */}
-        <table className="w-full text-xs">
+        <table className="w-full text-xs table-fixed">
+          <colgroup>
+            <col style={{ width: "96px" }} />
+            <col style={{ width: "96px" }} />
+            <col style={{ width: "104px" }} />
+            <col />
+            <col style={{ width: "112px" }} />
+            <col style={{ width: "96px" }} />
+            <col style={{ width: "116px" }} />
+            <col style={{ width: "28px" }} />
+          </colgroup>
           <thead>
             <tr className="border-b border-gray-100">
               {["Inclusão","Vencimento","Valor","Credor","Cidade","Origem","Fonte",""].map(h => (
