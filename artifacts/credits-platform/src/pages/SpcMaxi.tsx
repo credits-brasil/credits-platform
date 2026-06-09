@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, ShieldCheck, TrendingUp, Users, Network, Info, AlertCircle, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Search, ShieldCheck, TrendingUp, Users, Network, AlertCircle, CheckCircle2, AlertTriangle } from "lucide-react";
 
 type DocType = "cpf" | "cnpj";
 
@@ -294,7 +294,6 @@ export default function SpcMaxiPage() {
                   <Icon size={15} className="text-gray-500" />
                   <span className="text-sm font-semibold text-gray-700">{group.title}</span>
                 </div>
-                <Info size={14} className="text-gray-300 cursor-pointer hover:text-gray-400" />
               </div>
               <div className="space-y-2.5">
                 {group.items.map((item) => {
@@ -312,9 +311,8 @@ export default function SpcMaxiPage() {
                           </svg>
                         )}
                       </span>
-                      <span className="text-sm text-gray-600 group-hover:text-gray-800 transition-colors flex items-center gap-1.5">
+                      <span className="text-sm text-gray-600 group-hover:text-gray-800 transition-colors">
                         {item.label}
-                        <Info size={12} className="text-gray-300 hover:text-gray-400 cursor-pointer flex-shrink-0" />
                       </span>
                     </label>
                   );
