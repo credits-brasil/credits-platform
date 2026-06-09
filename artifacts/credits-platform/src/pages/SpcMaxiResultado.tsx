@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { User, Printer, Search, Eye, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
+  ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis,
   CartesianGrid, Tooltip,
 } from "recharts";
 
@@ -81,13 +81,14 @@ export default function SpcMaxiResultadoPage() {
   const visible = expanded ? filtered : filtered.slice(0, PAGE);
   const remaining = filtered.length - PAGE;
 
-  const chartData = [...ALL_RECORDS]
-    .filter(r => r.vencimento !== "–" && r.valor !== "–")
-    .sort((a, b) => parseBRDate(a.vencimento) - parseBRDate(b.vencimento))
-    .map(r => ({
-      data: r.vencimento,
-      valor: parseBRValue(r.valor),
-    }));
+  const chartData = (() => {
+    const rows = [...ALL_RECORDS]
+      .filter(r => r.vencimento !== "–" && r.valor !== "–")
+      .sort((a, b) => parseBRDate(a.vencimento) - parseBRDate(b.vencimento))
+      .map(r => ({ data: r.vencimento, valor: parseBRValue(r.valor) }));
+    let acc = 0;
+    return rows.map(r => { acc += r.valor; return { ...r, acumulado: acc }; });
+  })();
 
   return (
     <div className="w-full">
@@ -459,8 +460,8 @@ export default function SpcMaxiResultadoPage() {
         {/* Debt trend chart */}
         <div className="mt-8 pt-6 border-t border-gray-100">
           <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-4">Variação de Endividamento</p>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={chartData} margin={{ top: 4, right: 8, left: 8, bottom: 4 }}>
+          <ResponsiveContainer width="100%" height={220}>
+            <ComposedChart data={chartData} margin={{ top: 4, right: 88, left: 8, bottom: 4 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
               <XAxis
                 dataKey="data"
@@ -469,6 +470,7 @@ export default function SpcMaxiResultadoPage() {
                 axisLine={false}
               />
               <YAxis
+                yAxisId="left"
                 tick={{ fontSize: 10, fill: "#9CA3AF" }}
                 tickLine={false}
                 axisLine={false}
@@ -477,14 +479,37 @@ export default function SpcMaxiResultadoPage() {
                 }
                 width={80}
               />
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                tick={{ fontSize: 10, fill: "#243871" }}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(v: number) =>
+                  `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+                }
+                width={88}
+              />
               <Tooltip
-                formatter={(v: number) => [`R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, "Valor"]}
+                formatter={(v: number, name: string) => [
+                  `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+                  name === "acumulado" ? "Acumulado" : "Valor",
+                ]}
                 labelStyle={{ fontSize: 11, color: "#374151" }}
                 contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #E5E7EB" }}
                 cursor={{ fill: "#F9FAFB" }}
               />
-              <Bar dataKey="valor" fill="#ED884A" radius={[4, 4, 0, 0]} maxBarSize={40} />
-            </BarChart>
+              <Bar yAxisId="left" dataKey="valor" fill="#ED884A" radius={[4, 4, 0, 0]} maxBarSize={18} />
+              <Line
+                yAxisId="right"
+                type="monotone"
+                dataKey="acumulado"
+                stroke="#243871"
+                strokeWidth={2}
+                dot={{ r: 3, fill: "#243871", strokeWidth: 0 }}
+                activeDot={{ r: 5 }}
+              />
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
       </div>
