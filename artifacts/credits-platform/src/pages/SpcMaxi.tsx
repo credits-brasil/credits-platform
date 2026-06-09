@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Search, ShieldCheck, TrendingUp, Users, Network, Info } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Search, ShieldCheck, TrendingUp, Users, Network, Info, AlertCircle, CheckCircle2 } from "lucide-react";
 
 type DocType = "cpf" | "cnpj";
 
@@ -22,23 +22,42 @@ function formatCnpj(value: string) {
     .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
 }
 
-interface Insumo {
-  id: string;
-  label: string;
+function validateCpf(cpf: string): boolean {
+  const digits = cpf.replace(/\D/g, "");
+  if (digits.length !== 11) return false;
+  if (/^(\d)\1+$/.test(digits)) return false;
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += parseInt(digits[i]) * (10 - i);
+  let rest = (sum * 10) % 11;
+  if (rest === 10 || rest === 11) rest = 0;
+  if (rest !== parseInt(digits[9])) return false;
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += parseInt(digits[i]) * (11 - i);
+  rest = (sum * 10) % 11;
+  if (rest === 10 || rest === 11) rest = 0;
+  return rest === parseInt(digits[10]);
 }
 
-interface InsumoGroup {
-  id: string;
-  title: string;
-  icon: React.ElementType;
-  items: Insumo[];
+function validateCnpj(cnpj: string): boolean {
+  const digits = cnpj.replace(/\D/g, "");
+  if (digits.length !== 14) return false;
+  if (/^(\d)\1+$/.test(digits)) return false;
+  const calc = (d: string, weights: number[]) => {
+    const sum = weights.reduce((acc, w, i) => acc + parseInt(d[i]) * w, 0);
+    const rest = sum % 11;
+    return rest < 2 ? 0 : 11 - rest;
+  };
+  const w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  const w2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  return calc(digits, w1) === parseInt(digits[12]) && calc(digits, w2) === parseInt(digits[13]);
 }
+
+interface Insumo { id: string; label: string; }
+interface InsumoGroup { id: string; title: string; icon: React.ElementType; items: Insumo[]; }
 
 const insumoGroups: InsumoGroup[] = [
   {
-    id: "risco-credito",
-    title: "Risco de Crédito",
-    icon: ShieldCheck,
+    id: "risco-credito", title: "Risco de Crédito", icon: ShieldCheck,
     items: [
       { id: "score-12m", label: "Score 12 meses" },
       { id: "limite-credito", label: "Limite de Crédito sugerido" },
@@ -46,27 +65,21 @@ const insumoGroups: InsumoGroup[] = [
     ],
   },
   {
-    id: "informacoes-positivas",
-    title: "Informações Positivas",
-    icon: TrendingUp,
+    id: "informacoes-positivas", title: "Informações Positivas", icon: TrendingUp,
     items: [
       { id: "renda-presumida", label: "Renda presumida" },
       { id: "pontualidade", label: "Pontualidade de pagamento" },
     ],
   },
   {
-    id: "comportamentais",
-    title: "Comportamentais & Cadastrais",
-    icon: Users,
+    id: "comportamentais", title: "Comportamentais & Cadastrais", icon: Users,
     items: [
       { id: "dados-cadastrais", label: "Dados cadastrais completos" },
       { id: "consultas-mercado", label: "Consultas de mercado (12m)" },
     ],
   },
   {
-    id: "vinculos",
-    title: "Vínculos & Relacionamentos",
-    icon: Network,
+    id: "vinculos", title: "Vínculos & Relacionamentos", icon: Network,
     items: [
       { id: "parentes-vinculos", label: "Parentes e vínculos" },
       { id: "empresas-relacionadas", label: "Empresas relacionadas" },
@@ -79,34 +92,47 @@ const DEFAULT_SELECTED = new Set(["score-12m", "renda-presumida", "dados-cadastr
 export default function SpcMaxiPage() {
   const [docType, setDocType] = useState<DocType>("cpf");
   const [documento, setDocumento] = useState("");
+  const [touched, setTouched] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set(DEFAULT_SELECTED));
+
+  const rawDigits = documento.replace(/\D/g, "");
+  const isComplete = docType === "cpf" ? rawDigits.length === 11 : rawDigits.length === 14;
+  const isValid = useMemo(() => {
+    if (!isComplete) return null;
+    return docType === "cpf" ? validateCpf(documento) : validateCnpj(documento);
+  }, [documento, docType, isComplete]);
+
+  const showError = touched && isComplete && isValid === false;
+  const showSuccess = isComplete && isValid === true;
+  const canSubmit = showSuccess;
 
   const handleDocTypeChange = (type: DocType) => {
     setDocType(type);
     setDocumento("");
+    setTouched(false);
   };
 
   const handleDocumento = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
     setDocumento(docType === "cpf" ? formatCpf(raw) : formatCnpj(raw));
+    if (!touched) setTouched(true);
   };
 
   const toggleInsumo = (id: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   };
 
   const handleConsultar = (e: React.FormEvent) => {
     e.preventDefault();
+    setTouched(true);
   };
 
   return (
     <div className="w-full">
-      {/* Page header */}
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-gray-800">SPC MAXI</h1>
         <p className="mt-1 text-sm text-gray-500">
@@ -135,22 +161,54 @@ export default function SpcMaxiPage() {
               </button>
             ))}
           </div>
-          <input
-            type="text"
-            value={documento}
-            onChange={handleDocumento}
-            placeholder={docType === "cpf" ? "000.000.000-00" : "00.000.000/0000-00"}
-            className="w-56 rounded-lg border border-gray-300 px-3.5 py-2 text-sm text-gray-800 placeholder-gray-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-          />
+
+          {/* Input + validation icon */}
+          <div className="relative">
+            <input
+              type="text"
+              value={documento}
+              onChange={handleDocumento}
+              onBlur={() => setTouched(true)}
+              placeholder={docType === "cpf" ? "000.000.000-00" : "00.000.000/0000-00"}
+              className="w-56 rounded-lg border px-3.5 py-2 pr-9 text-sm text-gray-800 placeholder-gray-400 outline-none transition"
+              style={{
+                borderColor: showError ? "#ef4444" : showSuccess ? "#22c55e" : "#d1d5db",
+                boxShadow: showError
+                  ? "0 0 0 2px rgba(239,68,68,0.12)"
+                  : showSuccess
+                  ? "0 0 0 2px rgba(34,197,94,0.12)"
+                  : undefined,
+              }}
+            />
+            {showError && (
+              <AlertCircle size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 pointer-events-none" />
+            )}
+            {showSuccess && (
+              <CheckCircle2 size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 pointer-events-none" />
+            )}
+          </div>
+
           <button
             type="submit"
-            className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 active:scale-95 whitespace-nowrap"
-            style={{ backgroundColor: "#243871" }}
+            disabled={!canSubmit}
+            className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition whitespace-nowrap"
+            style={{
+              backgroundColor: canSubmit ? "#243871" : "#9ca3af",
+              cursor: canSubmit ? "pointer" : "not-allowed",
+              opacity: canSubmit ? 1 : 0.7,
+            }}
           >
             <Search size={14} />
             Consultar
           </button>
         </div>
+
+        {showError && (
+          <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1">
+            <AlertCircle size={11} />
+            {docType === "cpf" ? "CPF inválido. Verifique os dígitos informados." : "CNPJ inválido. Verifique os dígitos informados."}
+          </p>
+        )}
       </form>
 
       {/* Insumos Opcionais */}
@@ -165,11 +223,7 @@ export default function SpcMaxiPage() {
         {insumoGroups.map((group) => {
           const Icon = group.icon;
           return (
-            <div
-              key={group.id}
-              className="bg-white rounded-xl border border-gray-200 p-4"
-            >
-              {/* Card header */}
+            <div key={group.id} className="bg-white rounded-xl border border-gray-200 p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Icon size={15} className="text-gray-500" />
@@ -177,29 +231,15 @@ export default function SpcMaxiPage() {
                 </div>
                 <Info size={14} className="text-gray-300 cursor-pointer hover:text-gray-400" />
               </div>
-
-              {/* Checkboxes */}
               <div className="space-y-2.5">
                 {group.items.map((item) => {
                   const checked = selected.has(item.id);
                   return (
-                    <label
-                      key={item.id}
-                      className="flex items-center gap-2.5 cursor-pointer group"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => toggleInsumo(item.id)}
-                        className="hidden"
-                      />
-                      {/* Custom checkbox */}
+                    <label key={item.id} className="flex items-center gap-2.5 cursor-pointer group">
+                      <input type="checkbox" checked={checked} onChange={() => toggleInsumo(item.id)} className="hidden" />
                       <span
                         className="flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-all"
-                        style={{
-                          backgroundColor: checked ? "#243871" : "white",
-                          borderColor: checked ? "#243871" : "#d1d5db",
-                        }}
+                        style={{ backgroundColor: checked ? "#243871" : "white", borderColor: checked ? "#243871" : "#d1d5db" }}
                       >
                         {checked && (
                           <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
