@@ -307,13 +307,8 @@ export default function SpcMaxiResultadoPage() {
       {/* Negativos Consolidados */}
       <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center mb-4">
           <h2 className="text-sm font-semibold text-gray-700">Negativos Consolidados</h2>
-          <div className="flex items-center gap-1.5 text-xs text-gray-500">
-            <span>Total: <span className="font-semibold text-gray-800">11 registros</span></span>
-            <span className="text-gray-300">|</span>
-            <span>Valor: <span className="font-semibold" style={{ color: "#ED884A" }}>R$ 40.130,50</span></span>
-          </div>
         </div>
 
         {/* Group cards */}
