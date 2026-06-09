@@ -1,4 +1,4 @@
-import { UserCircle } from "lucide-react";
+import { User } from "lucide-react";
 
 export default function SpcMaxiResultadoPage() {
   return (
@@ -11,10 +11,10 @@ export default function SpcMaxiResultadoPage() {
       <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
         <div className="flex items-center gap-4">
           <div
-            className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full"
-            style={{ backgroundColor: "#EEF2FF" }}
+            className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: "#EAECF0" }}
           >
-            <UserCircle size={28} style={{ color: "#243871" }} />
+            <User size={24} style={{ color: "#243871" }} strokeWidth={1.5} />
           </div>
 
           <div className="flex flex-col gap-0.5">
