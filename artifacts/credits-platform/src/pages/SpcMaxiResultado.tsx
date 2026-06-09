@@ -7,6 +7,15 @@ export default function SpcMaxiResultadoPage() {
         <h1 className="text-xl font-semibold text-gray-800">Relatório SPC MAXI</h1>
       </div>
 
+      {/* Protocolo */}
+      <div className="flex items-center gap-4 mb-3 px-1 text-xs text-gray-400">
+        <span><span className="text-gray-500 font-medium">Protocolo:</span> 2026060900042</span>
+        <span className="text-gray-200">|</span>
+        <span><span className="text-gray-500 font-medium">Data/Hora:</span> 09/06/2026 às 14:32</span>
+        <span className="text-gray-200">|</span>
+        <span><span className="text-gray-500 font-medium">Operador:</span> usuario@credits.com</span>
+      </div>
+
       {/* Identificação do Consumidor */}
       <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
         <div className="flex items-center gap-3">
