@@ -164,7 +164,7 @@ export default function SpcMaxiPage() {
       <form onSubmit={handleConsultar} className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
         <div className="flex gap-6">
           {/* ── Left: Documento ── */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 basis-1/2">
             <p className="text-sm font-medium text-gray-700 mb-2">Documento</p>
             <div className="flex items-center gap-2">
               {/* CPF / CNPJ toggle */}
@@ -238,7 +238,7 @@ export default function SpcMaxiPage() {
           <div className="w-px bg-gray-200 self-stretch" />
 
           {/* ── Right: Insumos ── */}
-          <div className="w-64 flex-shrink-0">
+          <div className="flex-1 min-w-0 basis-1/2">
             <p className="text-sm font-medium text-gray-700 mb-2">Insumos</p>
 
             {/* Checkbox row */}
