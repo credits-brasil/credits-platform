@@ -55,6 +55,7 @@ export default function SpcMaxiResultadoPage() {
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [singleDate, setSingleDate] = useState(false);
+  const [consultasExpanded, setConsultasExpanded] = useState(false);
 
   function handleSort(key: SortKey) {
     if (sortKey === key) {
@@ -659,6 +660,113 @@ export default function SpcMaxiResultadoPage() {
 
         </Accordion>
       </div>
+
+      {/* Consultas Realizadas */}
+      {(() => {
+        const consultasMes = [
+          { mes: "12/2025", total: 1 },
+          { mes: "01/2026", total: 9 },
+          { mes: "02/2026", total: 15 },
+          { mes: "03/2026", total: 12 },
+        ];
+        const todasConsultas = [
+          { data: "20/03/2026", associado: "SUPPLIERCAR",                 entidade: "SAO PAULO / SP", cidade: "SAO PAULO", estado: "SP" },
+          { data: "20/03/2026", associado: "ZEUS DO BRASIL",              entidade: "SAO PAULO / SP", cidade: "BLUMENAU",  estado: "SC" },
+          { data: "18/03/2026", associado: "SUPPLIERCAR",                 entidade: "SAO PAULO / SP", cidade: "SAO PAULO", estado: "SP" },
+          { data: "14/03/2026", associado: "FEDERAL EXPRESS CORPORATI",   entidade: "SAO PAULO / SP", cidade: "SAO PAULO", estado: "SP" },
+          { data: "13/03/2026", associado: "FEDERAL EXPRESS CORPORATI",   entidade: "SAO PAULO / SP", cidade: "SAO PAULO", estado: "SP" },
+          { data: "10/03/2026", associado: "BANCO BRADESCO S/A",          entidade: "SAO PAULO / SP", cidade: "SAO PAULO", estado: "SP" },
+          { data: "05/03/2026", associado: "ITAU UNIBANCO S/A",           entidade: "SAO PAULO / SP", cidade: "SAO PAULO", estado: "SP" },
+          { data: "28/02/2026", associado: "MAGAZINE LUIZA S/A",          entidade: "SAO PAULO / SP", cidade: "SAO PAULO", estado: "SP" },
+          { data: "20/02/2026", associado: "CLARO S/A",                   entidade: "SAO PAULO / SP", cidade: "SAO PAULO", estado: "SP" },
+          { data: "14/02/2026", associado: "SUPPLIERCAR",                 entidade: "SAO PAULO / SP", cidade: "SAO PAULO", estado: "SP" },
+        ];
+        const visibleConsultas = consultasExpanded ? todasConsultas : todasConsultas.slice(0, 5);
+        return (
+          <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
+            <h2 className="text-sm font-semibold text-gray-700 mb-4">Consultas Realizadas</h2>
+
+            {/* KPIs */}
+            <div className="grid grid-cols-3 divide-x divide-gray-100 border border-gray-100 rounded-xl mb-5 overflow-hidden">
+              {[
+                { valor: 12, label: "Mês atual" },
+                { valor: 37, label: "Últimos 90 dias" },
+                { valor: 37, label: "Total" },
+              ].map(k => (
+                <div key={k.label} className="flex flex-col items-center py-4">
+                  <span className="text-2xl font-bold text-gray-800">{k.valor}</span>
+                  <span className="text-xs text-gray-400 mt-0.5">{k.label}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Line chart */}
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">Evolução de Consultas por Mês</p>
+            <ResponsiveContainer width="100%" height={180}>
+              <ComposedChart data={consultasMes} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
+                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#9CA3AF" }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: "#9CA3AF" }} tickLine={false} axisLine={false} width={28} />
+                <Tooltip
+                  formatter={(v: number) => [v, "Consultas"]}
+                  labelStyle={{ fontSize: 11, color: "#374151" }}
+                  contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #E5E7EB" }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="total"
+                  stroke="#243871"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: "#243871", strokeWidth: 0 }}
+                  activeDot={{ r: 6 }}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+
+            {/* Table */}
+            <div className="mt-5 border-t border-gray-100 pt-4">
+              <table className="w-full text-xs table-fixed">
+                <colgroup>
+                  <col style={{ width: "96px" }} />
+                  <col />
+                  <col style={{ width: "160px" }} />
+                  <col style={{ width: "120px" }} />
+                  <col style={{ width: "56px" }} />
+                </colgroup>
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    {["Data", "Associado", "Nome da Entidade", "Cidade", "Estado"].map(h => (
+                      <th key={h} className="text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide pb-2 pr-4 last:pr-0">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleConsultas.map((r, i) => (
+                    <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                      <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">{r.data}</td>
+                      <td className="py-2.5 pr-4 text-gray-700 font-medium">{r.associado}</td>
+                      <td className="py-2.5 pr-4 text-gray-600">{r.entidade}</td>
+                      <td className="py-2.5 pr-4 text-gray-600">{r.cidade}</td>
+                      <td className="py-2.5 text-gray-600">{r.estado}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="flex justify-end mt-3">
+                <button
+                  type="button"
+                  onClick={() => setConsultasExpanded(v => !v)}
+                  className="flex items-center gap-1 text-xs font-medium transition-colors"
+                  style={{ color: "#243871" }}
+                >
+                  {consultasExpanded ? "Recolher" : `Expandir`}
+                  <span className="text-[10px]">{consultasExpanded ? "▲" : "▼"}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
