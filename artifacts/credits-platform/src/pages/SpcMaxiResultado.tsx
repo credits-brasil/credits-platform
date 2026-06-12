@@ -768,7 +768,7 @@ export default function SpcMaxiResultadoPage() {
         );
       })()}
       {/* Floating section nav */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2.5">
+      <div className="fixed bottom-10 right-10 z-50 flex flex-col gap-2.5">
         {[
           { id: "section-identificacao", icon: <User size={16} />,          label: "Identificação"         },
           { id: "section-score",         icon: <BarChart2 size={16} />,      label: "Score & Capacidade"    },
