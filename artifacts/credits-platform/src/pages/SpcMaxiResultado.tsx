@@ -788,9 +788,13 @@ export default function SpcMaxiResultadoPage() {
             {/* Circle button */}
             <button
               type="button"
-              onClick={() =>
-                document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })
-              }
+              onClick={() => {
+                const el = document.getElementById(id);
+                if (el) {
+                  const y = el.getBoundingClientRect().top + window.scrollY - 68 - 16;
+                  window.scrollTo({ top: y, behavior: "smooth" });
+                }
+              }}
               className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-white shadow-md transition-all duration-150 hover:scale-110 hover:shadow-lg active:scale-95"
               style={{ backgroundColor: "#ED884A" }}
               aria-label={label}
