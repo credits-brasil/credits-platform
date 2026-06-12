@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, Printer, Search, Eye, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { User, Printer, Search, Eye, ArrowUpDown, ArrowUp, ArrowDown, ShieldAlert } from "lucide-react";
 import {
   ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis,
   CartesianGrid, Tooltip,
@@ -518,6 +518,82 @@ export default function SpcMaxiResultadoPage() {
               />
             </ComposedChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Alertas */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
+        <h2 className="text-sm font-semibold text-gray-700 mb-4">Alertas</h2>
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            {
+              severidade: "medio",
+              titulo: "Documento com divergência cadastral",
+              descricao: "RG informado diverge da base da Receita Federal.",
+              data: "10/01/2026",
+              fonte: "Receita Federal",
+              tipo: "RG",
+            },
+            {
+              severidade: "alto",
+              titulo: "Alto volume de consultas recentes",
+              descricao: "14 consultas nos últimos 30 dias — possível busca intensiva por crédito.",
+              data: "05/11/2025",
+              fonte: "SPC Brasil",
+              tipo: "CPF",
+            },
+            {
+              severidade: "baixo",
+              titulo: "Endereço desatualizado",
+              descricao: "Endereço cadastral difere do informado em consultas anteriores.",
+              data: "03/09/2024",
+              fonte: "CDL SP",
+              tipo: "Endereço",
+            },
+            {
+              severidade: "alto",
+              titulo: "CPF com restrição administrativa",
+              descricao: "CPF consta em lista de restrição da Receita Federal.",
+              data: "28/01/2025",
+              fonte: "Receita Federal",
+              tipo: "CPF",
+            },
+          ].map((a, i) => {
+            const cfg =
+              a.severidade === "alto"
+                ? { bg: "#FEF2F2", border: "#FECACA", icon: "#DC2626", badge: { bg: "#FEE2E2", color: "#DC2626" } }
+                : a.severidade === "medio"
+                ? { bg: "#FFFBEB", border: "#FDE68A", icon: "#D97706", badge: { bg: "#FEF3C7", color: "#D97706" } }
+                : { bg: "#F0FDF4", border: "#BBF7D0", icon: "#16A34A", badge: { bg: "#DCFCE7", color: "#16A34A" } };
+            return (
+              <div
+                key={i}
+                className="rounded-xl border p-4"
+                style={{ backgroundColor: cfg.bg, borderColor: cfg.border }}
+              >
+                <div className="flex items-start gap-3">
+                  <ShieldAlert size={18} style={{ color: cfg.icon, flexShrink: 0, marginTop: 1 }} />
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="text-sm font-semibold text-gray-800">{a.titulo}</span>
+                      <span
+                        className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold capitalize whitespace-nowrap"
+                        style={{ backgroundColor: cfg.badge.bg, color: cfg.badge.color }}
+                      >
+                        {a.severidade}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mb-2">{a.descricao}</p>
+                    <div className="flex items-center gap-3 text-[11px] text-gray-400">
+                      <span>{a.data}</span>
+                      <span>{a.fonte}</span>
+                      <span>{a.tipo}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
