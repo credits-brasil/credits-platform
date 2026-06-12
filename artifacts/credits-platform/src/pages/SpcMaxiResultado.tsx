@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, Printer, Search, Eye, ArrowUpDown, ArrowUp, ArrowDown, ShieldAlert } from "lucide-react";
+import { User, Printer, Search, Eye, ArrowUpDown, ArrowUp, ArrowDown, ShieldAlert, BarChart2, AlertTriangle, ClipboardList } from "lucide-react";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import {
   ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis,
@@ -129,7 +129,7 @@ export default function SpcMaxiResultadoPage() {
       </div>
 
       {/* Identificação do Consumidor */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
+      <div id="section-identificacao" className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
         <div className="flex items-center gap-3">
           {/* Icon */}
           <div
@@ -175,7 +175,7 @@ export default function SpcMaxiResultadoPage() {
         </div>
       </div>
       {/* Score & Capacidade */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
+      <div id="section-score" className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
         <h2 className="text-sm font-semibold text-gray-700 mb-4">Score &amp; Capacidade</h2>
         <div className="flex gap-6">
 
@@ -322,7 +322,7 @@ export default function SpcMaxiResultadoPage() {
 
       </div>
       {/* Negativos Consolidados */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
+      <div id="section-negativos" className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
         {/* Header */}
         <div className="flex items-center mb-4">
           <h2 className="text-sm font-semibold text-gray-700">Negativos Consolidados</h2>
@@ -524,7 +524,7 @@ export default function SpcMaxiResultadoPage() {
       </div>
 
       {/* Alertas */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
+      <div id="section-alertas" className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
         <h2 className="text-sm font-semibold text-gray-700 mb-4">Alertas</h2>
         <div className="grid grid-cols-2 gap-3">
           {[
@@ -600,7 +600,7 @@ export default function SpcMaxiResultadoPage() {
       </div>
 
       {/* Dados Cadastrais */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
+      <div id="section-cadastrais" className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
         <h2 className="text-sm font-semibold text-gray-700 mb-2">Dados Cadastrais</h2>
         <Accordion type="multiple" className="w-full">
 
@@ -683,7 +683,7 @@ export default function SpcMaxiResultadoPage() {
         ];
         const visibleConsultas = consultasExpanded ? todasConsultas : todasConsultas.slice(0, 5);
         return (
-          <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
+          <div id="section-consultas" className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
             <h2 className="text-sm font-semibold text-gray-700 mb-4">Consultas Realizadas</h2>
 
             {/* KPIs */}
@@ -767,6 +767,39 @@ export default function SpcMaxiResultadoPage() {
           </div>
         );
       })()}
+      {/* Floating section nav */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2.5">
+        {[
+          { id: "section-identificacao", icon: <User size={16} />,          label: "Identificação"         },
+          { id: "section-score",         icon: <BarChart2 size={16} />,      label: "Score & Capacidade"    },
+          { id: "section-negativos",     icon: <AlertTriangle size={16} />,  label: "Negativos Consolidados"},
+          { id: "section-alertas",       icon: <ShieldAlert size={16} />,    label: "Alertas"               },
+          { id: "section-cadastrais",    icon: <ClipboardList size={16} />,  label: "Dados Cadastrais"      },
+          { id: "section-consultas",     icon: <Search size={16} />,         label: "Consultas Realizadas"  },
+        ].map(({ id, icon, label }) => (
+          <div key={id} className="group flex items-center justify-end gap-2">
+            {/* Tooltip label */}
+            <span
+              className="pointer-events-none whitespace-nowrap rounded-lg px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 transition-all duration-150 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0"
+              style={{ backgroundColor: "#243871" }}
+            >
+              {label}
+            </span>
+            {/* Circle button */}
+            <button
+              type="button"
+              onClick={() =>
+                document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-white shadow-md transition-all duration-150 hover:scale-110 hover:shadow-lg active:scale-95"
+              style={{ backgroundColor: "#ED884A" }}
+              aria-label={label}
+            >
+              {icon}
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
