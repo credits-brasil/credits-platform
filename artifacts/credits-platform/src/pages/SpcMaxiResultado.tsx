@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { User, Printer, Search, Eye, ArrowUpDown, ArrowUp, ArrowDown, ShieldAlert } from "lucide-react";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import {
   ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis,
   CartesianGrid, Tooltip,
@@ -595,6 +596,68 @@ export default function SpcMaxiResultadoPage() {
             );
           })}
         </div>
+      </div>
+
+      {/* Dados Cadastrais */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
+        <h2 className="text-sm font-semibold text-gray-700 mb-2">Dados Cadastrais</h2>
+        <Accordion type="multiple" className="w-full">
+
+          {/* Dados Pessoais */}
+          <AccordionItem value="dados-pessoais" className="border-gray-100">
+            <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
+              Dados Pessoais
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="grid grid-cols-3 gap-x-8 gap-y-4 pt-1 pb-2">
+                {[
+                  { label: "Nome completo",      value: "Maria Helena Santos da Silva" },
+                  { label: "CPF",                value: "529.982.247-25" },
+                  { label: "Data de nascimento", value: "12/03/1985" },
+                  { label: "Sexo",               value: "Feminino" },
+                  { label: "Nacionalidade",      value: "Brasileira" },
+                  { label: "Nome da mãe",        value: "Ana Lúcia Santos" },
+                  { label: "Nome do pai",        value: "José Carlos da Silva" },
+                  { label: "RG",                 value: "12.345.678-9 SSP/SP" },
+                  { label: "Estado civil",       value: "Casada" },
+                ].map(f => (
+                  <div key={f.label}>
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">{f.label}</p>
+                    <p className="text-sm text-gray-800">{f.value}</p>
+                  </div>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Contato e Endereço */}
+          <AccordionItem value="contato-endereco" className="border-gray-100 last:border-b-0">
+            <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
+              Contato e Endereço
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="grid grid-cols-3 gap-x-8 gap-y-4 pt-1 pb-2">
+                {[
+                  { label: "Telefone principal", value: "(11) 98765-4321" },
+                  { label: "Telefone secundário", value: "(11) 3456-7890" },
+                  { label: "E-mail",             value: "maria.helena@email.com" },
+                  { label: "CEP",                value: "01310-100" },
+                  { label: "Logradouro",         value: "Av. Paulista, 1234 — Apto 52" },
+                  { label: "Bairro",             value: "Bela Vista" },
+                  { label: "Cidade",             value: "São Paulo" },
+                  { label: "Estado",             value: "SP" },
+                  { label: "País",               value: "Brasil" },
+                ].map(f => (
+                  <div key={f.label}>
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">{f.label}</p>
+                    <p className="text-sm text-gray-800">{f.value}</p>
+                  </div>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+        </Accordion>
       </div>
     </div>
   );
