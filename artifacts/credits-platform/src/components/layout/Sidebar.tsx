@@ -44,97 +44,97 @@ interface MenuGroup {
 }
 
 const menuGroups: MenuGroup[] = [
-  {
-    id: "main",
-    items: [
-      { id: "home", label: "Home", icon: Home, path: "/" },
-    ],
-  },
-  {
-    id: "favoritos",
-    label: "Favoritos",
-    items: [
-      {
-        id: "pessoa-fisica",
-        label: "Pessoa Física",
-        icon: User,
-        subItems: [
-          { label: "SPC Relatório Completo", path: "/favoritos/pf/relatorio-completo" },
-          { label: "SPC MAXI", path: "/favoritos/pf/spc-maxi" },
-        ],
-      },
-      {
-        id: "pessoa-juridica",
-        label: "Pessoa Jurídica",
-        icon: Building2,
-        subItems: [
-          { label: "SPC MAX", path: "/favoritos/pj/spc-max" },
-          { label: "SPC MAXI", path: "/favoritos/pj/spc-maxi" },
-        ],
-      },
-    ],
-  },
+  // {
+  //   id: "main",
+  //   items: [
+  //     { id: "home", label: "Home", icon: Home, path: "/" },
+  //   ],
+  // },
+  // {
+  //   id: "favoritos",
+  //   label: "Favoritos",
+  //   items: [
+  //     {
+  //       id: "pessoa-fisica",
+  //       label: "Pessoa Física",
+  //       icon: User,
+  //       subItems: [
+  //         { label: "SPC Relatório Completo", path: "/favoritos/pf/relatorio-completo" },
+  //         { label: "SPC MAXI", path: "/favoritos/pf/spc-maxi" },
+  //       ],
+  //     },
+  //     {
+  //       id: "pessoa-juridica",
+  //       label: "Pessoa Jurídica",
+  //       icon: Building2,
+  //       subItems: [
+  //         { label: "SPC MAX", path: "/favoritos/pj/spc-max" },
+  //         { label: "SPC MAXI", path: "/favoritos/pj/spc-maxi" },
+  //       ],
+  //     },
+  //   ],
+  // },
   {
     id: "catalogo-grupo",
     label: "Verticais",
     labelIcon: "apps",
     items: [
-      {
-        id: "catalogo-item",
-        label: "Catálogo",
-        icon: BookOpen,
-        path: "/catalogo",
-      },
+      // {
+      //   id: "catalogo-item",
+      //   label: "Catálogo",
+      //   icon: BookOpen,
+      //   path: "/catalogo",
+      // },
       {
         id: "credito-risco",
         label: "Crédito e Risco",
         icon: BookOpen,
         subItems: [
           { label: "SPC MAXI", path: "/verticais/credito-risco/spc-maxi" },
-          { label: "SPC Relatório Completo", path: "/catalogo/relatorio-1" },
+          // { label: "SPC Relatório Completo", path: "/catalogo/relatorio-1" },
         ],
       },
-      {
-        id: "cobranca",
-        label: "Cobrança",
-        icon: CreditCard,
-        subItems: [
-          { label: "Relatório A", path: "/credito/relatorio-a" },
-        ],
-      },
+      // {
+      //   id: "cobranca",
+      //   label: "Cobrança",
+      //   icon: CreditCard,
+      //   subItems: [
+      //     { label: "Relatório A", path: "/credito/relatorio-a" },
+      //   ],
+      // },
     ],
   },
-  {
-    id: "relatorios-analise",
-    label: "Relatórios e Análise",
-    items: [
-      {
-        id: "relatorios",
-        label: "Relatórios",
-        icon: BarChart2,
-        subItems: [
-          { label: "Extrato Sintético", path: "/relatorios/extrato-sintetico" },
-          { label: "Extrato Analítico", path: "/relatorios/extrato-analitico" },
-        ],
-      },
-      {
-        id: "auditoria",
-        label: "Auditoria",
-        icon: ShieldCheck,
-        path: "/auditoria",
-      },
-      {
-        id: "configuracoes",
-        label: "Configurações",
-        icon: Settings,
-        subItems: [
-          { label: "Empresas", path: "/configuracoes/empresas" },
-          { label: "Operadores", path: "/configuracoes/operadores" },
-          { label: "Permissões", path: "/configuracoes/permissoes" },
-        ],
-      },
-    ],
-  },
+  // {
+  //   id: "relatorios-analise",
+  //   label: "Relatórios e Análise",
+  //   items: [
+  //     {
+  //       id: "relatorios",
+  //       label: "Relatórios",
+  //       icon: BarChart2,
+  //       subItems: [
+  //         { label: "Extrato Sintético", path: "/relatorios/extrato-sintetico" },
+  //         { label: "Extrato Analítico", path: "/relatorios/extrato-analitico" },
+  //       ],
+  //     },
+  //     {
+  //       id: "auditoria",
+  //       label: "Auditoria",
+  //       icon: ShieldCheck,
+  //       path: "/auditoria",
+  //     },
+  //     {
+  //       id: "configuracoes",
+  //       label: "Configurações",
+  //       icon: Settings,
+  //       subItems: [
+  //         { label: "Empresas", path: "/configuracoes/empresas" },
+  //         { label: "Operadores", path: "/configuracoes/operadores" },
+  //         { label: "Permissões", path: "/configuracoes/permissoes" },
+  //       ],
+  //     },
+  //   ],
+  // },
 ];
 
 interface SidebarProps {
