@@ -119,7 +119,7 @@ const insumoGroups: InsumoGroup[] = [
     title: "Informações Positivas",
     icon: TrendingUp,
     items: [
-      { id: "123", label: "Renda presumida" },
+      { id: "123123", label: "Renda presumida" },
       { id: "5227", label: "Pontualidade de pagamento" },
     ],
   },
@@ -128,8 +128,8 @@ const insumoGroups: InsumoGroup[] = [
     title: "Comportamentais & Cadastrais",
     icon: Users,
     items: [
-      { id: "123", label: "Dados cadastrais completos" },
-      { id: "123", label: "Consultas de mercado (12m)" },
+      { id: "1231", label: "Dados cadastrais completos" },
+      { id: "12312", label: "Consultas de mercado (12m)" },
     ],
   },
   {
@@ -137,8 +137,8 @@ const insumoGroups: InsumoGroup[] = [
     title: "Vínculos & Relacionamentos",
     icon: Network,
     items: [
-      { id: "123", label: "Parentes e vínculos" },
-      { id: "123", label: "Empresas relacionadas" },
+      { id: "1233", label: "Parentes e vínculos" },
+      { id: "12332", label: "Empresas relacionadas" },
     ],
   },
 ];
@@ -216,8 +216,8 @@ export default function SpcMaxiPage() {
     try {
       const response = await fetch(
         // "http://credits-core-staging.sa-east-1.elasticbeanstalk.com/api/325-spc-maxi",
-        "http://127.0.0.1:3333/api/325-spc-maxi",
-        // "https://credits-core.onrender.com/api/325-spc-maxi",
+        // "http://127.0.0.1:3333/api/325-spc-maxi",
+        "https://credits-core.onrender.com/api/325-spc-maxi",
         {
           method: "POST",
           headers: {
