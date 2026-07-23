@@ -689,7 +689,8 @@ export default function SpcMaxiResultadoPage() {
             {/* KPIs */}
             <div className="grid grid-cols-3 divide-x divide-gray-100 border border-gray-100 rounded-xl mb-5 overflow-hidden">
               {[
-                { valor: 12, label: "Mês atual" },
+                { valor: 12, label: "Últimos 30 dias" },
+                { valor: 37, label: "Últimos 60 dias" },
                 { valor: 37, label: "Últimos 90 dias" },
                 { valor: 37, label: "Total" },
               ].map(k => (
