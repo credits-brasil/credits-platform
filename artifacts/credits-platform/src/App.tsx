@@ -1,4 +1,5 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { useEffect } from "react";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,11 +11,22 @@ import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
 
+function HomeRedirect() {
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    setLocation("/verticais/credito-risco/spc-maxi");
+  }, [setLocation]);
+
+  return null;
+}
+
 function Router() {
   return (
     <Layout>
       <Switch>
-        <Route path="/" component={HomePage} />
+        <Route path="/" component={HomeRedirect} />
+        <Route path="/home" component={HomePage} />
         <Route path="/verticais/credito-risco/spc-maxi" component={SpcMaxiPage} />
         <Route path="/verticais/credito-risco/spc-maxi/resultado" component={SpcMaxiResultadoPage} />
         <Route component={NotFound} />
