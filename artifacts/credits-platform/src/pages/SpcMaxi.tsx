@@ -210,7 +210,7 @@ export default function SpcMaxiPage() {
 
     try {
       const response = await fetch(
-        "http://credits-core-staging.sa-east-1.elasticbeanstalk.com/api/325-spc-maxi",
+        "https://credits-core-staging.sa-east-1.elasticbeanstalk.com/api/325-spc-maxi",
         // "http://127.0.0.1:3333/api/325-spc-maxi",
         {
           method: "POST",
