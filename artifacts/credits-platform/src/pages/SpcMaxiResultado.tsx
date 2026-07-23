@@ -149,6 +149,12 @@ export default function SpcMaxiResultadoPage() {
     spcData?.protesto?.resumo?.["data-ultima-ocorrencia"],
   ].filter(Boolean) as string[];
 
+  const formatValor = (valor?: string | number) => {
+    const numero = Number(valor ?? 0);
+
+    return `R$ ${numero === 0 ? "0" : numero.toFixed(2)}`;
+  };
+
   const GROUPS = [
     {
       key: "TODOS",
@@ -160,13 +166,13 @@ export default function SpcMaxiResultadoPage() {
         ) +
         Number(spcData?.protesto?.resumo?.["quantidade-total"] ?? 0),
 
-      valor: `R$ ${(
+      valor: formatValor(
         Number(spcData?.spc?.resumo?.["valor-total"] ?? 0) +
-        Number(
-          spcData?.["pendencia-financeira"]?.resumo?.["valor-total"] ?? 0,
-        ) +
-        Number(spcData?.protesto?.resumo?.["valor-total"] ?? 0)
-      ).toFixed(2)}`,
+          Number(
+            spcData?.["pendencia-financeira"]?.resumo?.["valor-total"] ?? 0,
+          ) +
+          Number(spcData?.protesto?.resumo?.["valor-total"] ?? 0),
+      ),
 
       antiga: formatDate(
         antigas.sort(
@@ -183,8 +189,8 @@ export default function SpcMaxiResultadoPage() {
     {
       key: "SPC",
       label: "SPC",
-      count: spcData?.spc?.resumo?.["quantidade-total"],
-      valor: `R$ ${spcData?.spc?.resumo?.["valor-total"]}`,
+      count: Number(spcData?.spc?.resumo?.["quantidade-total"] ?? 0),
+      valor: formatValor(spcData?.spc?.resumo?.["valor-total"]),
       antiga:
         Number(spcData?.spc?.resumo?.["quantidade-total"] ?? 0) <= 1
           ? formatDate(spcData?.spc?.resumo?.["data-ultima-ocorrencia"])
@@ -201,8 +207,12 @@ export default function SpcMaxiResultadoPage() {
     {
       key: "SERASA",
       label: "SERASA",
-      count: spcData?.["pendencia-financeira"]?.resumo?.["quantidade-total"],
-      valor: `R$ ${spcData?.["pendencia-financeira"]?.resumo?.["valor-total"]}`,
+      count: Number(
+        spcData?.["pendencia-financeira"]?.resumo?.["quantidade-total"] ?? 0,
+      ),
+      valor: formatValor(
+        spcData?.["pendencia-financeira"]?.resumo?.["valor-total"],
+      ),
       antiga: formatDate(
         spcData?.["pendencia-financeira"]?.["ocorrencia-mais-antiga-chequenet"],
       ),
@@ -215,8 +225,8 @@ export default function SpcMaxiResultadoPage() {
     {
       key: "PROTESTOS",
       label: "PROTESTOS",
-      count: spcData?.protesto?.resumo?.["quantidade-total"],
-      valor: `R$ ${spcData?.protesto?.resumo?.["valor-total"] ?? 0}`,
+      count: Number(spcData?.protesto?.resumo?.["quantidade-total"] ?? 0),
+      valor: formatValor(spcData?.protesto?.resumo?.["valor-total"]),
       antiga: formatDate(
         spcData?.protesto?.resumo?.["data-primeira-ocorrencia"],
       ),
@@ -227,7 +237,7 @@ export default function SpcMaxiResultadoPage() {
     {
       key: "CCF",
       label: "CCF",
-      count: spcData?.ccf,
+      count: Number(spcData?.ccf ?? 0),
       valor: "–",
       antiga: "-",
       recente: "-",
