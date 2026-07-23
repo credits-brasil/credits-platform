@@ -148,6 +148,7 @@ const DEFAULT_SELECTED = new Set<string>([]);
 export default function SpcMaxiPage() {
   const queryClient = useQueryClient();
 
+  const [loading, setLoading] = useState(false);
   const [docType, setDocType] = useState<DocType>("cpf");
   const [documento, setDocumento] = useState("");
   const [touched, setTouched] = useState(false);
@@ -208,6 +209,10 @@ export default function SpcMaxiPage() {
 
     if (!canSubmit) return;
 
+    if (!canSubmit || loading) return;
+
+    setLoading(true);
+
     try {
       const response = await fetch(
         // "http://credits-core-staging.sa-east-1.elasticbeanstalk.com/api/325-spc-maxi",
@@ -242,6 +247,8 @@ export default function SpcMaxiPage() {
       console.error(error);
 
       alert(error instanceof Error ? error.message : "ERROR NA BUSCA DA API");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -271,6 +278,7 @@ export default function SpcMaxiPage() {
                   <button
                     key={type}
                     type="button"
+                    disabled={loading}
                     onClick={() => handleDocTypeChange(type)}
                     className="rounded-md px-3 py-1.5 text-xs font-semibold transition-all"
                     style={{
@@ -294,6 +302,7 @@ export default function SpcMaxiPage() {
                   placeholder={
                     docType === "cpf" ? "000.000.000-00" : "AB.CDE.FGH/0001-00"
                   }
+                  disabled={loading}
                   className="w-56 rounded-lg border px-3.5 py-2 pr-9 text-sm text-gray-800 placeholder-gray-400 outline-none transition"
                   style={{
                     borderColor: showError
@@ -332,8 +341,17 @@ export default function SpcMaxiPage() {
                   opacity: canSubmit ? 1 : 0.7,
                 }}
               >
-                <Search size={14} />
-                Consultar
+                {loading ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Consultando...
+                  </>
+                ) : (
+                  <>
+                    <Search size={14} />
+                    Consultar
+                  </>
+                )}
               </button>
             </div>
 
