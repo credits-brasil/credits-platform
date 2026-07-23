@@ -410,6 +410,12 @@ export default function SpcMaxiResultadoPage() {
       : []),
   ];
 
+  const situacao = spcData?.consumidor?.cpf
+    ? spcData?.consumidor?.["situacao-cpf"]?.description
+    : spcData?.consumidor?.["situacao-cnpj"]?.description;
+
+  const isRegular = situacao === "REGULAR" || situacao === "ATIVA";
+
   return (
     <div className="w-full">
       <div className="mb-6">
@@ -478,7 +484,9 @@ export default function SpcMaxiResultadoPage() {
                 : `CNPJ: ${spcData?.consumidor?.cnpj}`}
             </span>
             <span className="text-sm font-semibold text-gray-800 truncate">
-              {spcData?.consumidor?.nome}
+              {spcData?.consumidor?.cpf
+                ? spcData?.consumidor?.nome
+                : spcData?.consumidor?.["razao-social"]}
             </span>
           </div>
 
@@ -489,10 +497,14 @@ export default function SpcMaxiResultadoPage() {
           <div className="flex flex-col gap-1.5 flex-1">
             <span
               className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
-              style={{ backgroundColor: "#DCFCE7", color: "#15803D" }}
+              style={{
+                backgroundColor: isRegular ? "#DCFCE7" : "#FEE2E2",
+                color: isRegular ? "#15803D" : "#DC2626",
+              }}
             >
-              {spcData?.consumidor?.["situacao-cpf"]?.description}
+              {situacao}
             </span>
+
             <span className="text-xs text-gray-400 whitespace-nowrap">
               {spcData?.consumidor?.idade} anos · {spcData?.consumidor?.sexo} ·{" "}
               {spcData?.consumidor?.endereco?.cidade}/
