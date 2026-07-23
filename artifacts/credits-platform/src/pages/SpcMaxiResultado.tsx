@@ -152,7 +152,12 @@ export default function SpcMaxiResultadoPage() {
   const formatValor = (valor?: string | number) => {
     const numero = Number(valor ?? 0);
 
-    return `R$ ${numero === 0 ? "0" : numero.toFixed(2)}`;
+    return numero === 0
+      ? "R$ 0"
+      : new Intl.NumberFormat("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }).format(numero);
   };
 
   const GROUPS = [
