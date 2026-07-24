@@ -364,57 +364,6 @@ export default function SpcMaxiPage() {
               </p>
             )}
           </div>
-
-          {/* ── Divider ── */}
-          <div className="w-px bg-gray-200 self-stretch" />
-
-          {/* ── Right: Insumos ── */}
-          <div className="flex-1 min-w-0 basis-1/2">
-            <p className="text-sm font-medium text-gray-700 mb-2">Insumos</p>
-
-            {/* Checkbox row */}
-            <label className="flex items-center gap-2 cursor-pointer select-none mb-3">
-              <input
-                type="checkbox"
-                className="sr-only peer"
-                checked={rememberInsumos}
-                onChange={(e) => setRememberInsumos(e.target.checked)}
-              />
-              <span
-                className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border transition peer-checked:border-transparent"
-                style={{
-                  borderColor: rememberInsumos ? "#243871" : "#d1d5db",
-                  backgroundColor: rememberInsumos ? "#243871" : "white",
-                }}
-              >
-                {rememberInsumos && (
-                  <svg viewBox="0 0 10 8" fill="none" className="w-2.5 h-2.5">
-                    <path
-                      d="M1 4l2.5 2.5L9 1"
-                      stroke="white"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                )}
-              </span>
-              <span className="text-sm text-gray-700">
-                Lembrar Insumos na Próxima Consulta
-              </span>
-            </label>
-
-            {/* Warning */}
-            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5">
-              <AlertTriangle
-                size={13}
-                className="flex-shrink-0 mt-0.5 text-amber-500"
-              />
-              <p className="text-xs text-amber-700 leading-snug">
-                Insumos podem gerar custos adicionais.
-              </p>
-            </div>
-          </div>
         </div>
       </form>
 
