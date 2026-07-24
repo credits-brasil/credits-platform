@@ -1182,7 +1182,7 @@ export default function SpcMaxiResultadoPage() {
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem
+          {/* <AccordionItem
             value="grafia-pessoal-fisica-spc-brasil"
             className="border-gray-100 last:border-b-0"
           >
@@ -1229,7 +1229,7 @@ export default function SpcMaxiResultadoPage() {
                 ))}
               </div>
             </AccordionContent>
-          </AccordionItem>
+          </AccordionItem> */}
 
           {/* Contato e Endereço */}
           <AccordionItem
@@ -1330,7 +1330,7 @@ export default function SpcMaxiResultadoPage() {
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem
+          {/* <AccordionItem
             value="agencia-bancaria"
             className="border-gray-100 last:border-b-0"
           >
@@ -1359,7 +1359,7 @@ export default function SpcMaxiResultadoPage() {
                 ))}
               </div>
             </AccordionContent>
-          </AccordionItem>
+          </AccordionItem> */}
 
           <AccordionItem
             value="dados-adicionais-contato-spc-brasil"
