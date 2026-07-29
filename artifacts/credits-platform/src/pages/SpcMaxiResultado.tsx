@@ -1634,19 +1634,19 @@ export default function SpcMaxiResultadoPage() {
                         key={index}
                         className="border-b border-gray-50 transition-colors hover:bg-gray-50"
                       >
-                        <td className="py-2.5 pr-4 text-gray-600 break-words">
+                        <td className="py-2.5 pr-4 text-sm text-gray-800 break-words">
                           {row.endereco}
                         </td>
 
-                        <td className="py-2.5 pr-4 text-gray-600 break-all">
+                        <td className="py-2.5 pr-4 text-sm text-gray-800">
                           {row.email}
                         </td>
 
-                        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                        <td className="py-2.5 pr-4 text-sm text-gray-800 whitespace-nowrap">
                           {row.telefone}
                         </td>
 
-                        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                        <td className="py-2.5 pr-4 text-sm text-gray-800 whitespace-nowrap">
                           {row.celular}
                         </td>
                       </tr>
