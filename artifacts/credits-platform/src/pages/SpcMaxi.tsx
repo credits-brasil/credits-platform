@@ -256,7 +256,7 @@ export default function SpcMaxiPage() {
     <div className="w-full">
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-gray-800">SPC MAXI</h1>
-        
+
         <p className="mt-1 text-sm text-gray-500">
           Consulta completa de crédito e risco para pessoas físicas. Detalhes a
           definir.
@@ -303,6 +303,7 @@ export default function SpcMaxiPage() {
                   placeholder={
                     docType === "cpf" ? "000.000.000-00" : "AB.CDE.FGH/0001-00"
                   }
+                  autoComplete="on"
                   disabled={loading}
                   className="w-56 rounded-lg border px-3.5 py-2 pr-9 text-sm text-gray-800 placeholder-gray-400 outline-none transition"
                   style={{

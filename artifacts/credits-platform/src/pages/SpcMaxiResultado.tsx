@@ -307,6 +307,8 @@ export default function SpcMaxiResultadoPage() {
     },
   ];
 
+  const shouldShowChart = GROUPS.some((group) => group.count >= 1);
+
   const spcRecords =
     spcData?.spc?.["detalhe-spc"]?.map((item) => ({
       tipo: item["comprador-fiador-avalista"],
@@ -1113,68 +1115,70 @@ export default function SpcMaxiResultadoPage() {
           </button>
         )}
 
-        <div className="mt-8 pt-6 border-t border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-              Variação de Endividamento
-            </p>
-          </div>
+        {shouldShowChart && (
+          <div className="mt-8 pt-6 border-t border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                Variação de Endividamento
+              </p>
+            </div>
 
-          <ResponsiveContainer width="100%" height={220}>
-            <ComposedChart
-              data={chartData}
-              margin={{ top: 4, right: 16, left: 8, bottom: 4 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="#F3F4F6"
-                vertical={false}
-              />
-              <XAxis
-                dataKey="data"
-                tick={{ fontSize: 10, fill: "#9CA3AF" }}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 10, fill: "#9CA3AF" }}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(v: number) =>
-                  `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
-                }
-                width={80}
-              />
-              <Tooltip
-                formatter={(v: number, name: string) => [
-                  `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-                  name === "acumulado" ? "Acumulado" : "Valor",
-                ]}
-                labelStyle={{ fontSize: 11, color: "#374151" }}
-                contentStyle={{
-                  fontSize: 11,
-                  borderRadius: 8,
-                  border: "1px solid #E5E7EB",
-                }}
-                cursor={{ fill: "#F9FAFB" }}
-              />
-              <Bar
-                dataKey="valor"
-                fill="#ED884A"
-                radius={[4, 4, 0, 0]}
-                maxBarSize={18}
-              />
-              <Line
-                type="monotone"
-                dataKey="acumulado"
-                stroke="#243871"
-                strokeWidth={2}
-                dot={{ r: 3, fill: "#243871", strokeWidth: 0 }}
-                activeDot={{ r: 5 }}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <ComposedChart
+                data={chartData}
+                margin={{ top: 4, right: 16, left: 8, bottom: 4 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#F3F4F6"
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="data"
+                  tick={{ fontSize: 10, fill: "#9CA3AF" }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 10, fill: "#9CA3AF" }}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(v: number) =>
+                    `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+                  }
+                  width={80}
+                />
+                <Tooltip
+                  formatter={(v: number, name: string) => [
+                    `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+                    name === "acumulado" ? "Acumulado" : "Valor",
+                  ]}
+                  labelStyle={{ fontSize: 11, color: "#374151" }}
+                  contentStyle={{
+                    fontSize: 11,
+                    borderRadius: 8,
+                    border: "1px solid #E5E7EB",
+                  }}
+                  cursor={{ fill: "#F9FAFB" }}
+                />
+                <Bar
+                  dataKey="valor"
+                  fill="#ED884A"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={18}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="acumulado"
+                  stroke="#243871"
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: "#243871", strokeWidth: 0 }}
+                  activeDot={{ r: 5 }}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
       {alertas.length ? (
@@ -1222,7 +1226,7 @@ export default function SpcMaxiResultadoPage() {
                         <span className="text-sm font-semibold text-gray-800">
                           {a.titulo}
                         </span>
-                        
+
                         <span
                           className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold capitalize whitespace-nowrap"
                           style={{
@@ -1403,14 +1407,21 @@ export default function SpcMaxiResultadoPage() {
                 {[
                   {
                     label: "Telefone principal",
-                    value: formatPhone(spcData?.consumidor?.["telefone-celular"]),
+                    value: formatPhone(
+                      spcData?.consumidor?.["telefone-celular"],
+                    ),
                   },
                   {
                     label: "Telefone secundário",
-                    value: formatPhone(spcData?.consumidor?.["telefone-residencial"]),
+                    value: formatPhone(
+                      spcData?.consumidor?.["telefone-residencial"],
+                    ),
                   },
                   { label: "E-mail", value: spcData?.consumidor?.email },
-                  { label: "CEP", value: formatCEP(spcData?.consumidor?.endereco?.cep) },
+                  {
+                    label: "CEP",
+                    value: formatCEP(spcData?.consumidor?.endereco?.cep),
+                  },
                   {
                     label: "Logradouro",
                     value: `${spcData?.consumidor?.endereco?.logradouro}, ${spcData?.consumidor?.endereco?.numero} — ${spcData?.consumidor?.endereco?.complemento}`,
