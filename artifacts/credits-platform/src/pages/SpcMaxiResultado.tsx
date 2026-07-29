@@ -711,11 +711,9 @@ export default function SpcMaxiResultadoPage() {
             </span>
           </div>
 
-          {/* Divider */}
-          <div className="w-px self-stretch bg-gray-100" />
+          {/* <div className="w-px self-stretch bg-gray-100" /> */}
 
-          {/* Col 3: risco */}
-          <div className="flex flex-col gap-1.5 basis-[44%] flex-shrink-0">
+          {/* <div className="flex flex-col gap-1.5 basis-[44%] flex-shrink-0">
             <span
               className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
               style={{ backgroundColor: "#FEF3C7", color: "#D97706" }}
@@ -725,7 +723,7 @@ export default function SpcMaxiResultadoPage() {
             <span className="text-xs text-gray-400">
               Perfil com histórico de atrasos pontuais, sem restrições ativas.
             </span>
-          </div>
+          </div> */}
         </div>
       </div>
 
