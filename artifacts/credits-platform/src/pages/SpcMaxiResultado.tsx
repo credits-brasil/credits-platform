@@ -115,7 +115,6 @@ export default function SpcMaxiResultadoPage() {
   const [expanded, setExpanded] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
-  const [singleDate, setSingleDate] = useState(false);
   const [consultasExpanded, setConsultasExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -353,6 +352,7 @@ export default function SpcMaxiResultadoPage() {
     spcData?.protesto?.["detalhe-protesto"]?.map((item) => ({
       tipo: "",
       inclusao: new Date(item["data-protesto"]).toLocaleDateString("pt-BR"),
+      vencimento: new Date(item["data-protesto"]).toLocaleDateString("pt-BR"),
       origem: "Protesto",
       data: new Date(item["data-protesto"]).toLocaleDateString("pt-BR"),
       cartorio: item.cartorio,
@@ -456,6 +456,8 @@ export default function SpcMaxiResultadoPage() {
       };
     });
   })();
+
+  console.log(chartData, "chartData");
 
   const activeGroupData = GROUPS.find((g) => g.key === activeGroup);
 
@@ -569,6 +571,14 @@ export default function SpcMaxiResultadoPage() {
         ),
     );
   });
+
+  console.log({
+  activeGroup,
+  total: ALL_RECORDS.length,
+  spc: spcRecords.length,
+  serasa: serasaRecords.length,
+  protestos: protestoRecords.length,
+});
 
   return (
     <div className="w-full">
