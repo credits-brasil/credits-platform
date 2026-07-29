@@ -401,16 +401,59 @@ export default function SpcMaxiResultadoPage() {
   const visible = expanded ? filtered : filtered.slice(0, PAGE);
   const remaining = filtered.length - PAGE;
 
+  // const chartData = (() => {
+  //   const rows = [...ALL_RECORDS]
+  //     .filter((r) => r.vencimento !== "–" && r.valor !== "–")
+  //     .sort((a, b) => parseBRDate(a.vencimento) - parseBRDate(b.vencimento))
+  //     .map((r) => ({ data: r.vencimento, valor: parseBRValue(r.valor) }));
+  //   const capped = singleDate ? rows.slice(0, 1) : rows;
+  //   let acc = 0;
+  //   return capped.map((r) => {
+  //     acc += r.valor;
+  //     return { ...r, acumulado: acc };
+  //   });
+  // })();
+
   const chartData = (() => {
-    const rows = [...ALL_RECORDS]
-      .filter((r) => r.vencimento !== "–" && r.valor !== "–")
-      .sort((a, b) => parseBRDate(a.vencimento) - parseBRDate(b.vencimento))
-      .map((r) => ({ data: r.vencimento, valor: parseBRValue(r.valor) }));
-    const capped = singleDate ? rows.slice(0, 1) : rows;
-    let acc = 0;
-    return capped.map((r) => {
-      acc += r.valor;
-      return { ...r, acumulado: acc };
+    const records =
+      activeGroup === "TODOS"
+        ? ALL_RECORDS
+        : ALL_RECORDS.filter((r) => r.grupo === activeGroup);
+
+    const grouped = records
+      .filter((r) => r.vencimento && r.vencimento !== "–" && r.valor !== "–")
+      .reduce(
+        (acc, item) => {
+          const data = item.vencimento;
+          const valor = parseBRValue(item.valor);
+
+          if (!acc[data]) {
+            acc[data] = {
+              data,
+              valor: 0,
+            };
+          }
+
+          acc[data].valor += valor;
+
+          return acc;
+        },
+        {} as Record<string, { data: string; valor: number }>,
+      );
+
+    const rows = Object.values(grouped).sort(
+      (a, b) => parseBRDate(a.data) - parseBRDate(b.data),
+    );
+
+    let acumulado = 0;
+
+    return rows.map((item) => {
+      acumulado += item.valor;
+
+      return {
+        ...item,
+        acumulado,
+      };
     });
   })();
 
@@ -1018,6 +1061,7 @@ export default function SpcMaxiResultadoPage() {
               ))}
             </tr>
           </thead>
+
           <tbody>
             {visible.map((r, i) => (
               <tr
