@@ -12,6 +12,8 @@ import {
   BarChart2,
   AlertTriangle,
   ClipboardList,
+  Copy,
+  Check,
 } from "lucide-react";
 import {
   Accordion,
@@ -115,12 +117,68 @@ export default function SpcMaxiResultadoPage() {
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [singleDate, setSingleDate] = useState(false);
   const [consultasExpanded, setConsultasExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const copyToClipboard = async (value: string, field: string) => {
+    if (!value) return;
+
+    await navigator.clipboard.writeText(value);
+
+    setCopied(true);
+    setCopiedField(field);
+
+    setTimeout(() => setCopiedField(null), 1500);
+  };
 
   const formatDate = (date?: string) => {
     if (!date) return "-";
 
     const [year, month, day] = date.split("T")[0].split("-");
     return `${day}/${month}/${year}`;
+  };
+
+  const formatCPF = (cpf?: string) => {
+    if (!cpf) return "-";
+
+    const value = cpf.replace(/\D/g, "");
+
+    return value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  };
+
+  const formatCNPJ = (cnpj?: string) => {
+    if (!cnpj) return "-";
+
+    const value = cnpj.replace(/\D/g, "");
+
+    return value.replace(
+      /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
+      "$1.$2.$3/$4-$5",
+    );
+  };
+
+  const formatCEP = (cep?: string) => {
+    if (!cep) return "-";
+
+    const value = cep.replace(/\D/g, "");
+
+    return value.replace(/(\d{5})(\d{3})/, "$1-$2");
+  };
+
+  const formatPhone = (phone?: string) => {
+    if (!phone) return "-";
+
+    const value = phone.replace(/\D/g, "");
+
+    if (value.length === 11) {
+      return value.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+    }
+
+    if (value.length === 10) {
+      return value.replace(/(\d{2})(\d{4})(\d{4})/, "($1) $2-$3");
+    }
+
+    return phone;
   };
 
   const parseDate = (date?: string) => {
@@ -431,6 +489,42 @@ export default function SpcMaxiResultadoPage() {
 
   const isRegular = situacao === "REGULAR" || situacao === "ATIVA";
 
+  const detalhes =
+    spcData?.["dados-adicionais-de-contato"]?.[
+      "detalhe-dados-adicionais-de-contato"
+    ] ?? [];
+
+  const body = detalhes.flatMap((item: any) => {
+    if (!item || typeof item !== "object") return [];
+
+    const enderecos = item.enderecosPF ?? [];
+    const emails = item.emails ?? [];
+    const telefones = item.telefones ?? [];
+    const celulares = item.celulares ?? [];
+
+    const maxLength = Math.max(
+      enderecos.length,
+      emails.length,
+      telefones.length,
+      celulares.length,
+    );
+
+    return Array.from({ length: maxLength }, (_, index) => ({
+      endereco: enderecos[index] ?? "-",
+      email: emails[index] ?? "-",
+      telefone: telefones[index] ?? "-",
+      celular: celulares[index] ?? "-",
+    })).filter(
+      (row) =>
+        !(
+          row.endereco === "-" &&
+          row.email === "-" &&
+          row.telefone === "-" &&
+          row.celular === "-"
+        ),
+    );
+  });
+
   return (
     <div className="w-full">
       <div className="mb-6">
@@ -465,6 +559,7 @@ export default function SpcMaxiResultadoPage() {
           >
             <Printer size={14} />
           </button>
+
           <button
             type="button"
             className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-colors"
@@ -477,13 +572,11 @@ export default function SpcMaxiResultadoPage() {
         </div>
       </div>
 
-      {/* Identificação do Consumidor */}
       <div
         id="section-identificacao"
         className="bg-white rounded-xl border border-gray-200 p-5 mb-4"
       >
         <div className="flex items-center gap-3">
-          {/* Icon */}
           <div
             className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl"
             style={{ backgroundColor: "#EAECF0" }}
@@ -493,16 +586,52 @@ export default function SpcMaxiResultadoPage() {
 
           {/* Col 1: documento + nome */}
           <div className="flex flex-col gap-0.5 min-w-0 basis-[25%] flex-shrink-0">
-            <span className="text-xs text-gray-400">
-              {spcData?.consumidor?.cpf
-                ? `CPF: ${spcData?.consumidor?.cpf}`
-                : `CNPJ: ${spcData?.consumidor?.cnpj}`}
-            </span>
-            <span className="text-sm font-semibold text-gray-800 truncate">
-              {spcData?.consumidor?.cpf
-                ? spcData?.consumidor?.nome
-                : spcData?.consumidor?.["razao-social"]}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400">
+                {spcData?.consumidor?.cpf
+                  ? `CPF: ${formatCPF(spcData?.consumidor?.cpf)}`
+                  : `CNPJ: ${formatCNPJ(spcData?.consumidor?.cnpj)}`}
+              </span>
+
+              <button
+                type="button"
+                onClick={() =>
+                  copyToClipboard(
+                    spcData?.consumidor?.cpf ?? spcData?.consumidor?.cnpj,
+                  )
+                }
+                className="text-gray-400 hover:text-[#243871] hover:cursor-pointer"
+                title={spcData?.consumidor?.cpf ? "Copiar CPF" : "Copiar CNPJ"}
+              >
+                {copied ? <Check size={14} /> : <Copy size={14} />}
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-gray-800 truncate">
+                {spcData?.consumidor?.cpf
+                  ? spcData?.consumidor?.nome
+                  : spcData?.consumidor?.["razao-social"]}
+              </span>
+
+              <button
+                type="button"
+                onClick={() =>
+                  copyToClipboard(
+                    spcData?.consumidor?.nome ??
+                      spcData?.consumidor?.["razao-social"],
+                  )
+                }
+                className="text-gray-400 hover:text-[#243871] hover:cursor-pointer"
+                title={
+                  spcData?.consumidor?.cpf
+                    ? "Copiar Nome"
+                    : "Copiar Razão Social"
+                }
+              >
+                {copied ? <Check size={14} /> : <Copy size={14} />}
+              </button>
+            </div>
           </div>
 
           {/* Divider */}
@@ -1093,6 +1222,7 @@ export default function SpcMaxiResultadoPage() {
                         <span className="text-sm font-semibold text-gray-800">
                           {a.titulo}
                         </span>
+                        
                         <span
                           className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold capitalize whitespace-nowrap"
                           style={{
@@ -1144,7 +1274,7 @@ export default function SpcMaxiResultadoPage() {
                     label: "Nome completo",
                     value: spcData?.consumidor?.nome,
                   },
-                  { label: "CPF", value: spcData?.consumidor?.cpf },
+                  { label: "CPF", value: formatCPF(spcData?.consumidor?.cpf) },
                   {
                     label: "Data de nascimento",
                     value: formatDate(spcData?.consumidor?.["data-nascimento"]),
@@ -1175,7 +1305,35 @@ export default function SpcMaxiResultadoPage() {
                     <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
                       {f.label}
                     </p>
-                    <p className="text-sm text-gray-800">{f.value}</p>
+
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-gray-800">{f.value}</p>
+
+                      {(f.label === "Nome completo" || f.label === "CPF") && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            copyToClipboard(String(f.value ?? ""), f.label)
+                          }
+                          className="text-gray-400 hover:text-[#243871] hover:cursor-pointer transition-colors"
+                          title={
+                            f.label === "Nome completo"
+                              ? spcData?.consumidor?.cpf
+                                ? "Copiar Nome completo"
+                                : "Copiar Razão Social"
+                              : spcData?.consumidor?.cpf
+                                ? "Copiar CPF"
+                                : "Copiar CNPJ"
+                          }
+                        >
+                          {copiedField === f.label ? (
+                            <Check size={14} />
+                          ) : (
+                            <Copy size={14} />
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1239,19 +1397,20 @@ export default function SpcMaxiResultadoPage() {
             <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
               Contato e Endereço
             </AccordionTrigger>
+
             <AccordionContent>
               <div className="grid grid-cols-3 gap-x-8 gap-y-4 pt-1 pb-2">
                 {[
                   {
                     label: "Telefone principal",
-                    value: spcData?.consumidor?.["telefone-celular"],
+                    value: formatPhone(spcData?.consumidor?.["telefone-celular"]),
                   },
                   {
                     label: "Telefone secundário",
-                    value: spcData?.consumidor?.["telefone-residencial"],
+                    value: formatPhone(spcData?.consumidor?.["telefone-residencial"]),
                   },
                   { label: "E-mail", value: spcData?.consumidor?.email },
-                  { label: "CEP", value: spcData?.consumidor?.endereco?.cep },
+                  { label: "CEP", value: formatCEP(spcData?.consumidor?.endereco?.cep) },
                   {
                     label: "Logradouro",
                     value: `${spcData?.consumidor?.endereco?.logradouro}, ${spcData?.consumidor?.endereco?.numero} — ${spcData?.consumidor?.endereco?.complemento}`,
@@ -1274,14 +1433,41 @@ export default function SpcMaxiResultadoPage() {
                     <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
                       {f.label}
                     </p>
-                    <p className="text-sm text-gray-800">{f.value}</p>
+
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-gray-800">{f.value}</p>
+
+                      {[
+                        "Telefone principal",
+                        "Telefone secundário",
+                        "E-mail",
+                        "CEP",
+                        "Logradouro",
+                      ].includes(f.label) &&
+                        f.value && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              copyToClipboard(String(f.value), f.label)
+                            }
+                            className="text-gray-400 hover:text-[#243871] transition-colors hover:cursor-pointer"
+                            title={`Copiar ${f.label}`}
+                          >
+                            {copiedField === f.label ? (
+                              <Check size={14} />
+                            ) : (
+                              <Copy size={14} />
+                            )}
+                          </button>
+                        )}
+                    </div>
                   </div>
                 ))}
               </div>
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem
+          {/* <AccordionItem
             value="ultimos-enderecos-informados-spc-brasil"
             className="border-gray-100 last:border-b-0"
           >
@@ -1328,7 +1514,7 @@ export default function SpcMaxiResultadoPage() {
                 ))}
               </div>
             </AccordionContent>
-          </AccordionItem>
+          </AccordionItem> */}
 
           {/* <AccordionItem
             value="agencia-bancaria"
@@ -1368,44 +1554,65 @@ export default function SpcMaxiResultadoPage() {
             <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
               Dados Adicionais de Contato - SPC Brasil
             </AccordionTrigger>
+
             <AccordionContent>
-              <div className="grid grid-cols-3 gap-x-8 gap-y-4 pt-1 pb-2">
-                {[
-                  {
-                    label: "Telefone principal",
-                    value: spcData?.consumidor?.["telefone-celular"],
-                  },
-                  {
-                    label: "Telefone secundário",
-                    value: spcData?.consumidor?.["telefone-residencial"],
-                  },
-                  { label: "E-mail", value: spcData?.consumidor?.email },
-                  { label: "CEP", value: spcData?.consumidor?.endereco?.cep },
-                  {
-                    label: "Logradouro",
-                    value: `${spcData?.consumidor?.endereco?.logradouro}, ${spcData?.consumidor?.endereco?.numero} — ${spcData?.consumidor?.endereco?.complemento}`,
-                  },
-                  {
-                    label: "Bairro",
-                    value: spcData?.consumidor?.endereco?.bairro,
-                  },
-                  {
-                    label: "Cidade",
-                    value: spcData?.consumidor?.endereco?.cidade,
-                  },
-                  {
-                    label: "Estado",
-                    value: spcData?.consumidor?.endereco?.estado,
-                  },
-                  { label: "País", value: "Brasil" },
-                ].map((f) => (
-                  <div key={f.label}>
-                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
-                      {f.label}
-                    </p>
-                    <p className="text-sm text-gray-800">{f.value}</p>
-                  </div>
-                ))}
+              <div className="mt-5 border-t border-gray-100 pt-4">
+                <table className="w-full text-xs table-fixed">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      {["Endereço", "Email", "Tel. fixo", "Tel. Celular"].map(
+                        (h) => (
+                          <th
+                            key={h}
+                            className="text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide pb-2 pr-4 last:pr-0"
+                          >
+                            {h}
+                          </th>
+                        ),
+                      )}
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {body.map((row, index) => (
+                      <tr
+                        key={index}
+                        className="border-b border-gray-50 transition-colors hover:bg-gray-50"
+                      >
+                        <td className="py-2.5 pr-4 text-gray-600 break-words">
+                          {row.endereco}
+                        </td>
+
+                        <td className="py-2.5 pr-4 text-gray-600 break-all">
+                          {row.email}
+                        </td>
+
+                        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                          {row.telefone}
+                        </td>
+
+                        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                          {row.celular}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                <div className="flex justify-end mt-3">
+                  <button
+                    type="button"
+                    onClick={() => setConsultasExpanded((v) => !v)}
+                    className="flex items-center gap-1 text-xs font-medium transition-colors"
+                    style={{ color: "#243871" }}
+                  >
+                    {consultasExpanded ? "Recolher" : "Expandir"}
+
+                    <span className="text-[10px]">
+                      {consultasExpanded ? "▲" : "▼"}
+                    </span>
+                  </button>
+                </div>
               </div>
             </AccordionContent>
           </AccordionItem>

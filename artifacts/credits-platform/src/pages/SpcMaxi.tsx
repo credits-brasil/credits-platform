@@ -216,8 +216,8 @@ export default function SpcMaxiPage() {
     try {
       const response = await fetch(
         // "http://credits-core-staging.sa-east-1.elasticbeanstalk.com/api/325-spc-maxi",
-        // "http://127.0.0.1:3333/api/325-spc-maxi",
-        "https://credits-core.onrender.com/api/325-spc-maxi",
+        "http://127.0.0.1:3333/api/325-spc-maxi",
+        // "https://credits-core.onrender.com/api/325-spc-maxi",
         {
           method: "POST",
           headers: {
@@ -256,6 +256,7 @@ export default function SpcMaxiPage() {
     <div className="w-full">
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-gray-800">SPC MAXI</h1>
+        
         <p className="mt-1 text-sm text-gray-500">
           Consulta completa de crédito e risco para pessoas físicas. Detalhes a
           definir.
