@@ -1599,46 +1599,63 @@ export default function SpcMaxiResultadoPage() {
                             : "-",
                         },
                       ]
-                    : []),
-                ].map((f) => (
-                  <div key={f.label}>
-                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
-                      {f.label}
-                    </p>
+                    : [
+                        {
+                          label: "CNAI",
+                          value:
+                            spcData?.["atividade-empresa"]?.[
+                              "detalhe-atividade-empresa"
+                            ]?.["ramo-atividade"]?.code,
+                        },
+                        {
+                          label: "Descrição do CNAI",
+                          value:
+                            spcData?.["atividade-empresa"]?.[
+                              "detalhe-atividade-empresa"
+                            ]?.["ramo-atividade"]?.description,
+                        },
+                      ]),
+                ].map((f) => {
+                  const COPYABLE_FIELDS = new Set([
+                    "Nome completo",
+                    "Razão Social",
+                    "CPF",
+                    "CNPJ",
+                    "CNAI",
+                    "Descrição do CNAI",
+                  ]);
+                  return (
+                    <div key={f.label}>
+                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
+                        {f.label}
+                      </p>
 
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm text-gray-800">{f.value}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-gray-800">
+                          {f.value || "–"}
+                        </p>
 
-                      {(f.label === "Nome completo" ||
-                        f.label === "Razão Social" ||
-                        f.label === "CPF" ||
-                        f.label === "CNPJ") && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            copyToClipboard(String(f.value ?? ""), f.label)
-                          }
-                          className="text-gray-400 hover:text-[#243871] hover:cursor-pointer transition-colors"
-                          title={
-                            f.label === "Nome completo"
-                              ? spcData?.consumidor?.cpf
-                                ? "Copiar Nome completo"
-                                : "Copiar Razão Social"
-                              : spcData?.consumidor?.cpf
-                                ? "Copiar CPF"
-                                : "Copiar CNPJ"
-                          }
-                        >
-                          {copiedField === f.label ? (
-                            <Check size={14} />
-                          ) : (
-                            <Copy size={14} />
-                          )}
-                        </button>
-                      )}
+                        {COPYABLE_FIELDS.has(f.label) && f.value && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              copyToClipboard(String(f.value), f.label)
+                            }
+                            className="shrink-0 text-gray-400 transition-colors hover:cursor-pointer hover:text-[#243871]"
+                            title={`Copiar ${f.label}`}
+                            aria-label={`Copiar ${f.label}`}
+                          >
+                            {copiedField === f.label ? (
+                              <Check size={14} aria-hidden="true" />
+                            ) : (
+                              <Copy size={14} aria-hidden="true" />
+                            )}
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -1913,7 +1930,7 @@ export default function SpcMaxiResultadoPage() {
                   </tbody>
                 </table>
 
-                <div className="flex justify-end mt-3">
+                {/* <div className="flex justify-end mt-3">
                   <button
                     type="button"
                     onClick={() => setConsultasExpanded((v) => !v)}
@@ -1926,10 +1943,78 @@ export default function SpcMaxiResultadoPage() {
                       {consultasExpanded ? "▲" : "▼"}
                     </span>
                   </button>
-                </div>
+                </div> */}
               </div>
             </AccordionContent>
           </AccordionItem>
+
+          {spcData?.consumidor?.cpf ? (
+            <></>
+          ) : (
+            <AccordionItem
+              value="atividades-economicas-secundarias-spc-brasil"
+              className="border-gray-100 last:border-b-0"
+            >
+              <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
+                Atividades Econômicas Secundarias - SPC Brasil
+              </AccordionTrigger>
+
+              <AccordionContent>
+                <div className="mt-5 border-t border-gray-100 pt-4">
+                  <table className="w-full text-xs table-fixed">
+                    <thead>
+                      <tr className="border-b border-gray-100">
+                        {["CNAI", "DESCRIÇÃO CNAI"].map((h) => (
+                          <th
+                            key={h}
+                            className="text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide pb-2 pr-4 last:pr-0"
+                          >
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {spcData?.["atividade-empresa"]?.[
+                        "detalhe-atividade-empresa"
+                      ]?.["atividades-economicas-secundarias"].map(
+                        (row, index) => (
+                          <tr
+                            key={index}
+                            className="border-b border-gray-50 transition-colors hover:bg-gray-50"
+                          >
+                            <td className="py-2.5 pr-4 text-sm text-gray-800 break-words">
+                              {row.code}
+                            </td>
+
+                            <td className="py-2.5 pr-4 text-sm text-gray-800">
+                              {row.description}
+                            </td>
+                          </tr>
+                        ),
+                      )}
+                    </tbody>
+                  </table>
+
+                  {/* <div className="flex justify-end mt-3">
+                    <button
+                      type="button"
+                      onClick={() => setConsultasExpanded((v) => !v)}
+                      className="flex items-center gap-1 text-xs font-medium transition-colors"
+                      style={{ color: "#243871" }}
+                    >
+                      {consultasExpanded ? "Recolher" : "Expandir"}
+
+                      <span className="text-[10px]">
+                        {consultasExpanded ? "▲" : "▼"}
+                      </span>
+                    </button>
+                  </div> */}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
         </Accordion>
       </div>
 
