@@ -137,6 +137,29 @@ export default function SpcMaxiResultadoPage() {
     return `${day}/${month}/${year}`;
   };
 
+  const getCompanyAge = (foundationDate?: string): number | string => {
+    if (!foundationDate) return "-";
+
+    const date = new Date(foundationDate);
+
+    if (Number.isNaN(date.getTime())) return "-";
+
+    const today = new Date();
+
+    let years = today.getFullYear() - date.getFullYear();
+
+    const hasNotHadBirthdayThisYear =
+      today.getMonth() < date.getMonth() ||
+      (today.getMonth() === date.getMonth() &&
+        today.getDate() < date.getDate());
+
+    if (hasNotHadBirthdayThisYear) {
+      years--;
+    }
+
+    return years;
+  };
+
   const formatCPF = (cpf?: string) => {
     if (!cpf) return "-";
 
@@ -159,7 +182,7 @@ export default function SpcMaxiResultadoPage() {
   const formatCEP = (cep?: string) => {
     if (!cep) return "-";
 
-    const value = cep.replace(/\D/g, "");
+    const value = cep.replace(/\D/g, "").padStart(8, "0");
 
     return value.replace(/(\d{5})(\d{3})/, "$1-$2");
   };
@@ -217,37 +240,129 @@ export default function SpcMaxiResultadoPage() {
         }).format(numero);
   };
 
+  const detalhesSpc = spcData?.spc?.["detalhe-spc"] ?? [];
+
+  const detalhesPendenciaFinanceira =
+    spcData?.["pendencia-financeira"]?.["detalhe-pendencia-financeira"] ?? [];
+
+  const detalhesProtesto = spcData?.protesto?.["detalhe-protesto"] ?? [];
+
+  /**
+   * Padroniza o contrato para evitar diferenças causadas
+   * por espaços, letras minúsculas etc.
+   */
+  const normalizeContrato = (contrato?: string) =>
+    String(contrato ?? "")
+      .trim()
+      .toUpperCase();
+
+  /**
+   * Todos os contratos que já existem no SPC.
+   * O SPC tem prioridade sobre pendência financeira.
+   */
+  const contratosSpc = new Set(
+    detalhesSpc.map((item) => normalizeContrato(item.contrato)).filter(Boolean),
+  );
+
+  /**
+   * Para o card TODOS, remove da pendência financeira
+   * os registros cujo contrato já esteja presente no SPC.
+   */
+  const pendenciasSemDuplicidade = detalhesPendenciaFinanceira.filter(
+    (item) => {
+      const contrato = normalizeContrato(item.contrato);
+
+      // Caso não tenha contrato, mantém o registro.
+      if (!contrato) return true;
+
+      return !contratosSpc.has(contrato);
+    },
+  );
+
+  /**
+   * Registros usados somente para calcular o card TODOS.
+   */
+  const registrosCardTodos = [
+    ...detalhesSpc.map((item) => ({
+      valor: Number(item.valor ?? 0),
+      data: item["data-inclusao"],
+    })),
+
+    ...pendenciasSemDuplicidade.map((item) => ({
+      valor: Number(item["valor-pendencia"] ?? 0),
+      data: item["data-ocorrencia"],
+    })),
+
+    ...detalhesProtesto.map((item) => ({
+      valor: Number(item.valor ?? 0),
+      data: item["data-protesto"],
+    })),
+  ];
+
+  const totalCountCardTodos = registrosCardTodos.length;
+
+  const totalValorCardTodos = registrosCardTodos.reduce(
+    (total, item) => total + item.valor,
+    0,
+  );
+
+  const datasCardTodos = registrosCardTodos
+    .map((item) => item.data)
+    .filter(Boolean) as string[];
+
+  const dataMaisAntigaCardTodos =
+    datasCardTodos.length > 0
+      ? [...datasCardTodos].sort(
+          (a, b) => new Date(a).getTime() - new Date(b).getTime(),
+        )[0]
+      : undefined;
+
+  const dataMaisRecenteCardTodos =
+    datasCardTodos.length > 0
+      ? [...datasCardTodos].sort(
+          (a, b) => new Date(b).getTime() - new Date(a).getTime(),
+        )[0]
+      : undefined;
+
   const GROUPS = [
     {
       key: "TODOS",
       label: "TODOS",
-      count:
-        Number(spcData?.spc?.resumo?.["quantidade-total"] ?? 0) +
-        Number(
-          spcData?.["pendencia-financeira"]?.resumo?.["quantidade-total"] ?? 0,
-        ) +
-        Number(spcData?.protesto?.resumo?.["quantidade-total"] ?? 0),
-
-      valor: formatValor(
-        Number(spcData?.spc?.resumo?.["valor-total"] ?? 0) +
-          Number(
-            spcData?.["pendencia-financeira"]?.resumo?.["valor-total"] ?? 0,
-          ) +
-          Number(spcData?.protesto?.resumo?.["valor-total"] ?? 0),
-      ),
-
-      antiga: formatDate(
-        antigas.sort(
-          (a, b) => parseDate(a)!.getTime() - parseDate(b)!.getTime(),
-        )[0],
-      ),
-
-      recente: formatDate(
-        recentes.sort(
-          (a, b) => parseDate(b)!.getTime() - parseDate(a)!.getTime(),
-        )[0],
-      ),
+      count: totalCountCardTodos,
+      valor: formatValor(totalValorCardTodos),
+      antiga: formatDate(dataMaisAntigaCardTodos),
+      recente: formatDate(dataMaisRecenteCardTodos),
     },
+    // {
+    //   key: "TODOS",
+    //   label: "TODOS",
+    //   count:
+    //     Number(spcData?.spc?.resumo?.["quantidade-total"] ?? 0) +
+    //     Number(
+    //       spcData?.["pendencia-financeira"]?.resumo?.["quantidade-total"] ?? 0,
+    //     ) +
+    //     Number(spcData?.protesto?.resumo?.["quantidade-total"] ?? 0),
+
+    //   valor: formatValor(
+    //     Number(spcData?.spc?.resumo?.["valor-total"] ?? 0) +
+    //       Number(
+    //         spcData?.["pendencia-financeira"]?.resumo?.["valor-total"] ?? 0,
+    //       ) +
+    //       Number(spcData?.protesto?.resumo?.["valor-total"] ?? 0),
+    //   ),
+
+    //   antiga: formatDate(
+    //     antigas.sort(
+    //       (a, b) => parseDate(a)!.getTime() - parseDate(b)!.getTime(),
+    //     )[0],
+    //   ),
+
+    //   recente: formatDate(
+    //     recentes.sort(
+    //       (a, b) => parseDate(b)!.getTime() - parseDate(a)!.getTime(),
+    //     )[0],
+    //   ),
+    // },
     {
       key: "SPC",
       label: "SPC",
@@ -544,7 +659,9 @@ export default function SpcMaxiResultadoPage() {
   const body = detalhes.flatMap((item: any) => {
     if (!item || typeof item !== "object") return [];
 
-    const enderecos = item.enderecosPF ?? [];
+    const enderecos = spcData?.consumidor?.cpf
+      ? (item.enderecosPF ?? [])
+      : (item.enderecosPJ ?? []);
     const emails = item.emails ?? [];
     const telefones = item.telefones ?? [];
     const celulares = item.celulares ?? [];
@@ -564,21 +681,47 @@ export default function SpcMaxiResultadoPage() {
     })).filter(
       (row) =>
         !(
-          row.endereco === "-" &&
-          row.email === "-" &&
-          row.telefone === "-" &&
-          row.celular === "-"
+          (row.endereco === "-" || row.endereco === " ") &&
+          (row.email === "-" || row.email === " ") &&
+          (row.telefone === "-" || row.telefone === " ") &&
+          (row.celular === "-" || row.celular === " ")
         ),
     );
   });
 
-  console.log({
-  activeGroup,
-  total: ALL_RECORDS.length,
-  spc: spcRecords.length,
-  serasa: serasaRecords.length,
-  protestos: protestoRecords.length,
-});
+  const resumoTabela = (() => {
+    if (!base.length) {
+      return {
+        count: 0,
+        antiga: "-",
+        recente: "-",
+      };
+    }
+
+    const datas = base
+      .map((item) => item.vencimento || item.inclusao || item.data)
+      .filter(
+        (data): data is string => Boolean(data) && data !== "-" && data !== "–",
+      );
+
+    if (!datas.length) {
+      return {
+        count: base.length,
+        antiga: "-",
+        recente: "-",
+      };
+    }
+
+    const datasOrdenadas = [...datas].sort(
+      (a, b) => parseBRDate(a) - parseBRDate(b),
+    );
+
+    return {
+      count: base.length,
+      antiga: datasOrdenadas[0],
+      recente: datasOrdenadas[datasOrdenadas.length - 1],
+    };
+  })();
 
   return (
     <div className="w-full">
@@ -704,11 +847,19 @@ export default function SpcMaxiResultadoPage() {
               {situacao}
             </span>
 
-            <span className="text-xs text-gray-400 whitespace-nowrap">
-              {spcData?.consumidor?.idade} anos · {spcData?.consumidor?.sexo} ·{" "}
-              {spcData?.consumidor?.endereco?.cidade}/
-              {spcData?.consumidor?.endereco?.estado}
-            </span>
+            {spcData?.consumidor?.cpf ? (
+              <span className="text-xs text-gray-400 whitespace-nowrap">
+                {spcData?.consumidor?.idade} anos · {spcData?.consumidor?.sexo}{" "}
+                · {spcData?.consumidor?.endereco?.cidade}/
+                {spcData?.consumidor?.endereco?.estado}
+              </span>
+            ) : (
+              <span className="text-xs text-gray-400 whitespace-nowrap">
+                {getCompanyAge(spcData?.consumidor?.["data-fundacao"])} anos ·{" "}
+                {spcData?.consumidor?.endereco?.cidade}/
+                {spcData?.consumidor?.endereco?.estado}
+              </span>
+            )}
           </div>
 
           {/* <div className="w-px self-stretch bg-gray-100" /> */}
@@ -978,15 +1129,16 @@ export default function SpcMaxiResultadoPage() {
           <span>
             Total:{" "}
             <span className="font-semibold text-gray-800">
-              {activeGroupData?.count ?? "0"} registros
+              {resumoTabela.count} registros
             </span>
           </span>
+
           <span className="text-gray-300">|</span>
 
           <span>
             Mais antiga:{" "}
             <span className="font-semibold text-gray-700">
-              {activeGroupData?.antiga ?? "-"}
+              {resumoTabela.antiga}
             </span>
           </span>
 
@@ -995,8 +1147,7 @@ export default function SpcMaxiResultadoPage() {
           <span>
             Mais recente:{" "}
             <span className="font-semibold text-gray-700">
-              {" "}
-              {activeGroupData?.recente ?? "-"}
+              {resumoTabela.recente}
             </span>
           </span>
         </div>
@@ -1175,7 +1326,76 @@ export default function SpcMaxiResultadoPage() {
               </p>
             </div>
 
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={260}>
+              <ComposedChart
+                data={chartData}
+                margin={{ top: 4, right: 16, left: 8, bottom: 55 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#F3F4F6"
+                  vertical={false}
+                />
+
+                <XAxis
+                  dataKey="data"
+                  interval={0}
+                  angle={-35}
+                  textAnchor="end"
+                  height={65}
+                  tickMargin={8}
+                  tick={{ fontSize: 10, fill: "#9CA3AF" }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+
+                <YAxis
+                  tick={{ fontSize: 10, fill: "#9CA3AF" }}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(v: number) =>
+                    `R$ ${v.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    })}`
+                  }
+                  width={80}
+                />
+
+                <Tooltip
+                  formatter={(v: number, name: string) => [
+                    `R$ ${v.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                    })}`,
+                    name === "acumulado" ? "Acumulado" : "Valor",
+                  ]}
+                  labelStyle={{ fontSize: 11, color: "#374151" }}
+                  contentStyle={{
+                    fontSize: 11,
+                    borderRadius: 8,
+                    border: "1px solid #E5E7EB",
+                  }}
+                  cursor={{ fill: "#F9FAFB" }}
+                />
+
+                <Bar
+                  dataKey="valor"
+                  fill="#ED884A"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={18}
+                />
+
+                <Line
+                  type="monotone"
+                  dataKey="acumulado"
+                  stroke="#243871"
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: "#243871", strokeWidth: 0 }}
+                  activeDot={{ r: 5 }}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+            {/* <ResponsiveContainer width="100%" height={220}>
               <ComposedChart
                 data={chartData}
                 margin={{ top: 4, right: 16, left: 8, bottom: 4 }}
@@ -1185,12 +1405,14 @@ export default function SpcMaxiResultadoPage() {
                   stroke="#F3F4F6"
                   vertical={false}
                 />
+                
                 <XAxis
                   dataKey="data"
                   tick={{ fontSize: 10, fill: "#9CA3AF" }}
                   tickLine={false}
                   axisLine={false}
                 />
+
                 <YAxis
                   tick={{ fontSize: 10, fill: "#9CA3AF" }}
                   tickLine={false}
@@ -1200,6 +1422,7 @@ export default function SpcMaxiResultadoPage() {
                   }
                   width={80}
                 />
+
                 <Tooltip
                   formatter={(v: number, name: string) => [
                     `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
@@ -1213,12 +1436,14 @@ export default function SpcMaxiResultadoPage() {
                   }}
                   cursor={{ fill: "#F9FAFB" }}
                 />
+
                 <Bar
                   dataKey="valor"
                   fill="#ED884A"
                   radius={[4, 4, 0, 0]}
                   maxBarSize={18}
                 />
+
                 <Line
                   type="monotone"
                   dataKey="acumulado"
@@ -1228,7 +1453,7 @@ export default function SpcMaxiResultadoPage() {
                   activeDot={{ r: 5 }}
                 />
               </ComposedChart>
-            </ResponsiveContainer>
+            </ResponsiveContainer> */}
           </div>
         )}
       </div>
@@ -1327,35 +1552,54 @@ export default function SpcMaxiResultadoPage() {
               <div className="grid grid-cols-3 gap-x-8 gap-y-4 pt-1 pb-2">
                 {[
                   {
-                    label: "Nome completo",
-                    value: spcData?.consumidor?.nome,
-                  },
-                  { label: "CPF", value: formatCPF(spcData?.consumidor?.cpf) },
-                  {
-                    label: "Data de nascimento",
-                    value: formatDate(spcData?.consumidor?.["data-nascimento"]),
-                  },
-                  { label: "Sexo", value: spcData?.consumidor?.sexo },
-                  {
-                    label: "Nacionalidade",
-                    value: !Boolean(spcData?.consumidor?.["pessoa-estrangeira"])
-                      ? "Estrangeira"
-                      : "Brasileira",
+                    label: spcData?.consumidor?.cpf
+                      ? "Nome completo"
+                      : "Razão Social",
+                    value: spcData?.consumidor?.cpf
+                      ? spcData?.consumidor?.nome
+                      : spcData?.consumidor?.["razao-social"],
                   },
                   {
-                    label: "Nome da mãe",
-                    value: spcData?.consumidor?.["nome-mae"] ?? "-",
+                    label: spcData?.consumidor?.cpf ? "CPF" : "CNPJ",
+                    value: spcData?.consumidor?.cpf
+                      ? formatCPF(spcData?.consumidor?.cpf)
+                      : formatCNPJ(spcData?.consumidor?.cnpj),
                   },
                   {
-                    label: "Nome do pai",
-                    value: spcData?.consumidor?.["nome-pai"] ?? "-",
+                    label: spcData?.consumidor?.cpf
+                      ? "Data de nascimento"
+                      : "Data de fundação",
+                    value: spcData?.consumidor?.cpf
+                      ? formatDate(spcData?.consumidor?.["data-nascimento"])
+                      : formatDate(spcData?.consumidor?.["data-fundacao"]),
                   },
-                  {
-                    label: "RG",
-                    value: spcData?.consumidor?.["numero-rg"]
-                      ? `${spcData?.consumidor?.["numero-rg"]} SSP/SP`
-                      : "-",
-                  },
+                  ...(spcData?.consumidor?.cpf
+                    ? [
+                        { label: "Sexo", value: spcData?.consumidor?.sexo },
+                        {
+                          label: "Nacionalidade",
+                          value: !Boolean(
+                            spcData?.consumidor?.["pessoa-estrangeira"],
+                          )
+                            ? "Estrangeira"
+                            : "Brasileira",
+                        },
+                        {
+                          label: "Nome da mãe",
+                          value: spcData?.consumidor?.["nome-mae"] ?? "-",
+                        },
+                        {
+                          label: "Nome do pai",
+                          value: spcData?.consumidor?.["nome-pai"] ?? "-",
+                        },
+                        {
+                          label: "RG",
+                          value: spcData?.consumidor?.["numero-rg"]
+                            ? `${spcData?.consumidor?.["numero-rg"]} SSP/SP`
+                            : "-",
+                        },
+                      ]
+                    : []),
                 ].map((f) => (
                   <div key={f.label}>
                     <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
@@ -1365,7 +1609,10 @@ export default function SpcMaxiResultadoPage() {
                     <div className="flex items-center gap-2">
                       <p className="text-sm text-gray-800">{f.value}</p>
 
-                      {(f.label === "Nome completo" || f.label === "CPF") && (
+                      {(f.label === "Nome completo" ||
+                        f.label === "Razão Social" ||
+                        f.label === "CPF" ||
+                        f.label === "CNPJ") && (
                         <button
                           type="button"
                           onClick={() =>
@@ -1459,16 +1706,20 @@ export default function SpcMaxiResultadoPage() {
                 {[
                   {
                     label: "Telefone principal",
-                    value: formatPhone(
-                      spcData?.consumidor?.["telefone-celular"],
-                    ),
+                    value: spcData?.consumidor?.cpf
+                      ? formatPhone(spcData?.consumidor?.["telefone-celular"])
+                      : formatPhone(spcData?.consumidor?.telefone),
                   },
-                  {
-                    label: "Telefone secundário",
-                    value: formatPhone(
-                      spcData?.consumidor?.["telefone-residencial"],
-                    ),
-                  },
+                  ...(spcData?.consumidor?.cpf
+                    ? [
+                        {
+                          label: "Telefone secundário",
+                          value: formatPhone(
+                            spcData?.consumidor?.["telefone-residencial"],
+                          ),
+                        },
+                      ]
+                    : []),
                   { label: "E-mail", value: spcData?.consumidor?.email },
                   {
                     label: "CEP",
