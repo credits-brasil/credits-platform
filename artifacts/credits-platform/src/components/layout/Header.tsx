@@ -37,6 +37,7 @@ export default function Header({ sidebarCollapsed }: HeaderProps) {
           <div className="w-9 h-9 rounded-full bg-[#243871] flex items-center justify-center text-white text-sm font-semibold">
             <User size={17} />
           </div>
+          
           <div className="flex flex-col leading-tight">
             <span className="text-sm font-semibold text-gray-800">Usuário</span>
             <span className="text-xs text-gray-500">usuario@credits.com</span>

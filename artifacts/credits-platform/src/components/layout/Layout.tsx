@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 
@@ -10,6 +11,13 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const [location] = useLocation();
+
+  useEffect(() => {
+    if (location === "/verticais/credito-risco/spc-maxi/resultado") {
+      setCollapsed(true);
+    }
+  }, [location]);
 
   return (
     <div className="min-h-screen bg-background">

@@ -8,13 +8,140 @@ import {
   Network,
   AlertCircle,
   CheckCircle2,
-  AlertTriangle,
   Info,
   X,
+  Building2,
+  TriangleAlert,
+  FileText,
+  HatGlasses,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 type DocType = "cpf" | "cnpj";
+
+const CPF_INSUMO_GROUPS: InsumoGroup[] = [
+  {
+    id: "risco-credito",
+    title: "Risco de Crédito",
+    icon: ShieldCheck,
+    items: [
+      { id: "78", label: "Score 12 meses" },
+      { id: "77", label: "Score 3 meses" },
+      {
+        id: "5239",
+        label: "Classificação de Risco dos Débitos Ativos",
+      },
+    ],
+  },
+  {
+    id: "informacoes-positivas",
+    title: "Informações Positivas",
+    icon: TrendingUp,
+    items: [
+      { id: "5228", label: "Score + Positivo" },
+      { id: "5122", label: "Renda Presumida + Positivo" },
+      { id: "5224", label: "Índice de Comportamento de Gastos" },
+    ],
+  },
+  {
+    id: "comportamentais-cadastrais",
+    title: "Comportamentais & Cadastrais",
+    icon: Users,
+    items: [
+      // { id: "5183", label: "Status Receita Federal Online" },
+      // { id: "55", label: "Pendencia Financeira" },
+      { id: "5142", label: "Limite de Crédito Sugerido" },
+      // { id: "5265", label: "Participação no Mercado de Capitais" },
+    ],
+  },
+  {
+    id: "informacoes-scr",
+    title: "Informações do SCR",
+    icon: FileText,
+    items: [{ id: "5257", label: "Operações no SCR" }],
+  },
+  {
+    id: "solucoes-antifraude",
+    title: "Soluções Antifraude",
+    icon: HatGlasses,
+    items: [
+      { id: "5264", label: "Alerta de CPF suspeito" },
+      { id: "5268", label: "SPC Valida Celular" },
+      { id: "5262", label: "Alerta de Identidade à Fraude" },
+    ],
+  },
+  // {
+  //   id: "anotacoes-negativas",
+  //   title: "Anotações Negativas",
+  //   icon: TriangleAlert,
+  //   items: [{ id: "17", label: "Protesto" }],
+  // },
+  // {
+  //   id: "socios-administradores",
+  //   title: "Sócios & Administradores",
+  //   icon: Building2,
+  //   items: [{ id: "24", label: "Participação Empresa" }],
+  // },
+];
+
+const CNPJ_INSUMO_GROUPS: InsumoGroup[] = [
+  {
+    id: "risco-credito",
+    title: "Risco de Crédito",
+    icon: ShieldCheck,
+    items: [
+      { id: "78", label: "Score 12 meses" },
+      { id: "77", label: "Score 3 meses" },
+      { id: "5229", label: "Score PJ" },
+      { id: "5186", label: "Quadro Social Mais Completo PJ" },
+      { id: "5247", label: "Score PJ MEI" },
+    ],
+  },
+  {
+    id: "comportamentais-cadastrais",
+    title: "Comportamentais & Cadastrais",
+    icon: Users,
+    items: [
+      // { id: "5183", label: "Status Receita Federal Online" },
+      // { id: "55", label: "Pendencia Financeira" },
+      { id: "5179", label: "Limite de Crédito PJ" },
+      { id: "5265", label: "Participação no Mercado de Capitais" },
+      { id: "5267", label: "Quantidade de funcionários" },
+    ],
+  },
+  {
+    id: "socios-administradores",
+    title: "Sócios & Administradores",
+    icon: Building2,
+    items: [
+      { id: "24", label: "Participação Empresa" },
+      { id: "49", label: "Quadro administrativo" },
+      { id: "23", label: "Controle Societário" },
+    ],
+  },
+  {
+    id: "informacoes-positivas",
+    title: "Informações Positivas",
+    icon: TrendingUp,
+    items: [
+      { id: "5185", label: "Gasto Financeiro Estimado PJ " },
+      { id: "5178", label: "Faturamento Presumido" },
+      { id: "5257", label: "Índice de Comportamento de Gastos" },
+    ],
+  },
+  {
+    id: "informacoes-scr",
+    title: "Informações do SCR",
+    icon: FileText,
+    items: [{ id: "5257", label: "Operações no SCR" }],
+  },
+  // {
+  //   id: "anotacoes-negativas",
+  //   title: "Anotações Negativas",
+  //   icon: TriangleAlert,
+  //   items: [{ id: "17", label: "Protesto" }],
+  // },
+];
 
 function formatCpf(value: string) {
   return value
@@ -103,46 +230,6 @@ interface InsumoGroup {
   items: Insumo[];
 }
 
-const insumoGroups: InsumoGroup[] = [
-  {
-    id: "risco-credito",
-    title: "Risco de Crédito",
-    icon: ShieldCheck,
-    items: [
-      { id: "78", label: "Score 12 meses" },
-      { id: "5142", label: "Limite de Crédito sugerido" },
-      { id: "123", label: "SCR — Sistema de Informações de Crédito" },
-    ],
-  },
-  {
-    id: "informacoes-positivas",
-    title: "Informações Positivas",
-    icon: TrendingUp,
-    items: [
-      { id: "123123", label: "Renda presumida" },
-      { id: "5227", label: "Pontualidade de pagamento" },
-    ],
-  },
-  {
-    id: "comportamentais",
-    title: "Comportamentais & Cadastrais",
-    icon: Users,
-    items: [
-      { id: "1231", label: "Dados cadastrais completos" },
-      { id: "12312", label: "Consultas de mercado (12m)" },
-    ],
-  },
-  {
-    id: "vinculos",
-    title: "Vínculos & Relacionamentos",
-    icon: Network,
-    items: [
-      { id: "1233", label: "Parentes e vínculos" },
-      { id: "12332", label: "Empresas relacionadas" },
-    ],
-  },
-];
-
 const DEFAULT_SELECTED = new Set<string>([]);
 
 export default function SpcMaxiPage() {
@@ -155,8 +242,12 @@ export default function SpcMaxiPage() {
   const [selected, setSelected] = useState<Set<string>>(
     new Set(DEFAULT_SELECTED),
   );
-  const [rememberInsumos, setRememberInsumos] = useState(false);
   const [activeModal, setActiveModal] = useState<string | null>(null);
+
+  const insumoGroups = useMemo(
+    () => (docType === "cpf" ? CPF_INSUMO_GROUPS : CNPJ_INSUMO_GROUPS),
+    [docType],
+  );
 
   const rawClean =
     docType === "cpf"
@@ -196,61 +287,78 @@ export default function SpcMaxiPage() {
 
   const [, navigate] = useLocation();
 
-  // const handleConsultar = (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   setTouched(true);
-  //   if (canSubmit) {
-  //     navigate("/verticais/credito-risco/spc-maxi/resultado");
-  //   }
-  // };
-
   const handleConsultar = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!canSubmit) return;
 
     if (!canSubmit || loading) return;
 
     setLoading(true);
 
     try {
-      const response = await fetch(
-        // "http://credits-core-staging.sa-east-1.elasticbeanstalk.com/api/325-spc-maxi",
-        // "http://127.0.0.1:3333/api/325-spc-maxi",
-        "https://credits-core.onrender.com/api/325-spc-maxi",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            document: rawClean,
-            typeDocument: docType === "cpf" ? "CPF" : "CNPJ",
-            insumos: Array.from(selected),
-          }),
-        },
-      );
+      // Simula um loading de 1 segundo
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      const data = await response.json();
+      // Salva apenas os parâmetros da consulta
+      queryClient.setQueryData(["spc-maxi-request"], {
+        document: rawClean,
+        typeDocument: docType === "cpf" ? "CPF" : "CNPJ",
+        insumos: Array.from(selected),
+      });
 
-      // API retornou erro
-      if (!response.ok) {
-        throw new Error(data?.message || "Erro ao consultar SPC MAXI");
-      }
-
-      // Salva somente se sucesso
-      queryClient.setQueryData(["spc-maxi"], data?.spc);
-
-      // Só navega se deu certo
+      // Navega para a tela de resultado
       navigate("/verticais/credito-risco/spc-maxi/resultado");
-    } catch (error) {
-      console.error(error);
-
-      alert(error instanceof Error ? error.message : "ERROR NA BUSCA DA API");
     } finally {
       setLoading(false);
     }
   };
+
+  // const handleConsultar = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+
+  //   if (!canSubmit) return;
+
+  //   if (!canSubmit || loading) return;
+
+  //   setLoading(true);
+
+  //   try {
+  //     const response = await fetch(
+  //       // "http://credits-core-staging.sa-east-1.elasticbeanstalk.com/api/325-spc-maxi",
+  //       // "http://localhost:3333/api/325-spc-maxi",
+  //       "https://credits-core.onrender.com/api/325-spc-maxi",
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //         body: JSON.stringify({
+  //           document: rawClean,
+  //           typeDocument: docType === "cpf" ? "CPF" : "CNPJ",
+  //           insumos: Array.from(selected),
+  //         }),
+  //       },
+  //     );
+
+  //     const data = await response.json();
+
+  //     // API retornou erro
+  //     if (!response.ok) {
+  //       throw new Error(data?.message || "Erro ao consultar SPC MAXI");
+  //     }
+
+  //     // Salva somente se sucesso
+  //     queryClient.setQueryData(["spc-maxi"], data?.spc);
+
+  //     // Só navega se deu certo
+  //     navigate("/verticais/credito-risco/spc-maxi/resultado");
+  //   } catch (error) {
+  //     console.error(error);
+
+  //     alert(error instanceof Error ? error.message : "ERROR NA BUSCA DA API");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
     <div className="w-full">
