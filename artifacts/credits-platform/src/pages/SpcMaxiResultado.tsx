@@ -219,7 +219,7 @@ export default function SpcMaxiResultadoPage() {
 
   console.log("SPC DATA:", spcData);
 
-  const [activeGroup, setActiveGroup] = useState("TODOS");
+  const [activeGroup, setActiveGroup] = useState("SPC");
   const [expanded, setExpanded] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
@@ -450,14 +450,14 @@ export default function SpcMaxiResultadoPage() {
       : undefined;
 
   const GROUPS = [
-    {
-      key: "TODOS",
-      label: "TODOS",
-      count: totalCountCardTodos,
-      valor: formatValor(totalValorCardTodos),
-      antiga: formatDate(dataMaisAntigaCardTodos),
-      recente: formatDate(dataMaisRecenteCardTodos),
-    },
+    // {
+    //   key: "TODOS",
+    //   label: "TODOS",
+    //   count: totalCountCardTodos,
+    //   valor: formatValor(totalValorCardTodos),
+    //   antiga: formatDate(dataMaisAntigaCardTodos),
+    //   recente: formatDate(dataMaisRecenteCardTodos),
+    // },
     // {
     //   key: "TODOS",
     //   label: "TODOS",
