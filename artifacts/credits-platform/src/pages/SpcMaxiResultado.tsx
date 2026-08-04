@@ -1336,7 +1336,7 @@ export default function SpcMaxiResultadoPage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-5 gap-3 mb-5">
+          <div className="grid grid-cols-4 gap-3 mb-5">
             {GROUPS.map((g) => {
               const isActive = activeGroup === g.key;
               return (
