@@ -11,7 +11,6 @@ import {
   Info,
   X,
   Building2,
-  TriangleAlert,
   FileText,
   HatGlasses,
 } from "lucide-react";
@@ -249,6 +248,15 @@ export default function SpcMaxiPage() {
     [docType],
   );
 
+  const allSelectableIds = useMemo(
+    () => insumoGroups.flatMap((group) => group.items.map((item) => item.id)),
+    [insumoGroups],
+  );
+
+  const isAllSelected =
+    allSelectableIds.length > 0 &&
+    allSelectableIds.every((id) => selected.has(id));
+
   const rawClean =
     docType === "cpf"
       ? documento.replace(/\D/g, "")
@@ -285,6 +293,14 @@ export default function SpcMaxiPage() {
     });
   };
 
+  const handleSelectAllFilters = () => {
+    setSelected(new Set(allSelectableIds));
+  };
+
+  const handleClearAllFilters = () => {
+    setSelected(new Set());
+  };
+
   const [, navigate] = useLocation();
 
   const handleConsultar = async (e: React.FormEvent) => {
@@ -295,70 +311,19 @@ export default function SpcMaxiPage() {
     setLoading(true);
 
     try {
-      // Simula um loading de 1 segundo
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Salva apenas os parâmetros da consulta
       queryClient.setQueryData(["spc-maxi-request"], {
         document: rawClean,
         typeDocument: docType === "cpf" ? "CPF" : "CNPJ",
         insumos: Array.from(selected),
       });
 
-      // Navega para a tela de resultado
       navigate("/verticais/credito-risco/spc-maxi/resultado");
     } finally {
       setLoading(false);
     }
   };
-
-  // const handleConsultar = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-
-  //   if (!canSubmit) return;
-
-  //   if (!canSubmit || loading) return;
-
-  //   setLoading(true);
-
-  //   try {
-  //     const response = await fetch(
-  //       // "http://credits-core-staging.sa-east-1.elasticbeanstalk.com/api/325-spc-maxi",
-  //       // "http://localhost:3333/api/325-spc-maxi",
-  //       "https://credits-core.onrender.com/api/325-spc-maxi",
-  //       {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //         body: JSON.stringify({
-  //           document: rawClean,
-  //           typeDocument: docType === "cpf" ? "CPF" : "CNPJ",
-  //           insumos: Array.from(selected),
-  //         }),
-  //       },
-  //     );
-
-  //     const data = await response.json();
-
-  //     // API retornou erro
-  //     if (!response.ok) {
-  //       throw new Error(data?.message || "Erro ao consultar SPC MAXI");
-  //     }
-
-  //     // Salva somente se sucesso
-  //     queryClient.setQueryData(["spc-maxi"], data?.spc);
-
-  //     // Só navega se deu certo
-  //     navigate("/verticais/credito-risco/spc-maxi/resultado");
-  //   } catch (error) {
-  //     console.error(error);
-
-  //     alert(error instanceof Error ? error.message : "ERROR NA BUSCA DA API");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   return (
     <div className="w-full">
@@ -377,11 +342,10 @@ export default function SpcMaxiPage() {
         className="bg-white rounded-xl border border-gray-200 p-5 mb-6"
       >
         <div className="flex gap-6">
-          {/* ── Left: Documento ── */}
           <div className="flex-1 min-w-0 basis-1/2">
             <p className="text-sm font-medium text-gray-700 mb-2">Documento</p>
+
             <div className="flex items-center gap-2">
-              {/* CPF / CNPJ toggle */}
               <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-100 p-0.5 flex-shrink-0">
                 {(["cpf", "cnpj"] as DocType[]).map((type) => (
                   <button
@@ -401,7 +365,6 @@ export default function SpcMaxiPage() {
                 ))}
               </div>
 
-              {/* Input + validation icon */}
               <div className="relative">
                 <input
                   type="text"
@@ -478,13 +441,33 @@ export default function SpcMaxiPage() {
       </form>
 
       {/* Insumos Opcionais */}
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-sm font-semibold text-gray-700">
           Insumos Opcionais
         </h2>
-        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
-          {selected.size} selecionada{selected.size !== 1 ? "s" : ""}
-        </span>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-700 cursor-pointer">
+            Selecionar todos
+
+            <input
+              type="checkbox"
+              checked={isAllSelected}
+              onChange={() => {
+                if (isAllSelected) {
+                  handleClearAllFilters();
+                } else {
+                  handleSelectAllFilters();
+                }
+              }}
+              className="h-3.5 w-3.5 rounded border-gray-300 text-[#243871] focus:ring-[#243871] transition"
+            />
+          </label>
+
+          <span className="px-3 py-1 text-xs font-semibold text-gray-600">
+            {selected.size} selecionada{selected.size !== 1 ? "s" : ""}
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
