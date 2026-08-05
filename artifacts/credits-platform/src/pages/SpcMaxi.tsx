@@ -51,6 +51,7 @@ const CPF_INSUMO_GROUPS: InsumoGroup[] = [
       // { id: "5183", label: "Status Receita Federal Online" },
       // { id: "55", label: "Pendencia Financeira" },
       { id: "5142", label: "Limite de Crédito Sugerido" },
+      { id: "5194", label: "Comprometimento de Renda Mensal" },
       // { id: "5265", label: "Participação no Mercado de Capitais" },
     ],
   },

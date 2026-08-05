@@ -4,11 +4,9 @@ import {
   User,
   Printer,
   Search,
-  Eye,
   RefreshCw,
   ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
+  ChevronDown,
   ShieldAlert,
   BarChart2,
   AlertTriangle,
@@ -69,48 +67,6 @@ function parseBRValue(s: string): number {
   );
 }
 
-function FonteBadge({ fonte }: { fonte: string }) {
-  if (fonte === "PROTESTOS")
-    return (
-      <span
-        className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
-        style={{ backgroundColor: "#D97706", color: "#FFF" }}
-      >
-        {fonte}
-      </span>
-    );
-
-  if (fonte === "SERASA")
-    return (
-      <span
-        className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
-        style={{ backgroundColor: "#E3006F", color: "#FFF" }}
-      >
-        {fonte}
-      </span>
-    );
-
-  if (fonte === "CCF")
-    return (
-      <span
-        className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
-        style={{ backgroundColor: "#7C3AED", color: "#FFF" }}
-      >
-        {fonte}
-      </span>
-    );
-
-  if (fonte === "SPC")
-    return (
-      <span
-        className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
-        style={{ backgroundColor: "#173FB9", color: "#FFF" }}
-      >
-        {fonte}
-      </span>
-    );
-}
-
 interface SpcMaxiRequest {
   document: string;
   typeDocument: "CPF" | "CNPJ";
@@ -145,9 +101,8 @@ export default function SpcMaxiResultadoPage() {
       }
 
       const response = await fetch(
-        // "http://credits-core-staging.sa-east-1.elasticbeanstalk.com/api/325-spc-maxi",
-        // "http://localhost:3333/api/325-spc-maxi",
-        "https://credits-core.onrender.com/api/325-spc-maxi",
+        "http://localhost:3333/api/325-spc-maxi",
+        // "https://credits-core.onrender.com/api/325-spc-maxi",
         {
           method: "POST",
           headers: {
@@ -224,12 +179,16 @@ export default function SpcMaxiResultadoPage() {
 
   const [activeGroup, setActiveGroup] = useState("SPC");
   const [expanded, setExpanded] = useState(false);
+  const [expandedRowKey, setExpandedRowKey] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [consultasExpanded, setConsultasExpanded] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showRedirectModal, setShowRedirectModal] = useState(false);
+
+  useEffect(() => {
+    setExpandedRowKey(null);
+  }, [activeGroup, expanded, sortKey, sortDir]);
 
   const handleOpenReloadModal = () => {
     isKeyboardReloadRef.current = false;
@@ -252,7 +211,6 @@ export default function SpcMaxiResultadoPage() {
 
     await navigator.clipboard.writeText(value);
 
-    setCopied(true);
     setCopiedField(field);
 
     setTimeout(() => setCopiedField(null), 1500);
@@ -331,32 +289,6 @@ export default function SpcMaxiResultadoPage() {
     return phone;
   };
 
-  const parseDate = (date?: string) => {
-    if (!date) return null;
-    return new Date(date);
-  };
-
-  const primeiraOcorrenciaSpc =
-    Number(spcData?.spc?.resumo?.["quantidade-total"] ?? 0) <= 1
-      ? spcData?.spc?.resumo?.["data-ultima-ocorrencia"]
-      : spcData?.spc?.["detalhe-spc"]?.reduce((oldest, current) =>
-          new Date(current["data-inclusao"]) < new Date(oldest["data-inclusao"])
-            ? current
-            : oldest,
-        )?.["data-inclusao"];
-
-  const antigas = [
-    primeiraOcorrenciaSpc,
-    spcData?.["pendencia-financeira"]?.["ocorrencia-mais-antiga-chequenet"],
-    spcData?.protesto?.resumo?.["data-primeira-ocorrencia"],
-  ].filter(Boolean) as string[];
-
-  const recentes = [
-    spcData?.spc?.resumo?.["data-ultima-ocorrencia"],
-    spcData?.["pendencia-financeira"]?.["ocorrencia-mais-recente-chequenet"],
-    spcData?.protesto?.resumo?.["data-ultima-ocorrencia"],
-  ].filter(Boolean) as string[];
-
   const formatValor = (valor?: string | number) => {
     const numero = Number(valor ?? 0);
 
@@ -367,13 +299,6 @@ export default function SpcMaxiResultadoPage() {
           currency: "BRL",
         }).format(numero);
   };
-
-  const detalhesSpc = spcData?.spc?.["detalhe-spc"] ?? [];
-
-  const detalhesPendenciaFinanceira =
-    spcData?.["pendencia-financeira"]?.["detalhe-pendencia-financeira"] ?? [];
-
-  const detalhesProtesto = spcData?.protesto?.["detalhe-protesto"] ?? [];
 
   const ccfSource = (() => {
     const payload = spcData?.ccf;
@@ -423,58 +348,6 @@ export default function SpcMaxiResultadoPage() {
         grupo: "CCF",
       };
     }) ?? [];
-
-  /**
-   * Padroniza o contrato para evitar diferenças causadas
-   * por espaços, letras minúsculas etc.
-   */
-  const normalizeContrato = (contrato?: string) =>
-    String(contrato ?? "")
-      .trim()
-      .toUpperCase();
-
-  /**
-   * Todos os contratos que já existem no SPC.
-   * O SPC tem prioridade sobre pendência financeira.
-   */
-  const contratosSpc = new Set(
-    detalhesSpc.map((item) => normalizeContrato(item.contrato)).filter(Boolean),
-  );
-
-  /**
-   * Para o card TODOS, remove da pendência financeira
-   * os registros cujo contrato já esteja presente no SPC.
-   */
-  const pendenciasSemDuplicidade = detalhesPendenciaFinanceira.filter(
-    (item) => {
-      const contrato = normalizeContrato(item.contrato);
-
-      // Caso não tenha contrato, mantém o registro.
-      if (!contrato) return true;
-
-      return !contratosSpc.has(contrato);
-    },
-  );
-
-  /**
-   * Registros usados somente para calcular o card TODOS.
-   */
-  const registrosCardTodos = [
-    ...detalhesSpc.map((item) => ({
-      valor: Number(item.valor ?? 0),
-      data: item["data-inclusao"],
-    })),
-
-    ...pendenciasSemDuplicidade.map((item) => ({
-      valor: Number(item["valor-pendencia"] ?? 0),
-      data: item["data-ocorrencia"],
-    })),
-
-    ...detalhesProtesto.map((item) => ({
-      valor: Number(item.valor ?? 0),
-      data: item["data-protesto"],
-    })),
-  ];
 
   const GROUPS = [
     {
@@ -848,53 +721,46 @@ export default function SpcMaxiResultadoPage() {
     return null;
   }
 
-  const score = Number(
-    spcData?.["spc-score-12-meses"]?.["detalhe-spc-score-12-meses"]?.[0]
-      ?.score ?? 0,
+  const score = Number(spcData?.["score-cadastro-positivo"]);
+  const score12Meses = Number(
+    spcData?.["spc-score-12-meses"]?.["detalhe-spc-score-12-meses"]?.[0]?.score,
+  );
+  const score3Meses = Number(
+    spcData?.["spc-score-3-meses"]?.["detalhe-spc-score-3-meses"]?.score,
   );
 
-  const normalizedScore = 300;
-  // const normalizedScore = Math.min(Math.max(score, 0), 1000);
+  const normalizedScore = Math.min(Math.max(score, 0), 1000);
+  const normalizedScore12Meses = Math.min(Math.max(score12Meses, 0), 1000);
+  const normalizedScore3Meses = Math.min(Math.max(score3Meses, 0), 1000);
+  const hasScore12Meses = Boolean(spcData?.["spc-score-12-meses"]);
+  const hasScore3Meses = Boolean(spcData?.["spc-score-3-meses"]);
+  const hasBothScorePeriods = hasScore12Meses && hasScore3Meses;
 
   const scoreColor = (() => {
-    if (normalizedScore >= 750) return "#259f58";
-    if (normalizedScore >= 500) return "#3487f1";
-    if (normalizedScore >= 250) return "#ffca39";
+    if (normalizedScore >= 675) return "#259f58";
+    if (normalizedScore >= 467) return "#ffca39";
     return "#f6a020";
   })();
 
   const riscoInfo = (() => {
-    if (normalizedScore >= 750) {
+    if (normalizedScore >= 675) {
       return {
-        label: "Risco Muito Baixo",
+        label: "Risco Baixo",
         description:
           "Perfil com baixo risco de inadimplencia e bom historico de pagamento.",
         badge: { backgroundColor: "#DCFCE7", color: "#15803D" },
       };
     }
 
-    if (normalizedScore >= 500) {
-      return {
-        label: "Risco Baixo",
-        description:
-          "Perfil com tendencia favoravel, mas com pontos de atencao pontuais.",
-        badge: { backgroundColor: "#DBEAFE", color: "#1D4ED8" },
-      };
-    }
-
-    if (normalizedScore >= 250) {
+    if (normalizedScore >= 467) {
       return {
         label: "Risco Medio",
-        description:
-          "Perfil com historico de atrasos pontuais, sem restricoes criticas recorrentes.",
         badge: { backgroundColor: "#FEF3C7", color: "#D97706" },
       };
     }
 
     return {
       label: "Risco Alto",
-      description:
-        "Perfil com maior probabilidade de inadimplencia e necessidade de analise reforcada.",
       badge: { backgroundColor: "#FEE2E2", color: "#DC2626" },
     };
   })();
@@ -917,7 +783,14 @@ export default function SpcMaxiResultadoPage() {
 
     if (!valores.length) return 0;
 
-    return valores.reduce((total, valor) => total + valor, 0) / valores.length;
+    const ordenados = [...valores].sort((a, b) => a - b);
+    const meio = Math.floor(ordenados.length / 2);
+
+    if (ordenados.length % 2 === 0) {
+      return (ordenados[meio - 1] + ordenados[meio]) / 2;
+    }
+
+    return ordenados[meio];
   })();
 
   const hasPontualidadeData =
@@ -972,11 +845,9 @@ export default function SpcMaxiResultadoPage() {
   const radius = 50;
   const circumference = 2 * Math.PI * radius;
 
-  // O gráfico utiliza somente 75% do círculo: 270 graus
   const arcPercentage = 0.75;
   const arcLength = circumference * arcPercentage;
 
-  // Tamanho preenchido conforme o score
   const progressLength = (normalizedScore / 1000) * arcLength;
 
   if (isLoading) {
@@ -1031,15 +902,18 @@ export default function SpcMaxiResultadoPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Voltar para a tela de consulta?</AlertDialogTitle>
+
             <AlertDialogDescription>
               Esta ação retornará para a tela de consulta SPC MAXI. Confirme
               abaixo se deseja continuar.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
           <div className="flex flex-col-reverse justify-end gap-2 sm:flex-row">
             <AlertDialogCancel onClick={handleCancelReload}>
               Cancelar
             </AlertDialogCancel>
+
             <AlertDialogAction onClick={handleConfirmReload}>
               Voltar
             </AlertDialogAction>
@@ -1072,7 +946,11 @@ export default function SpcMaxiResultadoPage() {
                     className="text-gray-400 hover:text-[#243871] hover:cursor-pointer"
                     title="Copiar Protocolo"
                   >
-                    {copied ? <Check size={14} /> : <Copy size={14} />}
+                    {copiedField === "protocolo" ? (
+                      <Check size={14} />
+                    ) : (
+                      <Copy size={14} />
+                    )}
                   </button>
                 </div>
               </span>
@@ -1138,7 +1016,6 @@ export default function SpcMaxiResultadoPage() {
                 />
               </div>
 
-              {/* Col 1: documento + nome */}
               <div className="flex flex-col gap-0.5 min-w-0 basis-[25%] flex-shrink-0">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-400">
@@ -1160,7 +1037,12 @@ export default function SpcMaxiResultadoPage() {
                       spcData?.consumidor?.cpf ? "Copiar CPF" : "Copiar CNPJ"
                     }
                   >
-                    {copied ? <Check size={14} /> : <Copy size={14} />}
+                    {copiedField ===
+                    (spcData?.consumidor?.cpf ? `CPF` : `CNPJ`) ? (
+                      <Check size={14} />
+                    ) : (
+                      <Copy size={14} />
+                    )}
                   </button>
                 </div>
 
@@ -1187,7 +1069,12 @@ export default function SpcMaxiResultadoPage() {
                         : "Copiar Razão Social"
                     }
                   >
-                    {copied ? <Check size={14} /> : <Copy size={14} />}
+                    {copiedField ===
+                    (spcData?.consumidor?.cpf ? "Nome" : "Razão Social") ? (
+                      <Check size={14} />
+                    ) : (
+                      <Copy size={14} />
+                    )}
                   </button>
                 </div>
               </div>
@@ -1235,7 +1122,7 @@ export default function SpcMaxiResultadoPage() {
                   {
                     spcData?.["spc-score-12-meses"]?.[
                       "detalhe-spc-score-12-meses"
-                    ][0]?.["mesagem-interpretativa-score"]
+                    ]?.[0]?.["mesagem-interpretativa-score"]
                   }
                 </span>
               </div>
@@ -1248,11 +1135,11 @@ export default function SpcMaxiResultadoPage() {
           className="bg-white rounded-xl border border-gray-200 p-5 mb-4"
         >
           <h2 className="text-sm font-semibold text-gray-700 mb-4">
-            Score &amp; Capacidade
+            Score + Positivo
           </h2>
 
           <div className="flex gap-6">
-            <div className="flex items-center justify-center gap-5 w-1/2">
+            <div className="flex items-center gap-5 w-1/2">
               <div
                 className="relative flex items-center justify-center flex-shrink-0"
                 style={{ width: 140, height: 140 }}
@@ -1301,20 +1188,18 @@ export default function SpcMaxiResultadoPage() {
               </div>
 
               <div className="flex flex-col gap-2">
-                <span
-                  className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
-                  style={riscoInfo.badge}
-                >
-                  {riscoInfo.label}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
+                    style={riscoInfo.badge}
+                  >
+                    {riscoInfo.label}
+                  </span>
 
-                <p className="text-xs text-gray-500">
-                  {
-                    spcData?.["spc-score-12-meses"]?.[
-                      "detalhe-spc-score-12-meses"
-                    ][0]?.["mesagem-interpretativa-score"]
-                  }
-                </p>
+                  <strong className="text-xs text-gray-700">
+                    Score + Positivo
+                  </strong>
+                </div>
               </div>
             </div>
 
@@ -1351,8 +1236,48 @@ export default function SpcMaxiResultadoPage() {
                         },
                       ]
                     : []),
-                  { label: "Comprometimento", value: "42%" },
-                  { label: "Valor SCR", value: "R$ 3.800" },
+                  ...(spcData?.["comprometimento-renda-mensal-pf"]
+                    ? [
+                        {
+                          label: "Comprometimento",
+                          value:
+                            spcData?.["comprometimento-renda-mensal-pf"]?.[
+                              "detalhe-comprometimento-renda-mensal-pf"
+                            ]?.faixa,
+                        },
+                      ]
+                    : []),
+                  ...(spcData?.["alerta-identidade-fraude"]
+                    ? [
+                        {
+                          label: "Alerta de Identidade à Fraude",
+                          value: (
+                            <span
+                              className="inline-flex w-fit rounded-full px-2 py-0.5 text-xs font-semibold"
+                              style={
+                                spcData?.["alerta-identidade-fraude"]?.[
+                                  "detalhe-alerta-identidade-fraude"
+                                ]?.[0]?.["alerta-fraude"] === "true"
+                                  ? {
+                                      backgroundColor: "#FEE2E2",
+                                      color: "#DC2626",
+                                    }
+                                  : {
+                                      backgroundColor: "#DCFCE7",
+                                      color: "#15803D",
+                                    }
+                              }
+                            >
+                              {spcData?.["alerta-identidade-fraude"]?.[
+                                "detalhe-alerta-identidade-fraude"
+                              ]?.[0]?.["alerta-fraude"] === "true"
+                                ? "Alerta ativo"
+                                : "Sem alertas"}
+                            </span>
+                          ),
+                        },
+                      ]
+                    : []),
                 ].map(({ label, value }) => (
                   <div
                     key={label}
@@ -1363,24 +1288,206 @@ export default function SpcMaxiResultadoPage() {
                       {label}
                     </span>
 
-                    <span className="text-base font-bold text-gray-800">
-                      {value}
-                    </span>
-                    {/* {value !== null ? (
+                    {typeof value === "string" || typeof value === "number" ? (
+                      <span className="text-base font-bold text-gray-800">
+                        {value}
+                      </span>
                     ) : (
-                      <button
-                        type="button"
-                        className="self-start rounded-md px-2 py-0.5 text-[10px] font-semibold transition-colors"
-                        style={{ backgroundColor: "#C7D2FE", color: "#243871" }}
-                      >
-                        Consultar
-                      </button>
-                    )} */}
+                      value
+                    )}
                   </div>
                 ))}
               </div>
             </div>
           </div>
+
+          {(hasScore12Meses || hasScore3Meses) && (
+            <div className="flex gap-6 mt-4">
+              {hasScore12Meses && (
+                <>
+                  {/* 12 Meses */}
+                  <div
+                    className={`flex items-center justify-center gap-5 ${
+                      hasBothScorePeriods ? "w-1/2" : "w-full"
+                    }`}
+                  >
+                    <div
+                      className={`flex items-center gap-5 w-full ${
+                        hasBothScorePeriods ? "justify-center" : "justify-start"
+                      }`}
+                    >
+                      <div
+                        className="relative flex items-center justify-center flex-shrink-0"
+                        style={{ width: 140, height: 140 }}
+                      >
+                        <svg viewBox="0 0 120 120" width="140" height="140">
+                          <circle
+                            cx="60"
+                            cy="60"
+                            r={radius}
+                            fill="none"
+                            stroke="#E5E7EB"
+                            strokeWidth="9"
+                            strokeDasharray={`${arcLength} ${circumference - arcLength}`}
+                            strokeLinecap="round"
+                            transform="rotate(135 60 60)"
+                          />
+
+                          <circle
+                            cx="60"
+                            cy="60"
+                            r={radius}
+                            fill="none"
+                            stroke={scoreColor}
+                            strokeWidth="9"
+                            strokeDasharray={`${progressLength} ${
+                              circumference - progressLength
+                            }`}
+                            strokeLinecap="round"
+                            transform="rotate(135 60 60)"
+                            className="transition-all duration-700 ease-out"
+                          />
+                        </svg>
+
+                        <div className="absolute flex flex-col items-center leading-none">
+                          <span
+                            className="text-3xl font-bold"
+                            style={{ color: scoreColor }}
+                          >
+                            {normalizedScore12Meses}
+                          </span>
+
+                          <span className="mt-1 text-[10px] text-gray-400">
+                            de 1000
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
+                            style={riscoInfo.badge}
+                          >
+                            {riscoInfo.label}
+                          </span>
+
+                          <span className="text-xs text-gray-500">
+                            Período:{" "}
+                            <strong className="text-xs text-gray-700">
+                              12 meses
+                            </strong>
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-gray-500 text-justify">
+                          {
+                            spcData?.["spc-score-12-meses"]?.[
+                              "detalhe-spc-score-12-meses"
+                            ]?.[0]?.["mesagem-interpretativa-score"]
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {hasScore3Meses && (
+                <>
+                  {hasScore12Meses && (
+                    <div className="w-px self-stretch bg-gray-100" />
+                  )}
+
+                  {/* 3 Meses */}
+                  <div
+                    className={`flex items-center justify-center gap-5 ${
+                      hasBothScorePeriods ? "w-1/2" : "w-full"
+                    }`}
+                  >
+                    <div
+                      className={`flex items-center gap-5 w-full ${
+                        hasBothScorePeriods ? "justify-center" : "justify-start"
+                      }`}
+                    >
+                      <div
+                        className="relative flex items-center justify-center flex-shrink-0"
+                        style={{ width: 140, height: 140 }}
+                      >
+                        <svg viewBox="0 0 120 120" width="140" height="140">
+                          <circle
+                            cx="60"
+                            cy="60"
+                            r={radius}
+                            fill="none"
+                            stroke="#E5E7EB"
+                            strokeWidth="9"
+                            strokeDasharray={`${arcLength} ${circumference - arcLength}`}
+                            strokeLinecap="round"
+                            transform="rotate(135 60 60)"
+                          />
+
+                          <circle
+                            cx="60"
+                            cy="60"
+                            r={radius}
+                            fill="none"
+                            stroke={scoreColor}
+                            strokeWidth="9"
+                            strokeDasharray={`${progressLength} ${
+                              circumference - progressLength
+                            }`}
+                            strokeLinecap="round"
+                            transform="rotate(135 60 60)"
+                            className="transition-all duration-700 ease-out"
+                          />
+                        </svg>
+
+                        <div className="absolute flex flex-col items-center leading-none">
+                          <span
+                            className="text-3xl font-bold"
+                            style={{ color: scoreColor }}
+                          >
+                            {normalizedScore3Meses}
+                          </span>
+
+                          <span className="mt-1 text-[10px] text-gray-400">
+                            de 1000
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
+                            style={riscoInfo.badge}
+                          >
+                            {riscoInfo.label}
+                          </span>
+
+                          <span className="text-xs text-gray-500">
+                            Período:{" "}
+                            <strong className="text-xs text-gray-700">
+                              3 meses
+                            </strong>
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-gray-500 text-justify">
+                          {
+                            spcData?.["spc-score-3-meses"]?.[
+                              "detalhe-spc-score-3-meses"
+                            ]?.["mesagem-interpretativa-score"]
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           {hasComportamentoFinanceiroData && (
             <div className="border-t border-gray-100 my-4" />
@@ -1678,113 +1785,192 @@ export default function SpcMaxiResultadoPage() {
             </thead>
 
             <tbody>
-              {visible.map((r, i) => (
-                <tr
-                  key={i}
-                  className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
-                >
-                  {activeGroup === "TODOS" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.tipo}
-                    </td>
-                  )}
+              {visible.map((r, i) => {
+                const rowKey = `${activeGroup}-${i}-${r.inclusao ?? r.data ?? ""}-${r.valor ?? ""}`;
+                const isRowExpanded = expandedRowKey === rowKey;
+                const detailColSpan =
+                  activeGroup === "CCF"
+                    ? 5
+                    : activeGroup === "PROTESTOS"
+                      ? 5
+                      : 7;
 
-                  {activeGroup === "PROTESTOS" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.data}
-                    </td>
-                  )}
+                const detailFields =
+                  activeGroup === "PROTESTOS"
+                    ? [
+                        { label: "Data", value: r.data ?? "-" },
+                        { label: "Cartório", value: r.cartorio ?? "-" },
+                        { label: "Valor", value: r.valor ?? "-" },
+                        { label: "Cidade", value: r.cidade ?? "-" },
+                      ]
+                    : [
+                        { label: "Inclusão", value: r.inclusao ?? "-" },
+                        { label: "Vencimento", value: r.vencimento ?? "-" },
+                        { label: "Valor", value: r.valor ?? "-" },
+                        { label: "Credor", value: r.credor ?? "-" },
+                        { label: "Cidade", value: r.cidade ?? "-" },
+                        { label: "Origem", value: r.origem ?? "-" },
+                      ];
 
-                  {activeGroup === "PROTESTOS" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.cartorio}
-                    </td>
-                  )}
+                return (
+                  <>
+                    <tr
+                      key={rowKey}
+                      className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                    >
+                      {activeGroup === "TODOS" && (
+                        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                          {r.tipo}
+                        </td>
+                      )}
 
-                  {activeGroup === "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.inclusao}
-                    </td>
-                  )}
+                      {activeGroup === "PROTESTOS" && (
+                        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                          {r.data}
+                        </td>
+                      )}
 
-                  {activeGroup === "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.motivo}
-                    </td>
-                  )}
+                      {activeGroup === "PROTESTOS" && (
+                        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                          {r.cartorio}
+                        </td>
+                      )}
 
-                  {activeGroup === "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.agencia}
-                    </td>
-                  )}
+                      {activeGroup === "CCF" && (
+                        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                          {r.inclusao}
+                        </td>
+                      )}
 
-                  {activeGroup === "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.banco}
-                    </td>
-                  )}
+                      {activeGroup === "CCF" && (
+                        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                          {r.motivo}
+                        </td>
+                      )}
 
-                  {activeGroup === "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.origem}
-                    </td>
-                  )}
+                      {activeGroup === "CCF" && (
+                        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                          {r.agencia}
+                        </td>
+                      )}
 
-                  {activeGroup !== "PROTESTOS" && activeGroup !== "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.inclusao}
-                    </td>
-                  )}
+                      {activeGroup === "CCF" && (
+                        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                          {r.banco}
+                        </td>
+                      )}
 
-                  {activeGroup !== "PROTESTOS" && activeGroup !== "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.vencimento}
-                    </td>
-                  )}
+                      {activeGroup === "CCF" && (
+                        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                          {r.origem}
+                        </td>
+                      )}
 
-                  {activeGroup !== "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-800 font-medium whitespace-nowrap">
-                      {r.valor}
-                    </td>
-                  )}
+                      {activeGroup !== "PROTESTOS" && activeGroup !== "CCF" && (
+                        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                          {r.inclusao}
+                        </td>
+                      )}
 
-                  {activeGroup !== "PROTESTOS" && activeGroup !== "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-700">{r.credor}</td>
-                  )}
+                      {activeGroup !== "PROTESTOS" && activeGroup !== "CCF" && (
+                        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                          {r.vencimento}
+                        </td>
+                      )}
 
-                  {activeGroup !== "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.cidade}
-                    </td>
-                  )}
+                      {activeGroup !== "CCF" && (
+                        <td className="py-2.5 pr-4 text-gray-800 font-medium whitespace-nowrap">
+                          {r.valor}
+                        </td>
+                      )}
 
-                  {activeGroup !== "PROTESTOS" && activeGroup !== "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-600">{r.origem}</td>
-                  )}
+                      {activeGroup !== "PROTESTOS" && activeGroup !== "CCF" && (
+                        <td className="py-2.5 pr-4 text-gray-700">
+                          {r.credor}
+                        </td>
+                      )}
 
-                  {/* {activeGroup === "TODOS" && (
-                    <td className="py-2.5 pr-4 text-gray-600">{r.telefone}</td>
-                  )}
+                      {activeGroup !== "CCF" && (
+                        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                          {r.cidade}
+                        </td>
+                      )}
 
-                  {activeGroup === "TODOS" && (
-                    <td className="py-2.5 pr-4">
-                      <FonteBadge fonte={r.fonte} />
-                    </td>
-                  )} */}
+                      {activeGroup !== "PROTESTOS" && activeGroup !== "CCF" && (
+                        <td className="py-2.5 pr-4 text-gray-600">
+                          {r.origem}
+                        </td>
+                      )}
 
-                  {activeGroup !== "CCF" && (
-                    <td className="py-2.5">
-                      <button
-                        type="button"
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                      {activeGroup !== "CCF" && (
+                        <td className="py-2.5">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedRowKey((prev) =>
+                                prev === rowKey ? null : rowKey,
+                              )
+                            }
+                            className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer p-1 rounded-full hover:bg-gray-100"
+                            aria-label={
+                              isRowExpanded
+                                ? "Recolher detalhes"
+                                : "Expandir detalhes"
+                            }
+                          >
+                            <ChevronDown
+                              size={13}
+                              className={`transition-transform ${isRowExpanded ? "rotate-180" : "rotate-0"}`}
+                            />
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+
+                    {activeGroup !== "CCF" && (
+                      <tr
+                        className={`bg-gray-50/50 transition-all ${
+                          isRowExpanded
+                            ? "border-b border-gray-50 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                            : "border-b border-transparent duration-300 ease-in-out"
+                        }`}
                       >
-                        <Eye size={13} />
-                      </button>
-                    </td>
-                  )}
-                </tr>
-              ))}
+                        <td colSpan={detailColSpan} className="p-0">
+                          <div
+                            className={`overflow-hidden transition-[max-height,opacity] ${
+                              isRowExpanded
+                                ? "max-h-40 opacity-100 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                                : "max-h-0 opacity-0 duration-300 ease-in-out"
+                            }`}
+                          >
+                            <div
+                              className={`grid grid-cols-2 gap-3 px-3 py-3 transition-all md:grid-cols-3 ${
+                                isRowExpanded
+                                  ? "translate-y-0 opacity-100 duration-500 delay-75"
+                                  : "-translate-y-1 opacity-0 duration-200"
+                              }`}
+                            >
+                              {detailFields.map((field) => (
+                                <div
+                                  key={`${rowKey}-${field.label}`}
+                                  className="min-w-0"
+                                >
+                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                                    {field.label}
+                                  </p>
+                                  <p className="truncate text-xs text-gray-700">
+                                    {field.value || "-"}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                );
+              })}
             </tbody>
           </table>
 
@@ -1889,65 +2075,6 @@ export default function SpcMaxiResultadoPage() {
                   />
                 </ComposedChart>
               </ResponsiveContainer>
-              {/* <ResponsiveContainer width="100%" height={220}>
-              <ComposedChart
-                data={chartData}
-                margin={{ top: 4, right: 16, left: 8, bottom: 4 }}
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#F3F4F6"
-                  vertical={false}
-                />
-                
-                <XAxis
-                  dataKey="data"
-                  tick={{ fontSize: 10, fill: "#9CA3AF" }}
-                  tickLine={false}
-                  axisLine={false}
-                />
-
-                <YAxis
-                  tick={{ fontSize: 10, fill: "#9CA3AF" }}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(v: number) =>
-                    `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
-                  }
-                  width={80}
-                />
-
-                <Tooltip
-                  formatter={(v: number, name: string) => [
-                    `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-                    name === "acumulado" ? "Acumulado" : "Valor",
-                  ]}
-                  labelStyle={{ fontSize: 11, color: "#374151" }}
-                  contentStyle={{
-                    fontSize: 11,
-                    borderRadius: 8,
-                    border: "1px solid #E5E7EB",
-                  }}
-                  cursor={{ fill: "#F9FAFB" }}
-                />
-
-                <Bar
-                  dataKey="valor"
-                  fill="#ED884A"
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={18}
-                />
-
-                <Line
-                  type="monotone"
-                  dataKey="acumulado"
-                  stroke="#243871"
-                  strokeWidth={2}
-                  dot={{ r: 3, fill: "#243871", strokeWidth: 0 }}
-                  activeDot={{ r: 5 }}
-                />
-              </ComposedChart>
-            </ResponsiveContainer> */}
             </div>
           )}
         </div>
@@ -2030,7 +2157,6 @@ export default function SpcMaxiResultadoPage() {
           <></>
         )}
 
-        {/* Dados Cadastrais */}
         <div
           id="section-cadastrais"
           className="bg-white rounded-xl border border-gray-200 p-5 mb-4"
@@ -2156,56 +2282,6 @@ export default function SpcMaxiResultadoPage() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* <AccordionItem
-            value="grafia-pessoal-fisica-spc-brasil"
-            className="border-gray-100 last:border-b-0"
-          >
-            <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
-              Grafia - Pessoal Fisica - SPC Brasil
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="grid grid-cols-3 gap-x-8 gap-y-4 pt-1 pb-2">
-                {[
-                  {
-                    label: "Telefone principal",
-                    value: spcData?.consumidor?.["telefone-celular"],
-                  },
-                  {
-                    label: "Telefone secundário",
-                    value: spcData?.consumidor?.["telefone-residencial"],
-                  },
-                  { label: "E-mail", value: spcData?.consumidor?.email },
-                  { label: "CEP", value: spcData?.consumidor?.endereco?.cep },
-                  {
-                    label: "Logradouro",
-                    value: `${spcData?.consumidor?.endereco?.logradouro}, ${spcData?.consumidor?.endereco?.numero} — ${spcData?.consumidor?.endereco?.complemento}`,
-                  },
-                  {
-                    label: "Bairro",
-                    value: spcData?.consumidor?.endereco?.bairro,
-                  },
-                  {
-                    label: "Cidade",
-                    value: spcData?.consumidor?.endereco?.cidade,
-                  },
-                  {
-                    label: "Estado",
-                    value: spcData?.consumidor?.endereco?.estado,
-                  },
-                  { label: "País", value: "Brasil" },
-                ].map((f) => (
-                  <div key={f.label}>
-                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
-                      {f.label}
-                    </p>
-                    <p className="text-sm text-gray-800">{f.value}</p>
-                  </div>
-                ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem> */}
-
-            {/* Contato e Endereço */}
             <AccordionItem
               value="contato-endereco"
               className="border-gray-100 last:border-b-0"
@@ -2294,86 +2370,6 @@ export default function SpcMaxiResultadoPage() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* <AccordionItem
-            value="ultimos-enderecos-informados-spc-brasil"
-            className="border-gray-100 last:border-b-0"
-          >
-            <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
-              Ultimos Endereços Informados - SPC Brasil
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="grid grid-cols-3 gap-x-8 gap-y-4 pt-1 pb-2">
-                {[
-                  {
-                    label: "Telefone principal",
-                    value: spcData?.consumidor?.["telefone-celular"],
-                  },
-                  {
-                    label: "Telefone secundário",
-                    value: spcData?.consumidor?.["telefone-residencial"],
-                  },
-                  { label: "E-mail", value: spcData?.consumidor?.email },
-                  { label: "CEP", value: spcData?.consumidor?.endereco?.cep },
-                  {
-                    label: "Logradouro",
-                    value: `${spcData?.consumidor?.endereco?.logradouro}, ${spcData?.consumidor?.endereco?.numero} — ${spcData?.consumidor?.endereco?.complemento}`,
-                  },
-                  {
-                    label: "Bairro",
-                    value: spcData?.consumidor?.endereco?.bairro,
-                  },
-                  {
-                    label: "Cidade",
-                    value: spcData?.consumidor?.endereco?.cidade,
-                  },
-                  {
-                    label: "Estado",
-                    value: spcData?.consumidor?.endereco?.estado,
-                  },
-                  { label: "País", value: "Brasil" },
-                ].map((f) => (
-                  <div key={f.label}>
-                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
-                      {f.label}
-                    </p>
-                    <p className="text-sm text-gray-800">{f.value}</p>
-                  </div>
-                ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem> */}
-
-            {/* <AccordionItem
-            value="agencia-bancaria"
-            className="border-gray-100 last:border-b-0"
-          >
-            <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
-              Agencia Bancaria
-            </AccordionTrigger>
-
-            <AccordionContent>
-              <div className="grid grid-cols-3 gap-x-8 gap-y-4 pt-1 pb-2">
-                {[
-                  { label: "País", value: "Brasil" },
-                  { label: "País", value: "Brasil" },
-                  { label: "País", value: "Brasil" },
-                  { label: "País", value: "Brasil" },
-                  { label: "País", value: "Brasil" },
-                  { label: "País", value: "Brasil" },
-                  { label: "País", value: "Brasil" },
-                  { label: "País", value: "Brasil" },
-                ].map((f) => (
-                  <div key={f.label}>
-                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
-                      {f.label}
-                    </p>
-                    <p className="text-sm text-gray-800">{f.value}</p>
-                  </div>
-                ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem> */}
-
             <AccordionItem
               value="dados-adicionais-contato-spc-brasil"
               className="border-gray-100 last:border-b-0"
@@ -2425,21 +2421,6 @@ export default function SpcMaxiResultadoPage() {
                       ))}
                     </tbody>
                   </table>
-
-                  {/* <div className="flex justify-end mt-3">
-                  <button
-                    type="button"
-                    onClick={() => setConsultasExpanded((v) => !v)}
-                    className="flex items-center gap-1 text-xs font-medium transition-colors"
-                    style={{ color: "#243871" }}
-                  >
-                    {consultasExpanded ? "Recolher" : "Expandir"}
-
-                    <span className="text-[10px]">
-                      {consultasExpanded ? "▲" : "▼"}
-                    </span>
-                  </button>
-                </div> */}
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -2492,21 +2473,6 @@ export default function SpcMaxiResultadoPage() {
                         )}
                       </tbody>
                     </table>
-
-                    {/* <div className="flex justify-end mt-3">
-                    <button
-                      type="button"
-                      onClick={() => setConsultasExpanded((v) => !v)}
-                      className="flex items-center gap-1 text-xs font-medium transition-colors"
-                      style={{ color: "#243871" }}
-                    >
-                      {consultasExpanded ? "Recolher" : "Expandir"}
-
-                      <span className="text-[10px]">
-                        {consultasExpanded ? "▲" : "▼"}
-                      </span>
-                    </button>
-                  </div> */}
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -2514,7 +2480,6 @@ export default function SpcMaxiResultadoPage() {
           </Accordion>
         </div>
 
-        {/* Consultas Realizadas */}
         {(() => {
           const consultas =
             spcData?.["consulta-realizada"]?.["detalhe-consulta-realizada"] ??
@@ -2606,7 +2571,6 @@ export default function SpcMaxiResultadoPage() {
                   { valor: ultimos30, label: "Últimos 30 dias" },
                   { valor: ultimos60, label: "Últimos 60 dias" },
                   { valor: ultimos90, label: "Últimos 90 dias" },
-                  // { valor: total, label: "Total" },
                 ].map((k) => (
                   <div
                     key={k.label}
@@ -2676,13 +2640,6 @@ export default function SpcMaxiResultadoPage() {
               </ResponsiveContainer>
 
               <div className="mt-5 border-t border-gray-100 pt-4">
-                {/* <colgroup>
-                  <col style={{ width: "10px" }} />
-                  <col />
-                  <col />
-                  <col />
-                </colgroup> */}
-
                 <table className="w-full text-xs table-fixed">
                   <thead>
                     <tr className="border-b border-gray-100">
@@ -2744,7 +2701,6 @@ export default function SpcMaxiResultadoPage() {
           );
         })()}
 
-        {/* Floating section nav */}
         <div className="fixed bottom-10 right-6 z-50 flex flex-col gap-2.5">
           {[
             {
@@ -2755,7 +2711,7 @@ export default function SpcMaxiResultadoPage() {
             {
               id: "section-score",
               icon: <BarChart2 size={16} />,
-              label: "Score & Capacidade",
+              label: "Score + Positivo",
             },
             {
               id: "section-negativos",
@@ -2779,14 +2735,13 @@ export default function SpcMaxiResultadoPage() {
             },
           ].map(({ id, icon, label }) => (
             <div key={id} className="group flex items-center justify-end gap-2">
-              {/* Tooltip label */}
               <span
                 className="pointer-events-none whitespace-nowrap rounded-lg px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 transition-all duration-150 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0"
                 style={{ backgroundColor: "#243871" }}
               >
                 {label}
               </span>
-              {/* Circle button */}
+
               <button
                 type="button"
                 onClick={() => {
