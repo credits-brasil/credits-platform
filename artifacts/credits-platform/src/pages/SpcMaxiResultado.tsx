@@ -721,7 +721,7 @@ export default function SpcMaxiResultadoPage() {
     return null;
   }
 
-  const score = Number(spcData?.["score-cadastro-positivo"]);
+  const scoreCadastroPositivo = Number(spcData?.["score-cadastro-positivo"]);
   const score12Meses = Number(
     spcData?.["spc-score-12-meses"]?.["detalhe-spc-score-12-meses"]?.[0]?.score,
   );
@@ -729,12 +729,49 @@ export default function SpcMaxiResultadoPage() {
     spcData?.["spc-score-3-meses"]?.["detalhe-spc-score-3-meses"]?.score,
   );
 
+  const scoreSource = Number.isFinite(scoreCadastroPositivo)
+    ? "cadastro"
+    : Number.isFinite(score12Meses)
+      ? "12-meses"
+      : Number.isFinite(score3Meses)
+        ? "3-meses"
+        : "none";
+
+  const mainScoreLabel =
+    scoreSource === "cadastro"
+      ? "Score + Positivo"
+      : scoreSource === "12-meses"
+        ? "Score 12 meses"
+        : scoreSource === "3-meses"
+          ? "Score 3 meses"
+          : "Score";
+
+  const mainScoreInterpretativeMessage =
+    scoreSource === "12-meses"
+      ? spcData?.["spc-score-12-meses"]?.["detalhe-spc-score-12-meses"]?.[0]?.[
+          "mesagem-interpretativa-score"
+        ]
+      : scoreSource === "3-meses"
+        ? spcData?.["spc-score-3-meses"]?.["detalhe-spc-score-3-meses"]?.[
+            "mesagem-interpretativa-score"
+          ]
+        : "";
+
+  const score =
+    [scoreCadastroPositivo, score12Meses, score3Meses].find((value) =>
+      Number.isFinite(value),
+    ) ?? 0;
+
   const normalizedScore = Math.min(Math.max(score, 0), 1000);
   const normalizedScore12Meses = Math.min(Math.max(score12Meses, 0), 1000);
   const normalizedScore3Meses = Math.min(Math.max(score3Meses, 0), 1000);
   const hasScore12Meses = Boolean(spcData?.["spc-score-12-meses"]);
   const hasScore3Meses = Boolean(spcData?.["spc-score-3-meses"]);
-  const hasBothScorePeriods = hasScore12Meses && hasScore3Meses;
+  const shouldShowScore12Meses = hasScore12Meses && scoreSource !== "12-meses";
+  const shouldShowScore3Meses = hasScore3Meses && scoreSource !== "3-meses";
+  const shouldShowDedicatedPeriodScores =
+    shouldShowScore12Meses || shouldShowScore3Meses;
+  const hasBothScorePeriods = shouldShowScore12Meses && shouldShowScore3Meses;
 
   const scoreColor = (() => {
     if (normalizedScore >= 675) return "#259f58";
@@ -1107,25 +1144,6 @@ export default function SpcMaxiResultadoPage() {
                   </span>
                 )}
               </div>
-
-              <div className="w-px self-stretch bg-gray-100" />
-
-              <div className="flex flex-col gap-1.5 basis-[44%] flex-shrink-0">
-                <span
-                  className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
-                  style={riscoInfo.badge}
-                >
-                  {riscoInfo.label}
-                </span>
-
-                <span className="text-xs text-gray-400">
-                  {
-                    spcData?.["spc-score-12-meses"]?.[
-                      "detalhe-spc-score-12-meses"
-                    ]?.[0]?.["mesagem-interpretativa-score"]
-                  }
-                </span>
-              </div>
             </div>
           </div>
         </div>
@@ -1197,9 +1215,15 @@ export default function SpcMaxiResultadoPage() {
                   </span>
 
                   <strong className="text-xs text-gray-700">
-                    Score + Positivo
+                    {mainScoreLabel}
                   </strong>
                 </div>
+
+                {mainScoreInterpretativeMessage && (
+                  <p className="text-xs text-gray-500 text-justify">
+                    {mainScoreInterpretativeMessage}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -1301,9 +1325,9 @@ export default function SpcMaxiResultadoPage() {
             </div>
           </div>
 
-          {(hasScore12Meses || hasScore3Meses) && (
+          {shouldShowDedicatedPeriodScores && (
             <div className="flex gap-6 mt-4">
-              {hasScore12Meses && (
+              {shouldShowScore12Meses && (
                 <>
                   {/* 12 Meses */}
                   <div
@@ -1393,9 +1417,9 @@ export default function SpcMaxiResultadoPage() {
                 </>
               )}
 
-              {hasScore3Meses && (
+              {shouldShowScore3Meses && (
                 <>
-                  {hasScore12Meses && (
+                  {shouldShowScore12Meses && (
                     <div className="w-px self-stretch bg-gray-100" />
                   )}
 
@@ -1499,9 +1523,9 @@ export default function SpcMaxiResultadoPage() {
                 Comportamento Financeiro
               </p>
 
-              <div className="grid grid-cols-1 gap-4 pb-1 md:grid-cols-2 xl:grid-cols-3 xl:gap-6">
+              <div className="grid grid-cols-1 gap-3 pb-1 md:grid-cols-2 md:gap-3 xl:grid-cols-[0.85fr_0.85fr_1.3fr] xl:gap-4">
                 {hasPontualidadeData && (
-                  <div className="flex h-full flex-col gap-3 rounded-lg border border-gray-100 p-4">
+                  <div className="flex h-full flex-col gap-3 rounded-lg border border-gray-100 p-4 xl:max-w-[320px]">
                     <span className="text-xs text-gray-500 font-medium">
                       Pontualidade de Pagamento
                     </span>
@@ -1530,7 +1554,7 @@ export default function SpcMaxiResultadoPage() {
                 )}
 
                 {hasComprometimentoData && (
-                  <div className="flex h-full flex-col gap-3 rounded-lg border border-gray-100 p-4">
+                  <div className="flex h-full flex-col gap-3 rounded-lg border border-gray-100 p-4 xl:max-w-[320px]">
                     <span className="text-xs text-gray-500 font-medium">
                       Comprometimento de Gastos
                     </span>
@@ -1556,8 +1580,11 @@ export default function SpcMaxiResultadoPage() {
                       </div>
                     </div>
 
-                    <span className="text-[11px] font-medium text-gray-500">
-                      Maior concentração: {comprometimentoGastos.nome}
+                    <span className="text-xs text-gray-500">
+                      Maior concentração:{" "}
+                      <strong className="text-xs text-gray-700">
+                        {comprometimentoGastos.nome}
+                      </strong>
                     </span>
                   </div>
                 )}

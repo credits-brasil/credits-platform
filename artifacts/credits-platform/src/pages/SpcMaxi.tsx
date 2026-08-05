@@ -5,7 +5,6 @@ import {
   ShieldCheck,
   TrendingUp,
   Users,
-  Network,
   AlertCircle,
   CheckCircle2,
   Info,
@@ -452,8 +451,11 @@ export default function SpcMaxiPage() {
         </h2>
 
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-700 cursor-pointer">
-            Selecionar todos
+          <label className="flex items-center gap-2.5 px-3 py-1.5 cursor-pointer group">
+            <span className="text-sm text-gray-600 group-hover:text-gray-800 transition-colors">
+              Selecionar todos
+            </span>
+
             <input
               type="checkbox"
               checked={isAllSelected}
@@ -464,8 +466,28 @@ export default function SpcMaxiPage() {
                   handleSelectAllFilters();
                 }
               }}
-              className="h-3.5 w-3.5 rounded border-gray-300 text-[#243871] focus:ring-[#243871] transition"
+              className="hidden"
             />
+
+            <span
+              className="flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-all"
+              style={{
+                backgroundColor: isAllSelected ? "#243871" : "white",
+                borderColor: isAllSelected ? "#243871" : "#d1d5db",
+              }}
+            >
+              {isAllSelected && (
+                <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                  <path
+                    d="M1 3.5L3.5 6L8 1"
+                    stroke="white"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              )}
+            </span>
           </label>
 
           <span className="px-3 py-1 text-xs font-semibold text-gray-600">
@@ -485,10 +507,12 @@ export default function SpcMaxiPage() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Icon size={15} className="text-gray-500" />
+
                   <span className="text-sm font-semibold text-gray-700">
                     {group.title}
                   </span>
                 </div>
+
                 <button
                   type="button"
                   onClick={() => setActiveModal(group.id)}
@@ -497,7 +521,9 @@ export default function SpcMaxiPage() {
                   <Info size={15} />
                 </button>
               </div>
+
               <hr className="border-gray-100 mb-3" />
+
               <div className="space-y-3.5">
                 {group.items.map((item) => {
                   const checked = selected.has(item.id);
@@ -512,6 +538,7 @@ export default function SpcMaxiPage() {
                         onChange={() => toggleInsumo(item.id)}
                         className="hidden"
                       />
+
                       <span
                         className="flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-all"
                         style={{
@@ -536,6 +563,7 @@ export default function SpcMaxiPage() {
                           </svg>
                         )}
                       </span>
+
                       <span className="text-sm text-gray-600 group-hover:text-gray-800 transition-colors">
                         {item.label}
                       </span>
