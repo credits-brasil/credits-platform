@@ -50,6 +50,9 @@ type SortKey =
   | "credor"
   | "cidade"
   | "origem"
+  | "motivo"
+  | "banco"
+  | "agencia"
   | "fonte";
 type SortDir = "asc" | "desc";
 
@@ -143,8 +146,8 @@ export default function SpcMaxiResultadoPage() {
 
       const response = await fetch(
         // "http://credits-core-staging.sa-east-1.elasticbeanstalk.com/api/325-spc-maxi",
-        // "http://localhost:3333/api/325-spc-maxi",
-        "https://credits-core.onrender.com/api/325-spc-maxi",
+        "http://localhost:3333/api/325-spc-maxi",
+        // "https://credits-core.onrender.com/api/325-spc-maxi",
         {
           method: "POST",
           headers: {
@@ -372,6 +375,55 @@ export default function SpcMaxiResultadoPage() {
 
   const detalhesProtesto = spcData?.protesto?.["detalhe-protesto"] ?? [];
 
+  const ccfSource = (() => {
+    const payload = spcData?.ccf;
+    const detalhes = payload?.["detalhe-ccf"];
+
+    if (Array.isArray(detalhes)) return detalhes;
+    if (detalhes) return [detalhes];
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload?.ccf)) return payload.ccf;
+    if (Array.isArray(payload?.dados)) return payload.dados;
+
+    return [];
+  })();
+
+  const ccfRecords =
+    ccfSource.map((item: any) => {
+      const inclusao =
+        item?.$?.["data-ultimo-cheque"] ??
+        item?.["data-ultimo-cheque"] ??
+        item?.["data-inclusao"] ??
+        item?.["data-ocorrencia"] ??
+        item?.data;
+      const dataExibicao = inclusao
+        ? inclusao.includes("/")
+          ? inclusao
+          : (() => {
+              const [year, month, day] = String(inclusao)
+                .split("T")[0]
+                .split("-");
+              return `${day}/${month}/${year}`;
+            })()
+        : "-";
+
+      return {
+        tipo: item?.$?.["tipo-ocorrencia"] ?? item?.tipo ?? "",
+        inclusao: dataExibicao,
+        vencimento: "–",
+        valor: "–",
+        contrato: item?.contrato ?? "",
+        credor: item?.$?.origem,
+        cidade: item?.cidade ? `${item.cidade}/${item.estado ?? ""}` : "-",
+        origem: item?.origem,
+        motivo: `${item?.motivo?.codigo} - ${item?.motivo?.descricao}`,
+        banco: item?.["ultimo-cheque"]?.banco?.nome,
+        agencia: item?.["ultimo-cheque"]?.["numero-agencia"],
+        fonte: "CCF",
+        grupo: "CCF",
+      };
+    }) ?? [];
+
   /**
    * Padroniza o contrato para evitar diferenças causadas
    * por espaços, letras minúsculas etc.
@@ -424,70 +476,11 @@ export default function SpcMaxiResultadoPage() {
     })),
   ];
 
-  const totalCountCardTodos = registrosCardTodos.length;
-
-  const totalValorCardTodos = registrosCardTodos.reduce(
-    (total, item) => total + item.valor,
-    0,
-  );
-
   const datasCardTodos = registrosCardTodos
     .map((item) => item.data)
     .filter(Boolean) as string[];
 
-  const dataMaisAntigaCardTodos =
-    datasCardTodos.length > 0
-      ? [...datasCardTodos].sort(
-          (a, b) => new Date(a).getTime() - new Date(b).getTime(),
-        )[0]
-      : undefined;
-
-  const dataMaisRecenteCardTodos =
-    datasCardTodos.length > 0
-      ? [...datasCardTodos].sort(
-          (a, b) => new Date(b).getTime() - new Date(a).getTime(),
-        )[0]
-      : undefined;
-
   const GROUPS = [
-    // {
-    //   key: "TODOS",
-    //   label: "TODOS",
-    //   count: totalCountCardTodos,
-    //   valor: formatValor(totalValorCardTodos),
-    //   antiga: formatDate(dataMaisAntigaCardTodos),
-    //   recente: formatDate(dataMaisRecenteCardTodos),
-    // },
-    // {
-    //   key: "TODOS",
-    //   label: "TODOS",
-    //   count:
-    //     Number(spcData?.spc?.resumo?.["quantidade-total"] ?? 0) +
-    //     Number(
-    //       spcData?.["pendencia-financeira"]?.resumo?.["quantidade-total"] ?? 0,
-    //     ) +
-    //     Number(spcData?.protesto?.resumo?.["quantidade-total"] ?? 0),
-
-    //   valor: formatValor(
-    //     Number(spcData?.spc?.resumo?.["valor-total"] ?? 0) +
-    //       Number(
-    //         spcData?.["pendencia-financeira"]?.resumo?.["valor-total"] ?? 0,
-    //       ) +
-    //       Number(spcData?.protesto?.resumo?.["valor-total"] ?? 0),
-    //   ),
-
-    //   antiga: formatDate(
-    //     antigas.sort(
-    //       (a, b) => parseDate(a)!.getTime() - parseDate(b)!.getTime(),
-    //     )[0],
-    //   ),
-
-    //   recente: formatDate(
-    //     recentes.sort(
-    //       (a, b) => parseDate(b)!.getTime() - parseDate(a)!.getTime(),
-    //     )[0],
-    //   ),
-    // },
     {
       key: "SPC",
       label: "SPC",
@@ -539,10 +532,18 @@ export default function SpcMaxiResultadoPage() {
     {
       key: "CCF",
       label: "CCF",
-      count: Number(spcData?.ccf ?? 0),
+      count: ccfRecords.length,
       valor: "–",
-      antiga: "-",
-      recente: "-",
+      antiga: ccfRecords.length
+        ? [...ccfRecords].sort(
+            (a, b) => parseBRDate(a.inclusao) - parseBRDate(b.inclusao),
+          )[0].inclusao
+        : "-",
+      recente: ccfRecords.length
+        ? ([...ccfRecords]
+            .sort((a, b) => parseBRDate(a.inclusao) - parseBRDate(b.inclusao))
+            .at(-1)?.inclusao ?? "-")
+        : "-",
     },
   ];
 
@@ -603,7 +604,12 @@ export default function SpcMaxiResultadoPage() {
       grupo: "PROTESTOS",
     })) ?? [];
 
-  const ALL_RECORDS = [...spcRecords, ...serasaRecords, ...protestoRecords];
+  const ALL_RECORDS = [
+    ...spcRecords,
+    ...serasaRecords,
+    ...protestoRecords,
+    ...ccfRecords,
+  ];
 
   const chartData = (() => {
     const records =
@@ -670,11 +676,14 @@ export default function SpcMaxiResultadoPage() {
         let va: string | number = a[sortKey];
         let vb: string | number = b[sortKey];
         if (sortKey === "inclusao" || sortKey === "vencimento") {
-          va = parseBRDate(a[sortKey]);
-          vb = parseBRDate(b[sortKey]);
+          va = parseBRDate(String(a[sortKey] ?? ""));
+          vb = parseBRDate(String(b[sortKey] ?? ""));
         } else if (sortKey === "valor") {
-          va = parseBRValue(a[sortKey]);
-          vb = parseBRValue(b[sortKey]);
+          va = parseBRValue(String(a[sortKey] ?? ""));
+          vb = parseBRValue(String(b[sortKey] ?? ""));
+        } else {
+          va = String(a[sortKey] ?? "");
+          vb = String(b[sortKey] ?? "");
         }
         if (va < vb) return sortDir === "asc" ? -1 : 1;
         if (va > vb) return sortDir === "asc" ? 1 : -1;
@@ -850,6 +859,64 @@ export default function SpcMaxiResultadoPage() {
 
   const normalizedScore = Math.min(Math.max(score, 0), 1000);
 
+  const pontualidadePagamentoPercent = (() => {
+    const segmentos =
+      spcData?.["indice-pontualidade-pagamento-cadastro-positivo"]?.[
+        "detalhe-indice-pontualidade-pagamento-cadastro-positivo"
+      ]?.segmentos ?? [];
+
+    const valores = segmentos.flatMap((segmento: any) =>
+      (segmento?.periodos ?? [])
+        .filter(
+          (periodo: any) =>
+            periodo?.descricao === "PAGAMENTO_EM_DIA" &&
+            Number(periodo?.porcentual ?? 0) > 0,
+        )
+        .map((periodo: any) => Number(periodo?.porcentual ?? 0)),
+    );
+
+    if (!valores.length) return 0;
+
+    return valores.reduce((total, valor) => total + valor, 0) / valores.length;
+  })();
+
+  const comprometimentoGastos = (() => {
+    const segmentos =
+      spcData?.["indice-comportamento-gastos-cadastro-positivo"]?.[
+        "detalhe-indice-comportamento-gastos-cadastro-positivo"
+      ]?.segmentos ?? [];
+
+    const maiorSegmento = [...segmentos]
+      .filter(
+        (segmento: any) =>
+          Number(segmento?.["porcentual-representatividade"] ?? 0) > 0,
+      )
+      .sort(
+        (a: any, b: any) =>
+          Number(b?.["porcentual-representatividade"] ?? 0) -
+          Number(a?.["porcentual-representatividade"] ?? 0),
+      )[0];
+
+    return {
+      percentual: Number(maiorSegmento?.["porcentual-representatividade"] ?? 0),
+      nome: maiorSegmento?.nome ?? "-",
+    };
+  })();
+
+  const scrOperacao = (() => {
+    const detalhes =
+      spcData?.["insumo-operacao-scr"]?.["detalhe-insumo-operacao-scr"] ?? [];
+    const primeiro = detalhes[0] ?? {};
+
+    return {
+      quantidade: primeiro?.quantidade ?? "0",
+      contratadoInicial: Number(
+        primeiro?.["valor-total-contratado-inicial"] ?? 0,
+      ),
+      contratadoFinal: Number(primeiro?.["valor-total-contratado-final"] ?? 0),
+    };
+  })();
+
   const radius = 50;
   const circumference = 2 * Math.PI * radius;
 
@@ -947,7 +1014,9 @@ export default function SpcMaxiResultadoPage() {
                   2026060900042
                   <button
                     type="button"
-                    onClick={() => copyToClipboard("2026060900042")}
+                    onClick={() =>
+                      copyToClipboard("2026060900042", "protocolo")
+                    }
                     className="text-gray-400 hover:text-[#243871] hover:cursor-pointer"
                     title="Copiar Protocolo"
                   >
@@ -1031,6 +1100,7 @@ export default function SpcMaxiResultadoPage() {
                     onClick={() =>
                       copyToClipboard(
                         spcData?.consumidor?.cpf ?? spcData?.consumidor?.cnpj,
+                        spcData?.consumidor?.cpf ? `CPF` : `CNPJ`,
                       )
                     }
                     className="text-gray-400 hover:text-[#243871] hover:cursor-pointer"
@@ -1055,6 +1125,7 @@ export default function SpcMaxiResultadoPage() {
                       copyToClipboard(
                         spcData?.consumidor?.nome ??
                           spcData?.consumidor?.["razao-social"],
+                        spcData?.consumidor?.cpf ? "Nome" : "Razão Social",
                       )
                     }
                     className="text-gray-400 hover:text-[#243871] hover:cursor-pointer"
@@ -1214,7 +1285,11 @@ export default function SpcMaxiResultadoPage() {
                   },
                   {
                     label: "Limite Sugerido",
-                    value: formatValor(spcData?.["limite-credito-sugerido"]),
+                    value: formatValor(
+                      spcData?.["limite-credito-sugerido"]?.resumo?.[
+                        "valor-total"
+                      ],
+                    ),
                   },
                   { label: "Comprometimento", value: "42%" },
                   { label: "Valor SCR", value: "R$ 3.800" },
@@ -1267,12 +1342,15 @@ export default function SpcMaxiResultadoPage() {
                   >
                     <div
                       className="h-3 rounded-full"
-                      style={{ width: "93%", backgroundColor: "#7EC8E3" }}
+                      style={{
+                        width: `${Math.min(Math.max(pontualidadePagamentoPercent, 0), 100)}%`,
+                        backgroundColor: "#7EC8E3",
+                      }}
                     />
                   </div>
 
                   <span className="absolute right-0 text-[11px] font-semibold text-gray-700 mt-1">
-                    93%
+                    {pontualidadePagamentoPercent.toFixed(2)}%
                   </span>
                 </div>
               </div>
@@ -1289,34 +1367,57 @@ export default function SpcMaxiResultadoPage() {
                   >
                     <div
                       className="h-3 rounded-full"
-                      style={{ width: "72%", backgroundColor: "#5B8DB8" }}
+                      style={{
+                        width: `${Math.min(Math.max(comprometimentoGastos.percentual, 0), 100)}%`,
+                        backgroundColor: "#5B8DB8",
+                      }}
                     />
                   </div>
 
                   <span className="absolute right-0 text-[11px] font-semibold text-gray-700 mt-1">
-                    72%
+                    {comprometimentoGastos.percentual.toFixed(2)}%
                   </span>
                 </div>
+
+                <span className="text-[11px] font-medium text-gray-500">
+                  Maior concentração: {comprometimentoGastos.nome}
+                </span>
               </div>
 
               <div className="flex flex-col gap-3">
                 <span className="text-xs text-gray-500 font-medium">SCR</span>
+
                 <div
                   className="grid gap-3"
-                  style={{ gridTemplateColumns: "40% 60%" }}
+                  style={{ gridTemplateColumns: "20% 30% 30%" }}
                 >
                   <div className="flex flex-col gap-0.5">
                     <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
                       Operações
                     </span>
-                    <span className="text-base font-bold text-gray-800">4</span>
+
+                    <span className="text-base font-bold text-gray-800">
+                      {scrOperacao.quantidade}
+                    </span>
                   </div>
+
                   <div className="flex flex-col gap-0.5">
                     <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-                      Contratado
+                      Contratado Inicial
                     </span>
+
                     <span className="text-base font-bold text-gray-800">
-                      R$ 45.000,00
+                      {formatValor(scrOperacao.contratadoInicial)}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                      Contratado Final
+                    </span>
+
+                    <span className="text-base font-bold text-gray-800">
+                      {formatValor(scrOperacao.contratadoFinal)}
                     </span>
                   </div>
                 </div>
@@ -1422,73 +1523,50 @@ export default function SpcMaxiResultadoPage() {
           </div>
 
           <table className="w-full text-xs table-fixed">
-            {
-              activeGroup === "TODOS" ? (
-                <colgroup>
-                  <col style={{ width: "100px" }} />
-                  <col style={{ width: "100px" }} />
-                  <col style={{ width: "100px" }} />
-                  <col />
-                  <col style={{width: "280px"}}/>
-                  <col />
-                  <col />
-                  <col style={{ width: "100px" }} />
-                  <col style={{ width: "70px" }} />
-                  <col style={{ width: "30px" }} />
-                </colgroup>
-              ) : // [
-              //     { label: "Tipo", key: "tipo" },
-              //     { label: "Inclusão", key: "inclusao" },
-              //     { label: "Vencimento", key: "vencimento" },
-              //     { label: "Valor", key: "valor" },
-              //     { label: "Credor", key: "credor" },
-              //     { label: "Cidade", key: "cidade" },
-              //     { label: "Origem", key: "origem" },
-              //     { label: "Telefone", key: "telefone" },
-              //     { label: "Fonte", key: "fonte" },
-              //     { label: "", key: null },
-              //   ]
-              activeGroup === "PROTESTOS" ? (
-                <colgroup>
-                  <col style={{ width: "120px" }} />
-                  <col style={{ width: "120px" }} />
-                  <col />
-                  <col />
-                </colgroup>
-              ) : (
-                <colgroup>
-                  <col style={{ width: "120px" }} />
-                  <col style={{ width: "120px" }} />
-                  <col />
-                  <col />
-                  <col />
-                  <col />
-                  <col style={{ width: "30px" }} />
-                </colgroup>
-              )
-            }
+            {activeGroup === "CCF" ? (
+              <colgroup>
+                <col style={{ width: "120px" }} />
+                <col style={{ width: "120px" }} />
+                <col style={{ width: "120px" }} />
+                <col />
+                <col />
+              </colgroup>
+            ) : activeGroup === "PROTESTOS" ? (
+              <colgroup>
+                <col style={{ width: "120px" }} />
+                <col style={{ width: "120px" }} />
+                <col />
+                <col />
+                <col style={{ width: "30px" }} />
+              </colgroup>
+            ) : (
+              <colgroup>
+                <col style={{ width: "120px" }} />
+                <col style={{ width: "120px" }} />
+                <col />
+                <col />
+                <col />
+                <col />
+                <col style={{ width: "30px" }} />
+              </colgroup>
+            )}
 
             <thead>
               <tr className="border-b border-gray-100">
-                {(activeGroup === "TODOS"
+                {(activeGroup === "CCF"
                   ? [
-                      { label: "Tipo", key: "tipo" },
                       { label: "Inclusão", key: "inclusao" },
-                      { label: "Vencimento", key: "vencimento" },
-                      { label: "Valor", key: "valor" },
-                      { label: "Credor", key: "credor" },
-                      { label: "Cidade", key: "cidade" },
+                      { label: "Motivo", key: "motivo" },
+                      { label: "Agência", key: "agencia" },
+                      { label: "Banco", key: "banco" },
                       { label: "Origem", key: "origem" },
-                      { label: "Telefone", key: "telefone" },
-                      { label: "Fonte", key: "fonte" },
-                      { label: "", key: null },
                     ]
                   : activeGroup === "PROTESTOS"
                     ? [
                         { label: "Data", key: "data" },
                         { label: "Cartório", key: "cartorio" },
-                        { label: "Cidade", key: "cidade" },
                         { label: "Valor", key: "valor" },
+                        { label: "Cidade", key: "cidade" },
                       ]
                     : ([
                         { label: "Inclusão", key: "inclusao" },
@@ -1551,35 +1629,69 @@ export default function SpcMaxiResultadoPage() {
                     </td>
                   )}
 
-                  {activeGroup !== "PROTESTOS" && (
+                  {activeGroup === "CCF" && (
                     <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
                       {r.inclusao}
                     </td>
                   )}
 
-                  {activeGroup !== "PROTESTOS" && (
+                  {activeGroup === "CCF" && (
+                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                      {r.motivo}
+                    </td>
+                  )}
+
+                  {activeGroup === "CCF" && (
+                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                      {r.agencia}
+                    </td>
+                  )}
+
+                  {activeGroup === "CCF" && (
+                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                      {r.banco}
+                    </td>
+                  )}
+
+                  {activeGroup === "CCF" && (
+                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                      {r.origem}
+                    </td>
+                  )}
+
+                  {activeGroup !== "PROTESTOS" && activeGroup !== "CCF" && (
+                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                      {r.inclusao}
+                    </td>
+                  )}
+
+                  {activeGroup !== "PROTESTOS" && activeGroup !== "CCF" && (
                     <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
                       {r.vencimento}
                     </td>
                   )}
 
-                  <td className="py-2.5 pr-4 text-gray-800 font-medium whitespace-nowrap">
-                    {r.valor}
-                  </td>
+                  {activeGroup !== "CCF" && (
+                    <td className="py-2.5 pr-4 text-gray-800 font-medium whitespace-nowrap">
+                      {r.valor}
+                    </td>
+                  )}
 
-                  {activeGroup !== "PROTESTOS" && (
+                  {activeGroup !== "PROTESTOS" && activeGroup !== "CCF" && (
                     <td className="py-2.5 pr-4 text-gray-700">{r.credor}</td>
                   )}
 
-                  <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                    {r.cidade}
-                  </td>
+                  {activeGroup !== "CCF" && (
+                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                      {r.cidade}
+                    </td>
+                  )}
 
-                  {activeGroup !== "PROTESTOS" && (
+                  {activeGroup !== "PROTESTOS" && activeGroup !== "CCF" && (
                     <td className="py-2.5 pr-4 text-gray-600">{r.origem}</td>
                   )}
 
-                  {activeGroup === "TODOS" && (
+                  {/* {activeGroup === "TODOS" && (
                     <td className="py-2.5 pr-4 text-gray-600">{r.telefone}</td>
                   )}
 
@@ -1587,16 +1699,18 @@ export default function SpcMaxiResultadoPage() {
                     <td className="py-2.5 pr-4">
                       <FonteBadge fonte={r.fonte} />
                     </td>
-                  )}
+                  )} */}
 
-                  <td className="py-2.5">
-                    <button
-                      type="button"
-                      className="text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      <Eye size={13} />
-                    </button>
-                  </td>
+                  {activeGroup !== "CCF" && (
+                    <td className="py-2.5">
+                      <button
+                        type="button"
+                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        <Eye size={13} />
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

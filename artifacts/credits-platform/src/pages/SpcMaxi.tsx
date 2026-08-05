@@ -58,7 +58,10 @@ const CPF_INSUMO_GROUPS: InsumoGroup[] = [
     id: "informacoes-scr",
     title: "Informações do SCR",
     icon: FileText,
-    items: [{ id: "5257", label: "Operações no SCR" }],
+    items: [
+      { id: "5256", label: "Operações no SCR" },
+      { id: "5257", label: "Histórico de Operações no SCR" },
+    ],
   },
   {
     id: "solucoes-antifraude",
@@ -450,7 +453,6 @@ export default function SpcMaxiPage() {
         <div className="flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-700 cursor-pointer">
             Selecionar todos
-
             <input
               type="checkbox"
               checked={isAllSelected}
