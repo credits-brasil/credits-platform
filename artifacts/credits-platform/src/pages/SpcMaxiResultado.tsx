@@ -773,14 +773,14 @@ export default function SpcMaxiResultadoPage() {
     shouldShowScore12Meses || shouldShowScore3Meses;
   const hasBothScorePeriods = shouldShowScore12Meses && shouldShowScore3Meses;
 
-  const scoreColor = (() => {
-    if (normalizedScore >= 675) return "#259f58";
-    if (normalizedScore >= 467) return "#ffca39";
+  const getScoreColor = (value: number) => {
+    if (value >= 675) return "#259f58";
+    if (value >= 467) return "#ffca39";
     return "#f6a020";
-  })();
+  };
 
-  const riscoInfo = (() => {
-    if (normalizedScore >= 675) {
+  const getRiscoInfo = (value: number) => {
+    if (value >= 675) {
       return {
         label: "Risco Baixo",
         description:
@@ -789,7 +789,7 @@ export default function SpcMaxiResultadoPage() {
       };
     }
 
-    if (normalizedScore >= 467) {
+    if (value >= 467) {
       return {
         label: "Risco Medio",
         badge: { backgroundColor: "#FEF3C7", color: "#D97706" },
@@ -800,7 +800,15 @@ export default function SpcMaxiResultadoPage() {
       label: "Risco Alto",
       badge: { backgroundColor: "#FEE2E2", color: "#DC2626" },
     };
-  })();
+  };
+
+  const scoreColor = getScoreColor(normalizedScore);
+  const scoreColor12Meses = getScoreColor(normalizedScore12Meses);
+  const scoreColor3Meses = getScoreColor(normalizedScore3Meses);
+
+  const riscoInfo = getRiscoInfo(normalizedScore);
+  const riscoInfo12Meses = getRiscoInfo(normalizedScore12Meses);
+  const riscoInfo3Meses = getRiscoInfo(normalizedScore3Meses);
 
   const pontualidadePagamentoPercent = (() => {
     const segmentos =
@@ -886,6 +894,8 @@ export default function SpcMaxiResultadoPage() {
   const arcLength = circumference * arcPercentage;
 
   const progressLength = (normalizedScore / 1000) * arcLength;
+  const progressLength12Meses = (normalizedScore12Meses / 1000) * arcLength;
+  const progressLength3Meses = (normalizedScore3Meses / 1000) * arcLength;
 
   if (isLoading) {
     return (
@@ -1362,10 +1372,10 @@ export default function SpcMaxiResultadoPage() {
                             cy="60"
                             r={radius}
                             fill="none"
-                            stroke={scoreColor}
+                            stroke={scoreColor12Meses}
                             strokeWidth="9"
-                            strokeDasharray={`${progressLength} ${
-                              circumference - progressLength
+                            strokeDasharray={`${progressLength12Meses} ${
+                              circumference - progressLength12Meses
                             }`}
                             strokeLinecap="round"
                             transform="rotate(135 60 60)"
@@ -1376,7 +1386,7 @@ export default function SpcMaxiResultadoPage() {
                         <div className="absolute flex flex-col items-center leading-none">
                           <span
                             className="text-3xl font-bold"
-                            style={{ color: scoreColor }}
+                            style={{ color: scoreColor12Meses }}
                           >
                             {normalizedScore12Meses}
                           </span>
@@ -1391,9 +1401,9 @@ export default function SpcMaxiResultadoPage() {
                         <div className="flex items-center gap-2">
                           <span
                             className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
-                            style={riscoInfo.badge}
+                            style={riscoInfo12Meses.badge}
                           >
-                            {riscoInfo.label}
+                            {riscoInfo12Meses.label}
                           </span>
 
                           <span className="text-xs text-gray-500">
@@ -1456,10 +1466,10 @@ export default function SpcMaxiResultadoPage() {
                             cy="60"
                             r={radius}
                             fill="none"
-                            stroke={scoreColor}
+                            stroke={scoreColor3Meses}
                             strokeWidth="9"
-                            strokeDasharray={`${progressLength} ${
-                              circumference - progressLength
+                            strokeDasharray={`${progressLength3Meses} ${
+                              circumference - progressLength3Meses
                             }`}
                             strokeLinecap="round"
                             transform="rotate(135 60 60)"
@@ -1470,7 +1480,7 @@ export default function SpcMaxiResultadoPage() {
                         <div className="absolute flex flex-col items-center leading-none">
                           <span
                             className="text-3xl font-bold"
-                            style={{ color: scoreColor }}
+                            style={{ color: scoreColor3Meses }}
                           >
                             {normalizedScore3Meses}
                           </span>
@@ -1485,9 +1495,9 @@ export default function SpcMaxiResultadoPage() {
                         <div className="flex items-center gap-2">
                           <span
                             className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
-                            style={riscoInfo.badge}
+                            style={riscoInfo3Meses.badge}
                           >
-                            {riscoInfo.label}
+                            {riscoInfo3Meses.label}
                           </span>
 
                           <span className="text-xs text-gray-500">
