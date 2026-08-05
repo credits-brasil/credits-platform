@@ -476,10 +476,6 @@ export default function SpcMaxiResultadoPage() {
     })),
   ];
 
-  const datasCardTodos = registrosCardTodos
-    .map((item) => item.data)
-    .filter(Boolean) as string[];
-
   const GROUPS = [
     {
       key: "SPC",
@@ -857,7 +853,51 @@ export default function SpcMaxiResultadoPage() {
       ?.score ?? 0,
   );
 
-  const normalizedScore = Math.min(Math.max(score, 0), 1000);
+  const normalizedScore = 300;
+  // const normalizedScore = Math.min(Math.max(score, 0), 1000);
+
+  const scoreColor = (() => {
+    if (normalizedScore >= 750) return "#259f58";
+    if (normalizedScore >= 500) return "#3487f1";
+    if (normalizedScore >= 250) return "#ffca39";
+    return "#f6a020";
+  })();
+
+  const riscoInfo = (() => {
+    if (normalizedScore >= 750) {
+      return {
+        label: "Risco Muito Baixo",
+        description:
+          "Perfil com baixo risco de inadimplencia e bom historico de pagamento.",
+        badge: { backgroundColor: "#DCFCE7", color: "#15803D" },
+      };
+    }
+
+    if (normalizedScore >= 500) {
+      return {
+        label: "Risco Baixo",
+        description:
+          "Perfil com tendencia favoravel, mas com pontos de atencao pontuais.",
+        badge: { backgroundColor: "#DBEAFE", color: "#1D4ED8" },
+      };
+    }
+
+    if (normalizedScore >= 250) {
+      return {
+        label: "Risco Medio",
+        description:
+          "Perfil com historico de atrasos pontuais, sem restricoes criticas recorrentes.",
+        badge: { backgroundColor: "#FEF3C7", color: "#D97706" },
+      };
+    }
+
+    return {
+      label: "Risco Alto",
+      description:
+        "Perfil com maior probabilidade de inadimplencia e necessidade de analise reforcada.",
+      badge: { backgroundColor: "#FEE2E2", color: "#DC2626" },
+    };
+  })();
 
   const pontualidadePagamentoPercent = (() => {
     const segmentos =
@@ -879,6 +919,9 @@ export default function SpcMaxiResultadoPage() {
 
     return valores.reduce((total, valor) => total + valor, 0) / valores.length;
   })();
+
+  const hasPontualidadeData =
+    spcData?.["indice-pontualidade-pagamento-cadastro-positivo"];
 
   const comprometimentoGastos = (() => {
     const segmentos =
@@ -903,6 +946,9 @@ export default function SpcMaxiResultadoPage() {
     };
   })();
 
+  const hasComprometimentoData =
+    spcData?.["indice-comportamento-gastos-cadastro-positivo"];
+
   const scrOperacao = (() => {
     const detalhes =
       spcData?.["insumo-operacao-scr"]?.["detalhe-insumo-operacao-scr"] ?? [];
@@ -916,6 +962,12 @@ export default function SpcMaxiResultadoPage() {
       contratadoFinal: Number(primeiro?.["valor-total-contratado-final"] ?? 0),
     };
   })();
+
+  const hasScrData = spcData?.["insumo-operacao-scr"];
+  const hasComportamentoFinanceiroData =
+    Boolean(hasPontualidadeData) ||
+    Boolean(hasComprometimentoData) ||
+    Boolean(hasScrData);
 
   const radius = 50;
   const circumference = 2 * Math.PI * radius;
@@ -1140,10 +1192,8 @@ export default function SpcMaxiResultadoPage() {
                 </div>
               </div>
 
-              {/* Divider */}
               <div className="w-px self-stretch bg-gray-100" />
 
-              {/* Col 2: status + complementar */}
               <div className="flex flex-col gap-1.5 flex-1">
                 <span
                   className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
@@ -1171,24 +1221,28 @@ export default function SpcMaxiResultadoPage() {
                 )}
               </div>
 
-              {/* <div className="w-px self-stretch bg-gray-100" /> */}
+              <div className="w-px self-stretch bg-gray-100" />
 
-              {/* <div className="flex flex-col gap-1.5 basis-[44%] flex-shrink-0">
-            <span
-              className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
-              style={{ backgroundColor: "#FEF3C7", color: "#D97706" }}
-              >
-              Risco Médio
-              </span>
-              <span className="text-xs text-gray-400">
-              Perfil com histórico de atrasos pontuais, sem restrições ativas.
-              </span>
-          </div> */}
+              <div className="flex flex-col gap-1.5 basis-[44%] flex-shrink-0">
+                <span
+                  className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
+                  style={riscoInfo.badge}
+                >
+                  {riscoInfo.label}
+                </span>
+
+                <span className="text-xs text-gray-400">
+                  {
+                    spcData?.["spc-score-12-meses"]?.[
+                      "detalhe-spc-score-12-meses"
+                    ][0]?.["mesagem-interpretativa-score"]
+                  }
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Score & Capacidade */}
         <div
           id="section-score"
           className="bg-white rounded-xl border border-gray-200 p-5 mb-4"
@@ -1204,7 +1258,6 @@ export default function SpcMaxiResultadoPage() {
                 style={{ width: 140, height: 140 }}
               >
                 <svg viewBox="0 0 120 120" width="140" height="140">
-                  {/* Arco de fundo */}
                   <circle
                     cx="60"
                     cy="60"
@@ -1217,13 +1270,12 @@ export default function SpcMaxiResultadoPage() {
                     transform="rotate(135 60 60)"
                   />
 
-                  {/* Arco dinâmico */}
                   <circle
                     cx="60"
                     cy="60"
                     r={radius}
                     fill="none"
-                    stroke="#ED884A"
+                    stroke={scoreColor}
                     strokeWidth="9"
                     strokeDasharray={`${progressLength} ${
                       circumference - progressLength
@@ -1237,7 +1289,7 @@ export default function SpcMaxiResultadoPage() {
                 <div className="absolute flex flex-col items-center leading-none">
                   <span
                     className="text-3xl font-bold"
-                    style={{ color: "#ED884A" }}
+                    style={{ color: scoreColor }}
                   >
                     {normalizedScore}
                   </span>
@@ -1251,9 +1303,9 @@ export default function SpcMaxiResultadoPage() {
               <div className="flex flex-col gap-2">
                 <span
                   className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
-                  style={{ backgroundColor: "#FEF3C7", color: "#D97706" }}
+                  style={riscoInfo.badge}
                 >
-                  Risco Médio
+                  {riscoInfo.label}
                 </span>
 
                 <p className="text-xs text-gray-500">
@@ -1262,8 +1314,6 @@ export default function SpcMaxiResultadoPage() {
                       "detalhe-spc-score-12-meses"
                     ][0]?.["mesagem-interpretativa-score"]
                   }
-                  {/* Inadimplência:{" "} */}
-                  {/* <span className="font-semibold text-gray-700">18.5%</span> */}
                 </p>
               </div>
             </div>
@@ -1277,20 +1327,30 @@ export default function SpcMaxiResultadoPage() {
 
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  {
-                    label: "Renda Presumida",
-                    value: formatValor(
-                      spcData?.["renda-presumida-spc"]?.resumo?.["valor-total"],
-                    ),
-                  },
-                  {
-                    label: "Limite Sugerido",
-                    value: formatValor(
-                      spcData?.["limite-credito-sugerido"]?.resumo?.[
-                        "valor-total"
-                      ],
-                    ),
-                  },
+                  ...(spcData?.["renda-presumida-spc"]
+                    ? [
+                        {
+                          label: "Renda Presumida",
+                          value: formatValor(
+                            spcData?.["renda-presumida-spc"]?.resumo?.[
+                              "valor-total"
+                            ],
+                          ),
+                        },
+                      ]
+                    : []),
+                  ...(spcData?.["limite-credito-sugerido"]
+                    ? [
+                        {
+                          label: "Limite Sugerido",
+                          value: formatValor(
+                            spcData?.["limite-credito-sugerido"]?.resumo?.[
+                              "valor-total"
+                            ],
+                          ),
+                        },
+                      ]
+                    : []),
                   { label: "Comprometimento", value: "42%" },
                   { label: "Valor SCR", value: "R$ 3.800" },
                 ].map(({ label, value }) => (
@@ -1322,111 +1382,123 @@ export default function SpcMaxiResultadoPage() {
             </div>
           </div>
 
-          <div className="border-t border-gray-100 my-4" />
+          {hasComportamentoFinanceiroData && (
+            <div className="border-t border-gray-100 my-4" />
+          )}
 
-          <div>
-            <p className="text-xs font-semibold text-gray-500 mb-4">
-              Comportamento Financeiro
-            </p>
+          {hasComportamentoFinanceiroData && (
+            <div className="space-y-4">
+              <p className="text-xs font-semibold text-gray-500 mb-4">
+                Comportamento Financeiro
+              </p>
 
-            <div className="grid grid-cols-3 gap-16 pb-1">
-              <div className="flex flex-col gap-3">
-                <span className="text-xs text-gray-500 font-medium">
-                  Pontualidade de Pagamento
-                </span>
-
-                <div className="relative">
-                  <div
-                    className="h-3 w-full rounded-full"
-                    style={{ backgroundColor: "#E5E7EB" }}
-                  >
-                    <div
-                      className="h-3 rounded-full"
-                      style={{
-                        width: `${Math.min(Math.max(pontualidadePagamentoPercent, 0), 100)}%`,
-                        backgroundColor: "#7EC8E3",
-                      }}
-                    />
-                  </div>
-
-                  <span className="absolute right-0 text-[11px] font-semibold text-gray-700 mt-1">
-                    {pontualidadePagamentoPercent.toFixed(2)}%
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                <span className="text-xs text-gray-500 font-medium">
-                  Comprometimento de Gastos
-                </span>
-
-                <div className="relative">
-                  <div
-                    className="h-3 w-full rounded-full"
-                    style={{ backgroundColor: "#E5E7EB" }}
-                  >
-                    <div
-                      className="h-3 rounded-full"
-                      style={{
-                        width: `${Math.min(Math.max(comprometimentoGastos.percentual, 0), 100)}%`,
-                        backgroundColor: "#5B8DB8",
-                      }}
-                    />
-                  </div>
-
-                  <span className="absolute right-0 text-[11px] font-semibold text-gray-700 mt-1">
-                    {comprometimentoGastos.percentual.toFixed(2)}%
-                  </span>
-                </div>
-
-                <span className="text-[11px] font-medium text-gray-500">
-                  Maior concentração: {comprometimentoGastos.nome}
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                <span className="text-xs text-gray-500 font-medium">SCR</span>
-
-                <div
-                  className="grid gap-3"
-                  style={{ gridTemplateColumns: "20% 30% 30%" }}
-                >
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-                      Operações
+              <div className="grid grid-cols-1 gap-4 pb-1 md:grid-cols-2 xl:grid-cols-3 xl:gap-6">
+                {hasPontualidadeData && (
+                  <div className="flex h-full flex-col gap-3 rounded-lg border border-gray-100 p-4">
+                    <span className="text-xs text-gray-500 font-medium">
+                      Pontualidade de Pagamento
                     </span>
 
-                    <span className="text-base font-bold text-gray-800">
-                      {scrOperacao.quantidade}
+                    <div className="space-y-1.5">
+                      <div
+                        className="h-3 w-full rounded-full"
+                        style={{ backgroundColor: "#E5E7EB" }}
+                      >
+                        <div
+                          className="h-3 rounded-full"
+                          style={{
+                            width: `${Math.min(Math.max(pontualidadePagamentoPercent, 0), 100)}%`,
+                            backgroundColor: "#7EC8E3",
+                          }}
+                        />
+                      </div>
+
+                      <div className="flex justify-end">
+                        <span className="text-[11px] font-semibold text-gray-700">
+                          {pontualidadePagamentoPercent.toFixed(2)}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {hasComprometimentoData && (
+                  <div className="flex h-full flex-col gap-3 rounded-lg border border-gray-100 p-4">
+                    <span className="text-xs text-gray-500 font-medium">
+                      Comprometimento de Gastos
+                    </span>
+
+                    <div className="space-y-1.5">
+                      <div
+                        className="h-3 w-full rounded-full"
+                        style={{ backgroundColor: "#E5E7EB" }}
+                      >
+                        <div
+                          className="h-3 rounded-full"
+                          style={{
+                            width: `${Math.min(Math.max(comprometimentoGastos.percentual, 0), 100)}%`,
+                            backgroundColor: "#5B8DB8",
+                          }}
+                        />
+                      </div>
+
+                      <div className="flex justify-end">
+                        <span className="text-[11px] font-semibold text-gray-700">
+                          {comprometimentoGastos.percentual.toFixed(2)}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <span className="text-[11px] font-medium text-gray-500">
+                      Maior concentração: {comprometimentoGastos.nome}
                     </span>
                   </div>
+                )}
 
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-                      Contratado Inicial
+                {hasScrData && (
+                  <div className="flex h-full flex-col gap-3 rounded-lg border border-gray-100 p-4 md:col-span-2 xl:col-span-1">
+                    <span className="text-xs text-gray-500 font-medium">
+                      SCR
                     </span>
 
-                    <span className="text-base font-bold text-gray-800">
-                      {formatValor(scrOperacao.contratadoInicial)}
-                    </span>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                          Operações
+                        </span>
+
+                        <span className="text-base font-bold text-gray-800">
+                          {scrOperacao.quantidade}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                          Contratado Inicial
+                        </span>
+
+                        <span className="text-base font-bold text-gray-800">
+                          {formatValor(scrOperacao.contratadoInicial)}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                          Contratado Final
+                        </span>
+
+                        <span className="text-base font-bold text-gray-800">
+                          {formatValor(scrOperacao.contratadoFinal)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-                      Contratado Final
-                    </span>
-
-                    <span className="text-base font-bold text-gray-800">
-                      {formatValor(scrOperacao.contratadoFinal)}
-                    </span>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Negativos Consolidados */}
         <div
           id="section-negativos"
           className="bg-white rounded-xl border border-gray-200 p-5 mb-4"
