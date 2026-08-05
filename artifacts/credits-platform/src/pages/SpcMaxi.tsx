@@ -126,6 +126,7 @@ const CNPJ_INSUMO_GROUPS: InsumoGroup[] = [
       { id: "5185", label: "Gasto Financeiro Estimado PJ " },
       { id: "5178", label: "Faturamento Presumido" },
       { id: "5257", label: "Índice de Comportamento de Gastos" },
+      { id: "5227", label: "Índice Pontualidade de Pagamento" },
     ],
   },
   {
