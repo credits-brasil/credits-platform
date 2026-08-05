@@ -101,8 +101,8 @@ export default function SpcMaxiResultadoPage() {
       }
 
       const response = await fetch(
-        "http://localhost:3333/api/325-spc-maxi",
-        // "https://credits-core.onrender.com/api/325-spc-maxi",
+        // "http://localhost:3333/api/325-spc-maxi",
+        "https://credits-core.onrender.com/api/325-spc-maxi",
         {
           method: "POST",
           headers: {
