@@ -101,8 +101,8 @@ export default function SpcMaxiResultadoPage() {
       }
 
       const response = await fetch(
-        // "http://localhost:3333/api/325-spc-maxi",
-        "https://credits-core.onrender.com/api/325-spc-maxi",
+        "http://localhost:3333/api/325-spc-maxi",
+        // "https://credits-core.onrender.com/api/325-spc-maxi",
         {
           method: "POST",
           headers: {
@@ -601,6 +601,8 @@ export default function SpcMaxiResultadoPage() {
   });
 
   const possuiAltoVolumeConsultas = consultasUltimos30Dias.length > 10;
+  const alertaDocumento =
+    spcData?.["alerta-documento"]?.["detalhe-alerta-documento"]?.[0];
 
   const alertas = [
     ...(enderecoDiferente
@@ -612,6 +614,31 @@ export default function SpcMaxiResultadoPage() {
               "O endereço informado difere do último endereço registrado nas bases consultadas.",
             fonte: "SPC Brasil",
             tipo: "Endereço",
+          },
+        ]
+      : []),
+    ...(alertaDocumento
+      ? [
+          {
+            severidade: "alto",
+            titulo: "Alerta de documento",
+            descricao: "Foi identificado um alerta de documento na consulta.",
+            fonte: alertaDocumento?.["entidade-origem"] ?? "SPC Brasil",
+            tipo: alertaDocumento?.["tipo-documento-alerta"] ?? "Documento",
+            detalhes: [
+              {
+                label: "Data Inclusão",
+                value: formatDate(alertaDocumento?.["data-inclusao"]),
+              },
+              {
+                label: "Data Ocorrência",
+                value: formatDate(alertaDocumento?.["data-ocorrencia"]),
+              },
+              {
+                label: "Motivo",
+                value: alertaDocumento?.motivo ?? "-",
+              },
+            ],
           },
         ]
       : []),
@@ -2263,6 +2290,24 @@ export default function SpcMaxiResultadoPage() {
                         <p className="text-xs text-gray-500 mb-2">
                           {a.descricao}
                         </p>
+
+                        {a.detalhes?.length ? (
+                          <div className="flex items-center justify-between mb-2 gap-6">
+                            {a.detalhes.map((detalhe) => (
+                              <div
+                                key={`${a.titulo}-${detalhe.label}`}
+                              >
+                                <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                                  {detalhe.label}
+                                </p>
+
+                                <p className="text-xs text-gray-700">
+                                  {detalhe.value || "-"}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
 
                         <div className="flex items-center gap-3 text-[11px] text-gray-400">
                           <span>{a.fonte}</span>
