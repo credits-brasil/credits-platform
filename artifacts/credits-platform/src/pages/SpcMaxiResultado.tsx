@@ -70,6 +70,7 @@ function parseBRValue(s: string): number {
 interface SpcMaxiRequest {
   document: string;
   typeDocument: "CPF" | "CNPJ";
+  telefone?: string;
   insumos: string[];
 }
 
@@ -101,8 +102,8 @@ export default function SpcMaxiResultadoPage() {
       }
 
       const response = await fetch(
-        "http://localhost:3333/api/325-spc-maxi",
-        // "https://credits-core.onrender.com/api/325-spc-maxi",
+        // "http://localhost:3333/api/325-spc-maxi",
+        "https://credits-core.onrender.com/api/325-spc-maxi",
         {
           method: "POST",
           headers: {
@@ -111,6 +112,7 @@ export default function SpcMaxiResultadoPage() {
           body: JSON.stringify({
             document: requestData.document,
             typeDocument: requestData.typeDocument,
+            telefone: requestData.telefone,
             insumos: requestData.insumos,
           }),
         },

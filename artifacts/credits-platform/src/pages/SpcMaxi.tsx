@@ -233,6 +233,14 @@ interface InsumoGroup {
   items: Insumo[];
 }
 
+function formatTelefone(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
 const DEFAULT_SELECTED = new Set<string>([]);
 
 export default function SpcMaxiPage() {
@@ -241,7 +249,9 @@ export default function SpcMaxiPage() {
   const [loading, setLoading] = useState(false);
   const [docType, setDocType] = useState<DocType>("cpf");
   const [documento, setDocumento] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [touched, setTouched] = useState(false);
+  const [touchedTelefone, setTouchedTelefone] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(
     new Set(DEFAULT_SELECTED),
   );
@@ -265,27 +275,40 @@ export default function SpcMaxiPage() {
     docType === "cpf"
       ? documento.replace(/\D/g, "")
       : documento.replace(/[^a-zA-Z0-9]/g, "");
+  const telefoneClean = telefone.replace(/\D/g, "");
+  const shouldRequireTelefone = docType === "cpf" && selected.has("5268");
   const isComplete =
     docType === "cpf" ? rawClean.length === 11 : rawClean.length === 14;
   const isValid = useMemo(() => {
     if (!isComplete) return null;
     return docType === "cpf" ? validateCpf(documento) : validateCnpj(documento);
   }, [documento, docType, isComplete]);
+  const isTelefoneComplete = !shouldRequireTelefone || telefoneClean.length === 11;
+  const showTelefoneError =
+    shouldRequireTelefone && touchedTelefone && !isTelefoneComplete;
+  const showTelefoneSuccess = shouldRequireTelefone && isTelefoneComplete;
 
   const showError = touched && isComplete && isValid === false;
   const showSuccess = isComplete && isValid === true;
-  const canSubmit = showSuccess;
+  const canSubmit = showSuccess && isTelefoneComplete;
 
   const handleDocTypeChange = (type: DocType) => {
     setDocType(type);
     setDocumento("");
+    setTelefone("");
     setTouched(false);
+    setTouchedTelefone(false);
   };
 
   const handleDocumento = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
     setDocumento(docType === "cpf" ? formatCpf(raw) : formatCnpj(raw));
     if (!touched) setTouched(true);
+  };
+
+  const handleTelefone = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTelefone(formatTelefone(e.target.value));
+    if (!touchedTelefone) setTouchedTelefone(true);
   };
 
   const toggleInsumo = (id: string) => {
@@ -320,6 +343,7 @@ export default function SpcMaxiPage() {
       queryClient.setQueryData(["spc-maxi-request"], {
         document: rawClean,
         typeDocument: docType === "cpf" ? "CPF" : "CNPJ",
+        telefone: shouldRequireTelefone ? telefoneClean : undefined,
         insumos: Array.from(selected),
       });
 
@@ -345,11 +369,11 @@ export default function SpcMaxiPage() {
         onSubmit={handleConsultar}
         className="bg-white rounded-xl border border-gray-200 p-5 mb-6"
       >
-        <div className="flex gap-6">
+          <div className="flex gap-6">
           <div className="flex-1 min-w-0 basis-1/2">
             <p className="text-sm font-medium text-gray-700 mb-2">Documento</p>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-100 p-0.5 flex-shrink-0">
                 {(["cpf", "cnpj"] as DocType[]).map((type) => (
                   <button
@@ -407,6 +431,48 @@ export default function SpcMaxiPage() {
                   />
                 )}
               </div>
+
+              {shouldRequireTelefone && (
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={telefone}
+                    onChange={handleTelefone}
+                    onBlur={() => setTouchedTelefone(true)}
+                    placeholder="(00) 00000-0000"
+                    autoComplete="tel"
+                    disabled={loading}
+                    required
+                    className="w-56 rounded-lg border px-3.5 py-2 pr-9 text-sm text-gray-800 placeholder-gray-400 outline-none transition"
+                    style={{
+                      borderColor: showTelefoneError
+                        ? "#ef4444"
+                        : showTelefoneSuccess
+                          ? "#22c55e"
+                          : "#d1d5db",
+                      boxShadow: showTelefoneError
+                        ? "0 0 0 2px rgba(239,68,68,0.12)"
+                        : showTelefoneSuccess
+                          ? "0 0 0 2px rgba(34,197,94,0.12)"
+                          : undefined,
+                    }}
+                  />
+
+                  {showTelefoneError && (
+                    <AlertCircle
+                      size={15}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 pointer-events-none"
+                    />
+                  )}
+
+                  {showTelefoneSuccess && (
+                    <CheckCircle2
+                      size={15}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 pointer-events-none"
+                    />
+                  )}
+                </div>
+              )}
 
               <button
                 type="submit"
