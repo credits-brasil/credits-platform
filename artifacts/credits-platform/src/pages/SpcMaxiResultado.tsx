@@ -2650,6 +2650,106 @@ export default function SpcMaxiResultadoPage() {
         </div>
 
         {(() => {
+          const comportamentoDetalhe =
+            spcData?.["indice-comportamento-gastos-cadastro-positivo"]?.[
+              "detalhe-indice-comportamento-gastos-cadastro-positivo"
+            ];
+
+          const segmentos = comportamentoDetalhe?.segmentos ?? [];
+
+          if (!segmentos.length) return null;
+
+          const gastoInicial = Number(comportamentoDetalhe?.["gasto-total-inicial"] ?? 0);
+          const gastoFinal = Number(comportamentoDetalhe?.["gasto-total-final"] ?? 0);
+          const temFaixaGasto = gastoInicial > 0 || gastoFinal > 0;
+
+          const formatarMoeda = (valor: number) =>
+            new Intl.NumberFormat("pt-BR", {
+              style: "currency",
+              currency: "BRL",
+            })
+              .format(valor)
+              .replace(/\s/g, "");
+
+          return (
+            <div
+              id="section-informacoes-positivas"
+              className="bg-white rounded-xl border border-gray-200 p-5 mb-4"
+            >
+              <h2 className="text-sm font-semibold text-gray-700 mb-4">
+                Informações Positivas
+              </h2>
+
+              <div className="mt-5 border-t border-gray-100 pt-4">
+                {temFaixaGasto ? (
+                  <div
+                    className="mb-3 flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+                    style={{ backgroundColor: "#F8F9FB" }}
+                  >
+                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                      Gasto médio mensal
+                    </span>
+                    <span className="text-base font-bold text-gray-800">
+                      Entre {formatarMoeda(gastoInicial)} e {formatarMoeda(gastoFinal)}
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
+                    Índice de comportamento de gastos
+                  </p>
+                )}
+
+                <table className="w-full text-xs table-fixed">
+                  <colgroup>
+                    <col style={{ width: "65%" }} />
+                    <col style={{ width: "35%" }} />
+                  </colgroup>
+
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      <th className="text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide pb-2 pr-4">
+                        Categoria
+                      </th>
+                      <th className="text-right text-[10px] font-semibold text-gray-400 uppercase tracking-wide pb-2 pr-0">
+                        % de Representatividade
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {segmentos.map((segmento: any, index: number) => {
+                      const percentual = Number(
+                        segmento?.["porcentual-representatividade"] ?? 0,
+                      );
+                      const percentualExibicao = Number.isFinite(percentual)
+                        ? percentual
+                        : 0;
+
+                      return (
+                        <tr
+                          key={`${segmento?.nome ?? "segmento"}-${index}`}
+                          className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                        >
+                          <td className="py-2.5 pr-4 text-gray-700 font-medium">
+                            {segmento?.nome ?? "-"}
+                          </td>
+
+                          <td className="py-2.5 pr-0 text-right text-gray-600 whitespace-nowrap">
+                            {percentualExibicao > 0
+                              ? `${percentualExibicao.toFixed(2)}%`
+                              : "0%"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })()}
+
+        {(() => {
           const consultas =
             spcData?.["consulta-realizada"]?.["detalhe-consulta-realizada"] ??
             [];
