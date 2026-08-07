@@ -2114,6 +2114,91 @@ export default function SpcMaxiResultadoPage() {
               </ResponsiveContainer>
             </div>
           )}
+
+          {(() => {
+            const riscoCreditoDetalhe =
+              spcData?.["insumo-classificacao-risco-debitos-ativos"]?.detalhe;
+
+            const classeRisco = riscoCreditoDetalhe?.["classe-severidade"];
+            const descricaoRisco = riscoCreditoDetalhe?.descricao;
+            const risco = riscoCreditoDetalhe?.risco;
+            const taxaMalPagador = riscoCreditoDetalhe?.["taxa-mau-pagador"];
+
+            if (!classeRisco && !descricaoRisco && !risco && !taxaMalPagador)
+              return null;
+
+            return (
+              <div className="w-full flex flex-col gap-2 mt-6">
+                <p className="text-xs font-semibold text-gray-500 mb-1">
+                  Risco de Crédito
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  {classeRisco ? (
+                    <div
+                      className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+                      style={{ backgroundColor: "#F8F9FB" }}
+                    >
+                      <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                        Classe do Risco
+                      </span>
+
+                      <span className="text-base font-bold text-gray-800">
+                        {classeRisco}
+                      </span>
+                    </div>
+                  ) : null}
+
+                  {risco ? (
+                    <div
+                      className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+                      style={{ backgroundColor: "#F8F9FB" }}
+                    >
+                      <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                        Risco
+                      </span>
+
+                      <span className="text-base font-bold text-gray-800">
+                        {risco}
+                      </span>
+                    </div>
+                  ) : null}
+
+                  {taxaMalPagador ? (
+                    <div
+                      className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+                      style={{ backgroundColor: "#F8F9FB" }}
+                    >
+                      <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                        Taxa Mal Pagador
+                      </span>
+
+                      <span className="text-base font-bold text-gray-800">
+                        {taxaMalPagador}
+                      </span>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="grid grid-cols-1 gap-2">
+                  {descricaoRisco ? (
+                    <div
+                      className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+                      style={{ backgroundColor: "#F8F9FB" }}
+                    >
+                      <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                        Descrição
+                      </span>
+
+                      <span className="text-base font-bold text-gray-800">
+                        {descricaoRisco}
+                      </span>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {alertas.length ? (
