@@ -2763,6 +2763,13 @@ export default function SpcMaxiResultadoPage() {
 
               <div className="mt-5 border-t border-gray-100 pt-4">
                 <table className="w-full text-xs table-fixed">
+                  <colgroup>
+                    <col style={{ width: "120px" }} />
+                    <col style={{ width: "100%" }} />
+                    <col style={{ width: "35%" }} />
+                    <col style={{ width: "35%" }} />
+                  </colgroup>
+
                   <thead>
                     <tr className="border-b border-gray-100">
                       {["Data", "Associado", "Nome da Entidade", "Cidade"].map(
@@ -2788,7 +2795,7 @@ export default function SpcMaxiResultadoPage() {
                           {r.data}
                         </td>
 
-                        <td className="py-2.5 pr-4 text-gray-700 font-medium">
+                        <td className="py-2.5 pr-4 text-gray-700 font-medium whitespace-nowrap">
                           {r.associado}
                         </td>
 
