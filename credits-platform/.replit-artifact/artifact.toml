@@ -2,7 +2,7 @@ kind = "web"
 previewPath = "/"
 title = "Plataforma Credits"
 version = "1.0.0"
-id = "artifacts/credits-platform"
+id = "credits-platform"
 router = "path"
 
 [[integratedSkills]]
@@ -19,7 +19,7 @@ run = "pnpm --filter @workspace/credits-platform run dev"
 
 [services.production]
 build = [ "pnpm", "--filter", "@workspace/credits-platform", "run", "build" ]
-publicDir = "artifacts/credits-platform/dist/public"
+publicDir = "credits-platform/dist/public"
 serve = "static"
 
 [[services.production.rewrites]]
