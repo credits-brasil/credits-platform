@@ -17,6 +17,15 @@ import { useQueryClient } from "@tanstack/react-query";
 
 type DocType = "cpf" | "cnpj";
 
+function detectDocTypeByInput(value: string): DocType {
+  const cleanAlnum = value.replace(/[^a-zA-Z0-9]/g, "");
+  const cleanDigits = value.replace(/\D/g, "");
+
+  if (/[a-zA-Z]/.test(cleanAlnum)) return "cnpj";
+
+  return cleanDigits.length > 11 ? "cnpj" : "cpf";
+}
+
 const CPF_INSUMO_GROUPS: InsumoGroup[] = [
   {
     id: "risco-credito",
@@ -294,15 +303,26 @@ export default function SpcMaxiPage() {
 
   const handleDocTypeChange = (type: DocType) => {
     setDocType(type);
-    setDocumento("");
-    setTelefone("");
-    setTouched(false);
-    setTouchedTelefone(false);
+    setDocumento((prev) => (type === "cpf" ? formatCpf(prev) : formatCnpj(prev)));
+
+    if (type === "cnpj") {
+      setTelefone("");
+      setTouchedTelefone(false);
+    }
   };
 
   const handleDocumento = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
-    setDocumento(docType === "cpf" ? formatCpf(raw) : formatCnpj(raw));
+    const detectedType = detectDocTypeByInput(raw);
+
+    setDocType(detectedType);
+    setDocumento(detectedType === "cpf" ? formatCpf(raw) : formatCnpj(raw));
+
+    if (detectedType === "cnpj") {
+      setTelefone("");
+      setTouchedTelefone(false);
+    }
+
     if (!touched) setTouched(true);
   };
 
