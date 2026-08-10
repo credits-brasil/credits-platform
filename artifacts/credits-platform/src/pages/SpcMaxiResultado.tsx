@@ -839,6 +839,72 @@ export default function SpcMaxiResultadoPage() {
   const riscoInfo12Meses = getRiscoInfo(normalizedScore12Meses);
   const riscoInfo3Meses = getRiscoInfo(normalizedScore3Meses);
 
+  const resumoFinanceiroItens = [
+    ...(spcData?.["renda-presumida-spc"]
+      ? [
+          {
+            label: "Renda Presumida",
+            value: formatValor(
+              spcData?.["renda-presumida-spc"]?.resumo?.["valor-total"],
+            ),
+          },
+        ]
+      : []),
+    ...(spcData?.["limite-credito-sugerido"]
+      ? [
+          {
+            label: "Limite Sugerido",
+            value: formatValor(
+              spcData?.["limite-credito-sugerido"]?.resumo?.["valor-total"],
+            ),
+          },
+        ]
+      : []),
+    ...(spcData?.["comprometimento-renda-mensal-pf"]
+      ? [
+          {
+            label: "Comprometimento",
+            value:
+              spcData?.["comprometimento-renda-mensal-pf"]?.[
+                "detalhe-comprometimento-renda-mensal-pf"
+              ]?.faixa,
+          },
+        ]
+      : []),
+    ...(spcData?.["alerta-identidade-fraude"]
+      ? [
+          {
+            label: "Alerta de Identidade à Fraude",
+            value: (
+              <span
+                className="inline-flex w-fit rounded-full px-2 py-0.5 text-xs font-semibold"
+                style={
+                  spcData?.["alerta-identidade-fraude"]?.[
+                    "detalhe-alerta-identidade-fraude"
+                  ]?.[0]?.["alerta-fraude"] === "true"
+                    ? {
+                        backgroundColor: "#FEE2E2",
+                        color: "#DC2626",
+                      }
+                    : {
+                        backgroundColor: "#DCFCE7",
+                        color: "#15803D",
+                      }
+                }
+              >
+                {spcData?.["alerta-identidade-fraude"]?.[
+                  "detalhe-alerta-identidade-fraude"
+                ]?.[0]?.["alerta-fraude"] === "true"
+                  ? "Alerta ativo"
+                  : "Sem alertas"}
+              </span>
+            ),
+          },
+        ]
+      : []),
+  ];
+  const hasResumoFinanceiro = resumoFinanceiroItens.length > 0;
+
   const pontualidadePagamentoPercent = (() => {
     const segmentos =
       spcData?.["indice-pontualidade-pagamento-cadastro-positivo"]?.[
@@ -1266,102 +1332,37 @@ export default function SpcMaxiResultadoPage() {
               </div>
             </div>
 
-            <div className="w-px self-stretch bg-gray-100" />
+            {hasResumoFinanceiro && <div className="w-px self-stretch bg-gray-100" />}
 
-            <div className="w-1/2 flex flex-col gap-2">
-              <p className="text-xs font-semibold text-gray-500 mb-1">
-                Resumo Financeiro
-              </p>
+            {hasResumoFinanceiro && (
+              <div className="w-1/2 flex flex-col gap-2">
+                <p className="text-xs font-semibold text-gray-500 mb-1">
+                  Resumo Financeiro
+                </p>
 
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  ...(spcData?.["renda-presumida-spc"]
-                    ? [
-                        {
-                          label: "Renda Presumida",
-                          value: formatValor(
-                            spcData?.["renda-presumida-spc"]?.resumo?.[
-                              "valor-total"
-                            ],
-                          ),
-                        },
-                      ]
-                    : []),
-                  ...(spcData?.["limite-credito-sugerido"]
-                    ? [
-                        {
-                          label: "Limite Sugerido",
-                          value: formatValor(
-                            spcData?.["limite-credito-sugerido"]?.resumo?.[
-                              "valor-total"
-                            ],
-                          ),
-                        },
-                      ]
-                    : []),
-                  ...(spcData?.["comprometimento-renda-mensal-pf"]
-                    ? [
-                        {
-                          label: "Comprometimento",
-                          value:
-                            spcData?.["comprometimento-renda-mensal-pf"]?.[
-                              "detalhe-comprometimento-renda-mensal-pf"
-                            ]?.faixa,
-                        },
-                      ]
-                    : []),
-                  ...(spcData?.["alerta-identidade-fraude"]
-                    ? [
-                        {
-                          label: "Alerta de Identidade à Fraude",
-                          value: (
-                            <span
-                              className="inline-flex w-fit rounded-full px-2 py-0.5 text-xs font-semibold"
-                              style={
-                                spcData?.["alerta-identidade-fraude"]?.[
-                                  "detalhe-alerta-identidade-fraude"
-                                ]?.[0]?.["alerta-fraude"] === "true"
-                                  ? {
-                                      backgroundColor: "#FEE2E2",
-                                      color: "#DC2626",
-                                    }
-                                  : {
-                                      backgroundColor: "#DCFCE7",
-                                      color: "#15803D",
-                                    }
-                              }
-                            >
-                              {spcData?.["alerta-identidade-fraude"]?.[
-                                "detalhe-alerta-identidade-fraude"
-                              ]?.[0]?.["alerta-fraude"] === "true"
-                                ? "Alerta ativo"
-                                : "Sem alertas"}
-                            </span>
-                          ),
-                        },
-                      ]
-                    : []),
-                ].map(({ label, value }) => (
-                  <div
-                    key={label}
-                    className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
-                    style={{ backgroundColor: "#F8F9FB" }}
-                  >
-                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-                      {label}
-                    </span>
-
-                    {typeof value === "string" || typeof value === "number" ? (
-                      <span className="text-base font-bold text-gray-800">
-                        {value}
+                <div className="grid grid-cols-2 gap-2">
+                  {resumoFinanceiroItens.map(({ label, value }) => (
+                    <div
+                      key={label}
+                      className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+                      style={{ backgroundColor: "#F8F9FB" }}
+                    >
+                      <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                        {label}
                       </span>
-                    ) : (
-                      value
-                    )}
-                  </div>
-                ))}
+
+                      {typeof value === "string" || typeof value === "number" ? (
+                        <span className="text-base font-bold text-gray-800">
+                          {value}
+                        </span>
+                      ) : (
+                        value
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {shouldShowDedicatedPeriodScores && (
