@@ -7,9 +7,10 @@ const HEADER_HEIGHT = 68;
 
 interface LayoutProps {
   children: React.ReactNode;
+  onLogout: () => void;
 }
 
-export default function Layout({ children }: LayoutProps) {
+export default function Layout({ children, onLogout }: LayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [location] = useLocation();
 
@@ -26,7 +27,7 @@ export default function Layout({ children }: LayoutProps) {
         onToggle={() => setCollapsed((c) => !c)}
         headerHeight={HEADER_HEIGHT}
       />
-      <Header sidebarCollapsed={collapsed} />
+      <Header sidebarCollapsed={collapsed} onLogout={onLogout} />
       <main
         className="py-8 px-6 lg:px-10"
         style={{
@@ -36,7 +37,7 @@ export default function Layout({ children }: LayoutProps) {
           minHeight: `calc(100vh - ${HEADER_HEIGHT}px)`,
         }}
       >
-        <div className="w-full max-w-5xl xl:max-w-6xl mx-auto">
+        <div className="w-full mx-auto">
           {children}
         </div>
       </main>

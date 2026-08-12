@@ -56,11 +56,8 @@ const CPF_INSUMO_GROUPS: InsumoGroup[] = [
     title: "Comportamentais & Cadastrais",
     icon: Users,
     items: [
-      // { id: "5183", label: "Status Receita Federal Online" },
-      // { id: "55", label: "Pendencia Financeira" },
       { id: "5142", label: "Limite de Crédito Sugerido" },
       { id: "5194", label: "Comprometimento de Renda Mensal" },
-      // { id: "5265", label: "Participação no Mercado de Capitais" },
     ],
   },
   {
@@ -82,18 +79,6 @@ const CPF_INSUMO_GROUPS: InsumoGroup[] = [
       { id: "5262", label: "Alerta de Identidade à Fraude" },
     ],
   },
-  // {
-  //   id: "anotacoes-negativas",
-  //   title: "Anotações Negativas",
-  //   icon: TriangleAlert,
-  //   items: [{ id: "17", label: "Protesto" }],
-  // },
-  // {
-  //   id: "socios-administradores",
-  //   title: "Sócios & Administradores",
-  //   icon: Building2,
-  //   items: [{ id: "24", label: "Participação Empresa" }],
-  // },
 ];
 
 const CNPJ_INSUMO_GROUPS: InsumoGroup[] = [
@@ -114,8 +99,6 @@ const CNPJ_INSUMO_GROUPS: InsumoGroup[] = [
     title: "Comportamentais & Cadastrais",
     icon: Users,
     items: [
-      // { id: "5183", label: "Status Receita Federal Online" },
-      // { id: "55", label: "Pendencia Financeira" },
       { id: "5179", label: "Limite de Crédito PJ" },
       { id: "5265", label: "Participação no Mercado de Capitais" },
       { id: "5267", label: "Quantidade de funcionários" },
@@ -138,21 +121,19 @@ const CNPJ_INSUMO_GROUPS: InsumoGroup[] = [
     items: [
       { id: "5185", label: "Gasto Financeiro Estimado PJ " },
       { id: "5178", label: "Faturamento Presumido" },
-      { id: "5257", label: "Índice de Comportamento de Gastos" },
+      { id: "5224", label: "Índice de Comportamento de Gastos" },
+      { id: "5227", label: "Índice Pontualidade de Pagamento" },
     ],
   },
   {
     id: "informacoes-scr",
     title: "Informações do SCR",
     icon: FileText,
-    items: [{ id: "5257", label: "Operações no SCR" }],
+    items: [
+      { id: "5256", label: "Operações no SCR" },
+      { id: "5257", label: "Histórico de Operações no SCR" },
+    ],
   },
-  // {
-  //   id: "anotacoes-negativas",
-  //   title: "Anotações Negativas",
-  //   icon: TriangleAlert,
-  //   items: [{ id: "17", label: "Protesto" }],
-  // },
 ];
 
 function formatCpf(value: string) {
@@ -292,7 +273,8 @@ export default function SpcMaxiPage() {
     if (!isComplete) return null;
     return docType === "cpf" ? validateCpf(documento) : validateCnpj(documento);
   }, [documento, docType, isComplete]);
-  const isTelefoneComplete = !shouldRequireTelefone || telefoneClean.length === 11;
+  const isTelefoneComplete =
+    !shouldRequireTelefone || telefoneClean.length === 11;
   const showTelefoneError =
     shouldRequireTelefone && touchedTelefone && !isTelefoneComplete;
   const showTelefoneSuccess = shouldRequireTelefone && isTelefoneComplete;
@@ -303,7 +285,9 @@ export default function SpcMaxiPage() {
 
   const handleDocTypeChange = (type: DocType) => {
     setDocType(type);
-    setDocumento((prev) => (type === "cpf" ? formatCpf(prev) : formatCnpj(prev)));
+    setDocumento((prev) =>
+      type === "cpf" ? formatCpf(prev) : formatCnpj(prev),
+    );
 
     if (type === "cnpj") {
       setTelefone("");
@@ -389,7 +373,7 @@ export default function SpcMaxiPage() {
         onSubmit={handleConsultar}
         className="bg-white rounded-xl border border-gray-200 p-5 mb-6"
       >
-          <div className="flex gap-6">
+        <div className="flex gap-6">
           <div className="flex-1 min-w-0 basis-1/2">
             <p className="text-sm font-medium text-gray-700 mb-2">Documento</p>
 

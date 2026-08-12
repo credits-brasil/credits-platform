@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import {
   User,
@@ -33,6 +33,7 @@ import {
   ResponsiveContainer,
   ComposedChart,
   Bar,
+  Cell,
   Line,
   XAxis,
   YAxis,
@@ -185,12 +186,22 @@ export default function SpcMaxiResultadoPage() {
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [consultasExpanded, setConsultasExpanded] = useState(false);
+  const [governancaTab, setGovernancaTab] = useState<
+    "controle-societario" | "quadro-administrativo" | "participacao-empresa"
+  >("controle-societario");
+  const [governancaExpandedRow, setGovernancaExpandedRow] = useState<
+    string | null
+  >(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showRedirectModal, setShowRedirectModal] = useState(false);
 
   useEffect(() => {
     setExpandedRowKey(null);
   }, [activeGroup, expanded, sortKey, sortDir]);
+
+  useEffect(() => {
+    setGovernancaExpandedRow(null);
+  }, [governancaTab]);
 
   const handleOpenReloadModal = () => {
     isKeyboardReloadRef.current = false;
@@ -605,8 +616,30 @@ export default function SpcMaxiResultadoPage() {
   const possuiAltoVolumeConsultas = consultasUltimos30Dias.length > 10;
   const alertaDocumento =
     spcData?.["alerta-documento"]?.["detalhe-alerta-documento"]?.[0];
+  const participacaoMercadoCapitais =
+    spcData?.["insumo-participacao-mercado-capitais"]?.[
+      "detalhe-insumo-participacao-mercado-capitais"
+    ];
+  const participaMercadoCapitaisRaw =
+    participacaoMercadoCapitais?.["participante-mercado-capital"];
+  const participaMercadoCapitais =
+    participaMercadoCapitaisRaw === true ||
+    String(participaMercadoCapitaisRaw).toLowerCase() === "true";
 
   const alertas = [
+    ...(participacaoMercadoCapitais
+      ? [
+          {
+            severidade: participaMercadoCapitais ? "medio" : "baixo",
+            titulo: "Participação no Mercado de Capitais",
+            descricao: participaMercadoCapitais
+              ? "Há participação registrada no mercado de capitais."
+              : "Não há participação registrada no mercado de capitais.",
+            fonte: "SPC Brasil",
+            tipo: "Mercado de Capitais",
+          },
+        ]
+      : []),
     ...(enderecoDiferente
       ? [
           {
@@ -656,7 +689,7 @@ export default function SpcMaxiResultadoPage() {
                 new Date(a["data-consulta"]).getTime(),
             )[0]["data-consulta"],
             fonte: "SPC Brasil",
-            tipo: "CPF",
+            tipo: spcData?.consumidor?.cpf ? "CPF" : "CNPJ",
           },
         ]
       : []),
@@ -750,6 +783,7 @@ export default function SpcMaxiResultadoPage() {
     return null;
   }
 
+  const isPessoaFisica = Boolean(spcData?.consumidor?.cpf);
   const scoreCadastroPositivo = Number(spcData?.["score-cadastro-positivo"]);
   const score12Meses = Number(
     spcData?.["spc-score-12-meses"]?.["detalhe-spc-score-12-meses"]?.[0]?.score,
@@ -757,50 +791,75 @@ export default function SpcMaxiResultadoPage() {
   const score3Meses = Number(
     spcData?.["spc-score-3-meses"]?.["detalhe-spc-score-3-meses"]?.score,
   );
+  const scorePj = Number(spcData?.["score-pj"]?.["detalhe-score-pj"]?.score);
+  const scorePjMei = Number(
+    spcData?.["score-pj-mei"]?.["detalhe-score-pj-mei"]?.score,
+  );
 
-  const scoreSource = Number.isFinite(scoreCadastroPositivo)
-    ? "cadastro"
-    : Number.isFinite(score12Meses)
-      ? "12-meses"
-      : Number.isFinite(score3Meses)
-        ? "3-meses"
-        : "none";
-
-  const mainScoreLabel =
-    scoreSource === "cadastro"
-      ? "Score + Positivo"
-      : scoreSource === "12-meses"
-        ? "Score 12 meses"
-        : scoreSource === "3-meses"
-          ? "Score 3 meses"
-          : "Score";
-
-  const mainScoreInterpretativeMessage =
-    scoreSource === "12-meses"
-      ? spcData?.["spc-score-12-meses"]?.["detalhe-spc-score-12-meses"]?.[0]?.[
+  const scoreCandidates = [
+    {
+      source: "cadastro",
+      label: "Score + Positivo",
+      score: scoreCadastroPositivo,
+      message: "",
+    },
+    {
+      source: "12-meses",
+      label: "Score 12 meses",
+      score: score12Meses,
+      message:
+        spcData?.["spc-score-12-meses"]?.["detalhe-spc-score-12-meses"]?.[0]?.[
           "mesagem-interpretativa-score"
-        ]
-      : scoreSource === "3-meses"
-        ? spcData?.["spc-score-3-meses"]?.["detalhe-spc-score-3-meses"]?.[
-            "mesagem-interpretativa-score"
-          ]
-        : "";
+        ] ?? "",
+    },
+    {
+      source: "3-meses",
+      label: "Score 3 meses",
+      score: score3Meses,
+      message:
+        spcData?.["spc-score-3-meses"]?.["detalhe-spc-score-3-meses"]?.[
+          "mesagem-interpretativa-score"
+        ] ?? "",
+    },
+    {
+      source: "pj",
+      label: "Score PJ",
+      score: scorePj,
+      message:
+        spcData?.["score-pj"]?.["detalhe-score-pj"]?.[
+          "mesagem-interpretativa-score"
+        ] ?? "",
+    },
+    {
+      source: "pj-mei",
+      label: "Score PJ MEI",
+      score: scorePjMei,
+      message:
+        spcData?.["score-pj-mei"]?.["detalhe-score-pj-mei"]?.[
+          "mesagem-interpretativa-score"
+        ] ?? "",
+    },
+  ];
 
-  const score =
-    [scoreCadastroPositivo, score12Meses, score3Meses].find((value) =>
-      Number.isFinite(value),
-    ) ?? 0;
+  const mainScoreCandidate = scoreCandidates.find((candidate) =>
+    Number.isFinite(candidate.score),
+  ) ?? {
+    source: "none",
+    label: "Score",
+    score: 0,
+    message: "",
+  };
 
-  const normalizedScore = Math.min(Math.max(score, 0), 1000);
-  const normalizedScore12Meses = Math.min(Math.max(score12Meses, 0), 1000);
-  const normalizedScore3Meses = Math.min(Math.max(score3Meses, 0), 1000);
-  const hasScore12Meses = Boolean(spcData?.["spc-score-12-meses"]);
-  const hasScore3Meses = Boolean(spcData?.["spc-score-3-meses"]);
-  const shouldShowScore12Meses = hasScore12Meses && scoreSource !== "12-meses";
-  const shouldShowScore3Meses = hasScore3Meses && scoreSource !== "3-meses";
-  const shouldShowDedicatedPeriodScores =
-    shouldShowScore12Meses || shouldShowScore3Meses;
-  const hasBothScorePeriods = shouldShowScore12Meses && shouldShowScore3Meses;
+  const mainScoreLabel = mainScoreCandidate.label;
+  const mainScoreInterpretativeMessage = mainScoreCandidate.message;
+  const normalizedScore = Math.min(Math.max(mainScoreCandidate.score, 0), 1000);
+  const secondaryScoreCandidates = scoreCandidates.filter(
+    (candidate) =>
+      candidate.source !== mainScoreCandidate.source &&
+      Number.isFinite(candidate.score),
+  );
+  const shouldShowDedicatedPeriodScores = secondaryScoreCandidates.length > 0;
+  const scoreSectionTitle = isPessoaFisica ? "Score + Positivo" : "Score";
 
   const getScoreColor = (value: number) => {
     if (value >= 675) return "#259f58";
@@ -832,30 +891,62 @@ export default function SpcMaxiResultadoPage() {
   };
 
   const scoreColor = getScoreColor(normalizedScore);
-  const scoreColor12Meses = getScoreColor(normalizedScore12Meses);
-  const scoreColor3Meses = getScoreColor(normalizedScore3Meses);
 
   const riscoInfo = getRiscoInfo(normalizedScore);
-  const riscoInfo12Meses = getRiscoInfo(normalizedScore12Meses);
-  const riscoInfo3Meses = getRiscoInfo(normalizedScore3Meses);
+
+  const rendaPresumidaValue = isPessoaFisica
+    ? spcData?.["renda-presumida-spc"]?.resumo?.["valor-total"]
+    : (spcData?.["faturamento-presumido"]?.["detalhe-faturamento-presumido"]?.[
+        "valor-faturamento"
+      ] ?? spcData?.["faturamento-presumido"]?.resumo?.["valor-total"]);
+
+  const limiteSugeridoValue = isPessoaFisica
+    ? spcData?.["limite-credito-sugerido"]?.resumo?.["valor-total"]
+    : (spcData?.["limite-credito-pj"]?.["detalhe-limite-credito-pj"]?.[
+        "valor-limite-credito"
+      ] ?? spcData?.["limite-credito-pj"]?.resumo?.["valor-total"]);
+
+  const gastoEstimadoPjValue = isPessoaFisica
+    ? null
+    : (spcData?.["gasto-estimado-pj"]?.["detalhe-gasto-estimado-pj"]?.[
+        "valor"
+      ] ?? spcData?.["gasto-estimado-pj"]?.resumo?.["valor-total"]);
+
+  const quantidadeFuncionariosValue = isPessoaFisica
+    ? null
+    : spcData?.["quantidade-funcionario"]?.resumo?.["quantidade-total"];
 
   const resumoFinanceiroItens = [
-    ...(spcData?.["renda-presumida-spc"]
+    ...(rendaPresumidaValue
       ? [
           {
-            label: "Renda Presumida",
-            value: formatValor(
-              spcData?.["renda-presumida-spc"]?.resumo?.["valor-total"],
-            ),
+            label: isPessoaFisica ? "Renda Presumida" : "Faturamento Presumido",
+            value: formatValor(rendaPresumidaValue),
           },
         ]
       : []),
-    ...(spcData?.["limite-credito-sugerido"]
+    ...(limiteSugeridoValue
       ? [
           {
-            label: "Limite Sugerido",
-            value: formatValor(
-              spcData?.["limite-credito-sugerido"]?.resumo?.["valor-total"],
+            label: isPessoaFisica ? "Limite Sugerido" : "Limite de Crédito PJ",
+            value: formatValor(limiteSugeridoValue),
+          },
+        ]
+      : []),
+    ...(gastoEstimadoPjValue
+      ? [
+          {
+            label: "Gasto Estimado PJ",
+            value: formatValor(gastoEstimadoPjValue),
+          },
+        ]
+      : []),
+    ...(!isPessoaFisica && quantidadeFuncionariosValue !== undefined
+      ? [
+          {
+            label: "Quantidade de Funcionários",
+            value: Number(quantidadeFuncionariosValue ?? 0).toLocaleString(
+              "pt-BR",
             ),
           },
         ]
@@ -976,11 +1067,17 @@ export default function SpcMaxiResultadoPage() {
     };
   })();
 
+  const historicoScrScoreData =
+    spcData?.["insumo-historico-operacao-scr"]?.[
+      "detalhe-insumo-historico-operacao-scr"
+    ];
+
   const hasScrData = spcData?.["insumo-operacao-scr"];
   const hasComportamentoFinanceiroData =
     Boolean(hasPontualidadeData) ||
     Boolean(hasComprometimentoData) ||
-    Boolean(hasScrData);
+    Boolean(hasScrData) ||
+    Boolean(historicoScrScoreData);
 
   const radius = 50;
   const circumference = 2 * Math.PI * radius;
@@ -989,8 +1086,6 @@ export default function SpcMaxiResultadoPage() {
   const arcLength = circumference * arcPercentage;
 
   const progressLength = (normalizedScore / 1000) * arcLength;
-  const progressLength12Meses = (normalizedScore12Meses / 1000) * arcLength;
-  const progressLength3Meses = (normalizedScore3Meses / 1000) * arcLength;
 
   if (isLoading) {
     return (
@@ -1064,7 +1159,7 @@ export default function SpcMaxiResultadoPage() {
       </AlertDialog>
 
       <div className="w-full">
-        <div>
+        <div className="sticky top-[100px] z-20 bg-background pb-2 relative before:content-[''] before:absolute before:-top-8 before:left-0 before:right-0 before:h-8 before:bg-background">
           <div className="mb-6">
             <h1 className="text-xl font-semibold text-gray-800">
               Relatório SPC MAXI
@@ -1258,7 +1353,7 @@ export default function SpcMaxiResultadoPage() {
           className="bg-white rounded-xl border border-gray-200 p-5 mb-4"
         >
           <h2 className="text-sm font-semibold text-gray-700 mb-4">
-            Score + Positivo
+            {scoreSectionTitle}
           </h2>
 
           <div className="flex gap-6">
@@ -1332,7 +1427,9 @@ export default function SpcMaxiResultadoPage() {
               </div>
             </div>
 
-            {hasResumoFinanceiro && <div className="w-px self-stretch bg-gray-100" />}
+            {hasResumoFinanceiro && (
+              <div className="w-px self-stretch bg-gray-100" />
+            )}
 
             {hasResumoFinanceiro && (
               <div className="w-1/2 flex flex-col gap-2">
@@ -1351,7 +1448,8 @@ export default function SpcMaxiResultadoPage() {
                         {label}
                       </span>
 
-                      {typeof value === "string" || typeof value === "number" ? (
+                      {typeof value === "string" ||
+                      typeof value === "number" ? (
                         <span className="text-base font-bold text-gray-800">
                           {value}
                         </span>
@@ -1366,190 +1464,100 @@ export default function SpcMaxiResultadoPage() {
           </div>
 
           {shouldShowDedicatedPeriodScores && (
-            <div className="flex gap-6 mt-4">
-              {shouldShowScore12Meses && (
-                <>
-                  {/* 12 Meses */}
-                  <div
-                    className={`flex items-center justify-center gap-5 ${
-                      hasBothScorePeriods ? "w-1/2" : "w-full"
-                    }`}
-                  >
-                    <div
-                      className={`flex items-center gap-5 w-full ${
-                        hasBothScorePeriods ? "justify-center" : "justify-start"
-                      }`}
-                    >
-                      <div
-                        className="relative flex items-center justify-center flex-shrink-0"
-                        style={{ width: 140, height: 140 }}
-                      >
-                        <svg viewBox="0 0 120 120" width="140" height="140">
-                          <circle
-                            cx="60"
-                            cy="60"
-                            r={radius}
-                            fill="none"
-                            stroke="#E5E7EB"
-                            strokeWidth="9"
-                            strokeDasharray={`${arcLength} ${circumference - arcLength}`}
-                            strokeLinecap="round"
-                            transform="rotate(135 60 60)"
-                          />
+            <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
+              {secondaryScoreCandidates.map((scoreItem, index) => {
+                const normalizedSecondaryScore = Math.min(
+                  Math.max(scoreItem.score, 0),
+                  1000,
+                );
+                const secondaryScoreColor = getScoreColor(
+                  normalizedSecondaryScore,
+                );
+                const secondaryRiscoInfo = getRiscoInfo(
+                  normalizedSecondaryScore,
+                );
+                const progressLengthSecondary =
+                  (normalizedSecondaryScore / 1000) * arcLength;
 
-                          <circle
-                            cx="60"
-                            cy="60"
-                            r={radius}
-                            fill="none"
-                            stroke={scoreColor12Meses}
-                            strokeWidth="9"
-                            strokeDasharray={`${progressLength12Meses} ${
-                              circumference - progressLength12Meses
-                            }`}
-                            strokeLinecap="round"
-                            transform="rotate(135 60 60)"
-                            className="transition-all duration-700 ease-out"
-                          />
-                        </svg>
+                return (
+                  <Fragment key={scoreItem.source}>
+                    <div className="flex items-center justify-center gap-5">
+                      <div className="flex items-center gap-5 w-full justify-start">
+                        <div
+                          className="relative flex items-center justify-center flex-shrink-0"
+                          style={{ width: 140, height: 140 }}
+                        >
+                          <svg viewBox="0 0 120 120" width="140" height="140">
+                            <circle
+                              cx="60"
+                              cy="60"
+                              r={radius}
+                              fill="none"
+                              stroke="#E5E7EB"
+                              strokeWidth="9"
+                              strokeDasharray={`${arcLength} ${circumference - arcLength}`}
+                              strokeLinecap="round"
+                              transform="rotate(135 60 60)"
+                            />
 
-                        <div className="absolute flex flex-col items-center leading-none">
-                          <span
-                            className="text-3xl font-bold"
-                            style={{ color: scoreColor12Meses }}
-                          >
-                            {normalizedScore12Meses}
-                          </span>
+                            <circle
+                              cx="60"
+                              cy="60"
+                              r={radius}
+                              fill="none"
+                              stroke={secondaryScoreColor}
+                              strokeWidth="9"
+                              strokeDasharray={`${progressLengthSecondary} ${
+                                circumference - progressLengthSecondary
+                              }`}
+                              strokeLinecap="round"
+                              transform="rotate(135 60 60)"
+                              className="transition-all duration-700 ease-out"
+                            />
+                          </svg>
 
-                          <span className="mt-1 text-[10px] text-gray-400">
-                            de 1000
-                          </span>
-                        </div>
-                      </div>
+                          <div className="absolute flex flex-col items-center leading-none">
+                            <span
+                              className="text-3xl font-bold"
+                              style={{ color: secondaryScoreColor }}
+                            >
+                              {normalizedSecondaryScore}
+                            </span>
 
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
-                            style={riscoInfo12Meses.badge}
-                          >
-                            {riscoInfo12Meses.label}
-                          </span>
-
-                          <span className="text-xs text-gray-500">
-                            Período:{" "}
-                            <strong className="text-xs text-gray-700">
-                              12 meses
-                            </strong>
-                          </span>
+                            <span className="mt-1 text-[10px] text-gray-400">
+                              de 1000
+                            </span>
+                          </div>
                         </div>
 
-                        <p className="text-xs text-gray-500 text-justify">
-                          {
-                            spcData?.["spc-score-12-meses"]?.[
-                              "detalhe-spc-score-12-meses"
-                            ]?.[0]?.["mesagem-interpretativa-score"]
-                          }
-                        </p>
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
+                              style={secondaryRiscoInfo.badge}
+                            >
+                              {secondaryRiscoInfo.label}
+                            </span>
+
+                            <span className="text-xs text-gray-500">
+                              Fonte:{" "}
+                              <strong className="text-xs text-gray-700">
+                                {scoreItem.label}
+                              </strong>
+                            </span>
+                          </div>
+
+                          {scoreItem.message && (
+                            <p className="text-xs text-gray-500 text-justify">
+                              {scoreItem.message}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </>
-              )}
-
-              {shouldShowScore3Meses && (
-                <>
-                  {shouldShowScore12Meses && (
-                    <div className="w-px self-stretch bg-gray-100" />
-                  )}
-
-                  {/* 3 Meses */}
-                  <div
-                    className={`flex items-center justify-center gap-5 ${
-                      hasBothScorePeriods ? "w-1/2" : "w-full"
-                    }`}
-                  >
-                    <div
-                      className={`flex items-center gap-5 w-full ${
-                        hasBothScorePeriods ? "justify-center" : "justify-start"
-                      }`}
-                    >
-                      <div
-                        className="relative flex items-center justify-center flex-shrink-0"
-                        style={{ width: 140, height: 140 }}
-                      >
-                        <svg viewBox="0 0 120 120" width="140" height="140">
-                          <circle
-                            cx="60"
-                            cy="60"
-                            r={radius}
-                            fill="none"
-                            stroke="#E5E7EB"
-                            strokeWidth="9"
-                            strokeDasharray={`${arcLength} ${circumference - arcLength}`}
-                            strokeLinecap="round"
-                            transform="rotate(135 60 60)"
-                          />
-
-                          <circle
-                            cx="60"
-                            cy="60"
-                            r={radius}
-                            fill="none"
-                            stroke={scoreColor3Meses}
-                            strokeWidth="9"
-                            strokeDasharray={`${progressLength3Meses} ${
-                              circumference - progressLength3Meses
-                            }`}
-                            strokeLinecap="round"
-                            transform="rotate(135 60 60)"
-                            className="transition-all duration-700 ease-out"
-                          />
-                        </svg>
-
-                        <div className="absolute flex flex-col items-center leading-none">
-                          <span
-                            className="text-3xl font-bold"
-                            style={{ color: scoreColor3Meses }}
-                          >
-                            {normalizedScore3Meses}
-                          </span>
-
-                          <span className="mt-1 text-[10px] text-gray-400">
-                            de 1000
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
-                            style={riscoInfo3Meses.badge}
-                          >
-                            {riscoInfo3Meses.label}
-                          </span>
-
-                          <span className="text-xs text-gray-500">
-                            Período:{" "}
-                            <strong className="text-xs text-gray-700">
-                              3 meses
-                            </strong>
-                          </span>
-                        </div>
-
-                        <p className="text-xs text-gray-500 text-justify">
-                          {
-                            spcData?.["spc-score-3-meses"]?.[
-                              "detalhe-spc-score-3-meses"
-                            ]?.["mesagem-interpretativa-score"]
-                          }
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
+                  </Fragment>
+                );
+              })}
             </div>
           )}
 
@@ -1629,42 +1637,82 @@ export default function SpcMaxiResultadoPage() {
                   </div>
                 )}
 
-                {hasScrData && (
+                {(hasScrData || historicoScrScoreData) && (
                   <div className="flex h-full flex-col gap-3 rounded-lg border border-gray-100 p-4 md:col-span-2 xl:col-span-1">
                     <span className="text-xs text-gray-500 font-medium">
                       SCR
                     </span>
 
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-                          Operações
-                        </span>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {hasScrData && (
+                        <>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                              Operações
+                            </span>
 
-                        <span className="text-base font-bold text-gray-800">
-                          {scrOperacao.quantidade}
-                        </span>
-                      </div>
+                            <span className="text-base font-bold text-gray-800">
+                              {scrOperacao.quantidade}
+                            </span>
+                          </div>
 
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-                          Contratado Inicial
-                        </span>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                              Contratado Inicial
+                            </span>
 
-                        <span className="text-base font-bold text-gray-800">
-                          {formatValor(scrOperacao.contratadoInicial)}
-                        </span>
-                      </div>
+                            <span className="text-base font-bold text-gray-800">
+                              {formatValor(scrOperacao.contratadoInicial)}
+                            </span>
+                          </div>
 
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-                          Contratado Final
-                        </span>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                              Contratado Final
+                            </span>
 
-                        <span className="text-base font-bold text-gray-800">
-                          {formatValor(scrOperacao.contratadoFinal)}
-                        </span>
-                      </div>
+                            <span className="text-base font-bold text-gray-800">
+                              {formatValor(scrOperacao.contratadoFinal)}
+                            </span>
+                          </div>
+                        </>
+                      )}
+
+                      {historicoScrScoreData && (
+                        <>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                              Score SCR
+                            </span>
+
+                            <span className="text-base font-bold text-gray-800">
+                              {historicoScrScoreData?.score ?? "-"}
+                            </span>
+                          </div>
+
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                              Risco de Crédito
+                            </span>
+
+                            <span className="text-base font-bold text-gray-800">
+                              {historicoScrScoreData?.["indice-risco-credito-score"] ?? "-"}
+                            </span>
+                          </div>
+
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                              Prob. Inadimplência
+                            </span>
+
+                            <span className="text-base font-bold text-gray-800">
+                              {historicoScrScoreData?.["probabilidade-inadimplencia"]
+                                ? `${historicoScrScoreData?.["probabilidade-inadimplencia"]}%`
+                                : "-"}
+                            </span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
@@ -1835,6 +1883,7 @@ export default function SpcMaxiResultadoPage() {
                         }}
                       >
                         {label}
+
                         {sortKey === key ? (
                           sortDir === "asc" ? (
                             <ArrowUp size={10} />
@@ -2297,9 +2346,7 @@ export default function SpcMaxiResultadoPage() {
                         {a.detalhes?.length ? (
                           <div className="flex items-center justify-between mb-2 gap-6">
                             {a.detalhes.map((detalhe) => (
-                              <div
-                                key={`${a.titulo}-${detalhe.label}`}
-                              >
+                              <div key={`${a.titulo}-${detalhe.label}`}>
                                 <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
                                   {detalhe.label}
                                 </p>
@@ -2393,8 +2440,16 @@ export default function SpcMaxiResultadoPage() {
                         ]
                       : [
                           {
+                            label: "Nome Comercial",
+                            value:
+                              spcData?.consumidor?.["nome-comercial"] ?? "-",
+                          },
+                          {
                             label: "CNAE",
                             value:
+                              spcData?.consumidor?.[
+                                "atividade-economica-principal"
+                              ]?.code ??
                               spcData?.["atividade-empresa"]?.[
                                 "detalhe-atividade-empresa"
                               ]?.["ramo-atividade"]?.code,
@@ -2402,15 +2457,32 @@ export default function SpcMaxiResultadoPage() {
                           {
                             label: "Descrição do CNAE",
                             value:
+                              spcData?.consumidor?.[
+                                "atividade-economica-principal"
+                              ]?.description ??
                               spcData?.["atividade-empresa"]?.[
                                 "detalhe-atividade-empresa"
                               ]?.["ramo-atividade"]?.description,
+                          },
+                          {
+                            label: "Natureza Jurídica",
+                            value: (() => {
+                              const naturezaJuridica =
+                                spcData?.consumidor?.["natureza-juridica"];
+                              const descricao = naturezaJuridica?.description;
+                              const code = naturezaJuridica?.code;
+
+                              if (descricao && code)
+                                return `${descricao} (${code})`;
+                              return descricao ?? code ?? "-";
+                            })(),
                           },
                         ]),
                   ].map((f) => {
                     const COPYABLE_FIELDS = new Set([
                       "Nome completo",
                       "Razão Social",
+                      "Nome Comercial",
                       "CPF",
                       "CNPJ",
                       "CNAE",
@@ -2598,57 +2670,867 @@ export default function SpcMaxiResultadoPage() {
             {spcData?.consumidor?.cpf ? (
               <></>
             ) : (
-              <AccordionItem
-                value="atividades-economicas-secundarias-spc-brasil"
-                className="border-gray-100 last:border-b-0"
-              >
-                <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
-                  Atividades Econômicas Secundarias - SPC Brasil
-                </AccordionTrigger>
+              <>
+                <AccordionItem
+                  value="atividades-economicas-secundarias-spc-brasil"
+                  className="border-gray-100"
+                >
+                  <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
+                    Atividades Econômicas Secundarias - SPC Brasil
+                  </AccordionTrigger>
 
-                <AccordionContent>
-                  <div className="mt-5 border-t border-gray-100 pt-4">
-                    <table className="w-full text-xs table-fixed">
-                      <thead>
-                        <tr className="border-b border-gray-100">
-                          {["CNAE", "DESCRIÇÃO CNAE"].map((h) => (
-                            <th
-                              key={h}
-                              className="text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide pb-2 pr-4 last:pr-0"
-                            >
-                              {h}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
+                  <AccordionContent>
+                    <div className="mt-5 border-t border-gray-100 pt-4">
+                      <table className="w-full text-xs table-fixed">
+                        <thead>
+                          <tr className="border-b border-gray-100">
+                            {["CNAE", "DESCRIÇÃO CNAE"].map((h) => (
+                              <th
+                                key={h}
+                                className="text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide pb-2 pr-4 last:pr-0"
+                              >
+                                {h}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
 
-                      <tbody>
-                        {spcData?.["atividade-empresa"]?.[
-                          "detalhe-atividade-empresa"
-                        ]?.["atividades-economicas-secundarias"].map(
-                          (row, index) => (
-                            <tr
-                              key={index}
-                              className="border-b border-gray-50 transition-colors hover:bg-gray-50"
-                            >
-                              <td className="py-2.5 pr-4 text-sm text-gray-800 break-words">
-                                {row.code}
-                              </td>
+                        <tbody>
+                          {spcData?.["atividade-empresa"]?.[
+                            "detalhe-atividade-empresa"
+                          ]?.["atividades-economicas-secundarias"].map(
+                            (row, index) => (
+                              <tr
+                                key={index}
+                                className="border-b border-gray-50 transition-colors hover:bg-gray-50"
+                              >
+                                <td className="py-2.5 pr-4 text-sm text-gray-800 break-words">
+                                  {row.code}
+                                </td>
 
-                              <td className="py-2.5 pr-4 text-sm text-gray-800">
-                                {row.description}
-                              </td>
-                            </tr>
-                          ),
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
+                                <td className="py-2.5 pr-4 text-sm text-gray-800">
+                                  {row.description}
+                                </td>
+                              </tr>
+                            ),
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem
+                  value="administrador-spc-brasil"
+                  className="border-gray-100 last:border-b-0"
+                >
+                  <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
+                    Administrador - SPC Brasil
+                  </AccordionTrigger>
+
+                  <AccordionContent>
+                    <div className="mt-5 border-t border-gray-100 pt-4">
+                      <table className="w-full text-xs table-fixed">
+                        <thead>
+                          <tr className="border-b border-gray-100">
+                            {[
+                              "Nome",
+                              "Documento",
+                              "Cargo",
+                              "Tipo Relacionamento",
+                              "Data Entrada",
+                            ].map((h) => (
+                              <th
+                                key={h}
+                                className="text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide pb-2 pr-4 last:pr-0"
+                              >
+                                {h}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {(
+                            spcData?.administrador?.["detalhe-administrador"] ??
+                            []
+                          )
+                            .filter((row: any) => row)
+                            .map((row: any, index: number) => {
+                              const documento = String(row?.documento ?? "");
+                              const documentoFormatado =
+                                documento.length === 11
+                                  ? formatCPF(documento)
+                                  : documento || "-";
+
+                              return (
+                                <tr
+                                  key={index}
+                                  className="border-b border-gray-50 transition-colors hover:bg-gray-50"
+                                >
+                                  <td className="py-2.5 pr-4 text-sm text-gray-800 break-words">
+                                    {row?.nome ?? "-"}
+                                  </td>
+
+                                  <td className="py-2.5 pr-4 text-sm text-gray-800 whitespace-nowrap">
+                                    {documentoFormatado}
+                                  </td>
+
+                                  <td className="py-2.5 pr-4 text-sm text-gray-800 whitespace-nowrap">
+                                    {row?.["cargo-administracao"] ?? "-"}
+                                  </td>
+
+                                  <td className="py-2.5 pr-4 text-sm text-gray-800 whitespace-nowrap">
+                                    {row?.["tipo-relacionamento"] ?? "-"}
+                                  </td>
+
+                                  <td className="py-2.5 pr-4 text-sm text-gray-800 whitespace-nowrap">
+                                    {formatDate(row?.["data-entrada"]) || "-"}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </>
             )}
           </Accordion>
         </div>
+
+        {(() => {
+          const quadroSocial =
+            spcData?.["quadro-social-mais-completo-pj"]?.[
+              "detalhe-quadro-social-mais-completo-pj"
+            ];
+
+          const controleSocietario =
+            quadroSocial?.["controle-societario"] ?? [];
+          const quadroAdministrativo =
+            quadroSocial?.["quadro-administrativo"] ?? [];
+          const participacaoEmpresa =
+            spcData?.["participacao-empresa"]?.[
+              "detalhe-participacao-empresa"
+            ] ?? [];
+
+          if (
+            !controleSocietario.length &&
+            !quadroAdministrativo.length &&
+            !participacaoEmpresa.length
+          ) {
+            return null;
+          }
+
+          const activeRows =
+            governancaTab === "controle-societario"
+              ? controleSocietario
+              : governancaTab === "quadro-administrativo"
+                ? quadroAdministrativo
+                : participacaoEmpresa;
+
+          const formatDocument = (document?: string) => {
+            if (!document) return "-";
+
+            const digits = document.replace(/\D/g, "");
+            if (digits.length === 11) return formatCPF(digits);
+            if (digits.length === 14) return formatCNPJ(digits);
+            return document;
+          };
+
+          const getInfoParts = (row: any) => ({
+            info1: row?.["informacoes-adicionais-1"]?.$ ?? {},
+            info2: row?.["informacoes-adicionais-2"]?.$ ?? {},
+            info3: row?.["informacoes-adicionais-3"]?.$ ?? {},
+            restricoes: row?.restricoes?.$ ?? null,
+            semRestricoes: row?.["sem-restricoes"] ?? [],
+          });
+
+          const hasAdditionalInfo = (row: any) => {
+            const { info1, info2, info3, restricoes, semRestricoes } =
+              getInfoParts(row);
+
+            return (
+              Object.keys(info1).length > 0 ||
+              Object.keys(info2).length > 0 ||
+              Object.keys(info3).length > 0 ||
+              Boolean(restricoes) ||
+              semRestricoes.length > 0
+            );
+          };
+
+          return (
+            <div
+              id="section-governanca"
+              className="bg-white rounded-xl border border-gray-200 p-5 mb-4"
+            >
+              <div className="mb-4 flex items-center">
+                <h2 className="text-sm font-semibold text-gray-700">
+                  Governança
+                </h2>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+                {[
+                  {
+                    key: "controle-societario" as const,
+                    label: "Controle Societário",
+                    count: controleSocietario.length,
+                    helper: "Quadro Social mais completo",
+                  },
+                  {
+                    key: "quadro-administrativo" as const,
+                    label: "Quadro Administrativo",
+                    count: quadroAdministrativo.length,
+                    helper: "Quadro Social mais completo",
+                  },
+                  {
+                    key: "participacao-empresa" as const,
+                    label: "Participação Empresa",
+                    count: participacaoEmpresa.length,
+                    helper: "Participações societárias",
+                  },
+                ].map((tab) => {
+                  const isActive = governancaTab === tab.key;
+
+                  return (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => setGovernancaTab(tab.key)}
+                      className="text-left rounded-xl border p-3 transition-all"
+                      style={{
+                        borderColor: isActive ? "#ED884A" : "#E5E7EB",
+                        backgroundColor: isActive ? "#FFFBF7" : "#fff",
+                        boxShadow: isActive
+                          ? "0 6px 20px rgba(237, 136, 74, 0.18)"
+                          : "0 1px 2px rgba(15, 23, 42, 0.04)",
+                      }}
+                    >
+                      <div className="flex items-center gap-3 mb-2">
+                        <p className="text-[10px] font-semibold text-gray-700 uppercase tracking-wide">
+                          {tab.label}
+                        </p>
+                      </div>
+
+                      <hr className="border-gray-200 mb-2" />
+
+                      <div className="mb-1 text-right">
+                        <span
+                          className="text-2xl font-bold leading-none"
+                          style={{ color: isActive ? "#ED884A" : "#1F2937" }}
+                        >
+                          {tab.count}
+                        </span>
+                      </div>
+
+                      <span className="inline-flex max-w-full rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-600">
+                        <span className="truncate">{tab.helper}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-6 border-t border-gray-100 pt-4">
+                <table className="w-full table-fixed text-xs">
+                  {governancaTab === "controle-societario" ? (
+                    <colgroup>
+                      <col style={{ width: "150px" }}/>
+                      <col style={{ width: "100%" }}/>
+                      <col style={{ width: "70px" }}/>
+                      <col style={{ width: "110px" }}/>
+                      <col style={{ width: "70px" }}/>
+                      <col style={{ width: "70px" }}/>
+                      <col style={{ width: "30px" }} />
+                    </colgroup>
+                  ) : governancaTab === "quadro-administrativo" ? (
+                    <colgroup>
+                      <col style={{ width: "120px" }} />
+                      <col style={{ width: "100%" }} />
+                      <col style={{ width: "100px" }} />
+                      <col style={{ width: "120px" }} />
+                      <col style={{ width: "30px" }} />
+                    </colgroup>
+                  ) : (
+                    <colgroup>
+                      <col style={{ width: "150px" }}/>
+                      <col style={{ width: "100%" }}/>
+                      <col style={{ width: "130px" }}/>
+                      <col style={{ width: "100px" }}/>
+                      <col style={{ width: "100px" }}/>
+                      <col style={{ width: "100px" }}/>
+                      <col style={{ width: "70px" }}/>
+                    </colgroup>
+                  )}
+
+                  <thead>
+                    {governancaTab === "controle-societario" ? (
+                      <tr className="border-b border-gray-100">
+                        <th className="w-[140px] text-left pb-2 pr-4 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                          Documento
+                        </th>
+                        <th className="text-left pb-2 pr-4 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                          Sócio/Acionista
+                        </th>
+                        <th className="w-[90px] text-left pb-2 pr-4 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                          Entrada
+                        </th>
+                        <th className="w-[130px] text-left pb-2 pr-4 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                          Nacionalidade
+                        </th>
+                        <th className="w-[90px] text-left pb-2 pr-4 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                          Votante
+                        </th>
+                        <th className="w-[90px] text-left pb-2 pr-0 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                          Total
+                        </th>
+                        <th className="w-[110px] text-left pb-2 pr-4 text-[10px] font-semibold text-gray-400 uppercase tracking-wide"></th>
+                      </tr>
+                    ) : governancaTab === "quadro-administrativo" ? (
+                      <tr className="border-b border-gray-100">
+                        <th className="w-[160px] text-left pb-2 pr-4 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                          Documento
+                        </th>
+                        <th className="text-left pb-2 pr-4 text-[10px] font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">
+                          Administração
+                        </th>
+                        <th className="w-[130px] text-left pb-2 pr-4 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                          Cargo
+                        </th>
+                        <th className="w-[130px] text-left pb-2 pr-0 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                          Nacionalidade
+                        </th>
+                        <th className="w-[110px] text-left pb-2 pr-4 text-[10px] font-semibold text-gray-400 uppercase tracking-wide"></th>
+                      </tr>
+                    ) : (
+                      <tr className="border-b border-gray-100">
+                        <th className="w-[160px] text-left pb-2 pr-4 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                          Documento
+                        </th>
+                        <th className="text-left pb-2 pr-4 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                          Empresa
+                        </th>
+                        <th className="w-[140px] text-left pb-2 pr-4 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                          Relacionamento
+                        </th>
+                        <th className="w-[130px] text-left pb-2 pr-4 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                          Cargo
+                        </th>
+                        <th className="w-[90px] text-left pb-2 pr-4 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                          Entrada
+                        </th>
+                        <th className="w-[120px] text-left pb-2 pr-4 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                          Participação
+                        </th>
+                        <th className="w-[90px] text-left pb-2 pr-0 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                          Situação
+                        </th>
+                      </tr>
+                    )}
+                  </thead>
+
+                  <tbody>
+                    {activeRows.map((row: any, index: number) => {
+                      const socio = row?.["detalhes-socio-1"]?.$ ?? {};
+                      const socioPercentual =
+                        row?.["detalhes-socio-2"]?.$ ?? {};
+                      const administrativo = row?.administrativo?.$ ?? {};
+                      const participacao =
+                        governancaTab === "participacao-empresa" ? row : {};
+                      const info = getInfoParts(row);
+
+                      const documentValue =
+                        governancaTab === "controle-societario"
+                          ? socio?.documento
+                          : governancaTab === "quadro-administrativo"
+                            ? administrativo?.documento
+                            : participacao?.documento;
+
+                      const rowKey = `${governancaTab}-${index}-${documentValue ?? "-"}`;
+                      const rowHasDetails = hasAdditionalInfo(row);
+                      const rowHasRestriction =
+                        governancaTab === "participacao-empresa"
+                          ? String(
+                              participacao?.["indicador-restricao"],
+                            ).toLowerCase() === "true"
+                          : Boolean(info?.restricoes);
+                      const isExpanded = governancaExpandedRow === rowKey;
+                      const isControleSocietarioTab =
+                        governancaTab === "controle-societario";
+                      const isQuadroAdministrativoTab =
+                        governancaTab === "quadro-administrativo";
+                      const isChevronExpandTab =
+                        isControleSocietarioTab || isQuadroAdministrativoTab;
+                      const votantePercentual =
+                        socioPercentual?.percentualCapitalVotante;
+                      const totalPercentual = socio?.percentual;
+                      const canExpandRow = isChevronExpandTab
+                        ? true
+                        : rowHasDetails;
+
+                      const infoIcon = rowHasRestriction ? (
+                        <span className="text-red-600 text-base font-bold">
+                          ×
+                        </span>
+                      ) : rowHasDetails ? (
+                        <Search size={18} style={{ color: "#0F4B93" }} />
+                      ) : governancaTab === "controle-societario" &&
+                        socio?.tipoPessoa === "J" ? (
+                        <AlertTriangle size={18} style={{ color: "#F4B400" }} />
+                      ) : (
+                        <span className="text-gray-300">-</span>
+                      );
+
+                      return (
+                        <Fragment key={rowKey}>
+                          <tr className="border-b border-gray-50 hover:bg-gray-50 transition-colors align-middle">
+                            {governancaTab === "controle-societario" ? (
+                              <>
+                                <td className="py-2.5 pr-4 text-sm text-gray-700 break-words whitespace-nowrap">
+                                  {formatDocument(socio?.documento)}
+                                </td>
+                                <td className="py-2.5 pr-4 text-sm text-gray-700 font-medium break-words uppercase">
+                                  {socio?.nome ?? "-"}
+                                </td>
+                                <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                                  {socio?.tipoPessoa ?? "-"}
+                                </td>
+                                <td className="py-2.5 pr-4 text-gray-600 uppercase whitespace-nowrap">
+                                  {socio?.nacionalidade || "-"}
+                                </td>
+                                <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                                  {votantePercentual !== undefined &&
+                                  votantePercentual !== null &&
+                                  String(votantePercentual).trim() !== ""
+                                    ? String(votantePercentual).includes("%")
+                                      ? String(votantePercentual)
+                                      : `${votantePercentual}%`
+                                    : "-"}
+                                </td>
+                                <td className="py-2.5 pr-0 text-gray-600 whitespace-nowrap">
+                                  {totalPercentual !== undefined &&
+                                  totalPercentual !== null &&
+                                  String(totalPercentual).trim() !== ""
+                                    ? String(totalPercentual).includes("%")
+                                      ? String(totalPercentual)
+                                      : `${totalPercentual}%`
+                                    : "-"}
+                                </td>
+                                <td className="py-2.5 pr-4 text-left">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setGovernancaExpandedRow((current) =>
+                                        current === rowKey ? null : rowKey,
+                                      )
+                                    }
+                                    className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer p-1 rounded-full hover:bg-gray-100"
+                                    aria-label={
+                                      isExpanded
+                                        ? "Recolher detalhes"
+                                        : "Expandir detalhes"
+                                    }
+                                  >
+                                    <ChevronDown
+                                      size={13}
+                                      className={`transition-transform ${isExpanded ? "rotate-180" : "rotate-0"}`}
+                                    />
+                                  </button>
+                                </td>
+                              </>
+                            ) : governancaTab === "quadro-administrativo" ? (
+                              <>
+                                <td className="py-2.5 pr-4 text-sm text-gray-700 break-words whitespace-nowrap">
+                                  {formatDocument(administrativo?.documento)}
+                                </td>
+                                <td className="py-2.5 pr-4 text-sm text-gray-700 font-medium uppercase whitespace-nowrap">
+                                  {administrativo?.nome ?? "-"}
+                                </td>
+                                <td className="py-2.5 pr-4 text-gray-600 uppercase whitespace-nowrap">
+                                  {administrativo?.cargo ?? "-"}
+                                </td>
+                                <td className="py-2.5 pr-0 text-gray-600 uppercase whitespace-nowrap">
+                                  {administrativo?.nacionalidade || "-"}
+                                </td>
+                                <td className="py-2.5 pr-4 text-left">
+                                  {canExpandRow ? (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setGovernancaExpandedRow((current) =>
+                                          current === rowKey ? null : rowKey,
+                                        )
+                                      }
+                                      className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer p-1 rounded-full hover:bg-gray-100"
+                                      aria-label={
+                                        isExpanded
+                                          ? "Recolher detalhes"
+                                          : "Expandir detalhes"
+                                      }
+                                    >
+                                      <ChevronDown
+                                        size={13}
+                                        className={`transition-transform ${isExpanded ? "rotate-180" : "rotate-0"}`}
+                                      />
+                                    </button>
+                                  ) : (
+                                    <span className="inline-flex h-7 w-7 items-center justify-center">
+                                      {infoIcon}
+                                    </span>
+                                  )}
+                                </td>
+                              </>
+                            ) : (
+                              <>
+                                {(() => {
+                                  const situacaoDocumento =
+                                    String(
+                                      participacao?.["situacao-documento"] ??
+                                        "-",
+                                    ).trim() || "-";
+                                  const situacaoNormalizada =
+                                    situacaoDocumento.toUpperCase();
+                                  const situacaoBadgeStyle =
+                                    situacaoNormalizada === "ATIVO"
+                                      ? {
+                                          backgroundColor: "#DCFCE7",
+                                          color: "#166534",
+                                        }
+                                      : situacaoNormalizada === "INATIVO"
+                                        ? {
+                                            backgroundColor: "#FEE2E2",
+                                            color: "#991B1B",
+                                          }
+                                        : {
+                                            backgroundColor: "#F3F4F6",
+                                            color: "#374151",
+                                          };
+
+                                  return (
+                                    <>
+                                      <td className="py-2.5 pr-4 text-sm text-gray-700 break-words whitespace-nowrap">
+                                        {formatDocument(
+                                          participacao?.documento,
+                                        )}
+                                      </td>
+                                      <td className="py-2.5 pr-4 text-sm text-gray-700 font-medium break-words uppercase">
+                                        {participacao?.nome ?? "-"}
+                                      </td>
+                                      <td className="py-2.5 pr-4 text-gray-600 uppercase whitespace-nowrap">
+                                        {participacao?.[
+                                          "tipo-relacionamento"
+                                        ] ?? "-"}
+                                      </td>
+                                      <td className="py-2.5 pr-4 text-gray-600 uppercase whitespace-nowrap">
+                                        {participacao?.["cargo-direcao"] ?? "-"}
+                                      </td>
+                                      <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                                        {formatDate(
+                                          participacao?.["data-entrada"],
+                                        )}
+                                      </td>
+                                      <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                                        {participacao?.[
+                                          "porcentual-participacao"
+                                        ]
+                                          ? `${participacao["porcentual-participacao"]}%`
+                                          : "-"}
+                                      </td>
+                                      <td className="py-2.5 pr-0 text-gray-600 uppercase whitespace-nowrap">
+                                        <span
+                                          className="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase"
+                                          style={situacaoBadgeStyle}
+                                        >
+                                          {situacaoDocumento}
+                                        </span>
+                                      </td>
+                                    </>
+                                  );
+                                })()}
+                              </>
+                            )}
+                          </tr>
+
+                          {(isControleSocietarioTab ||
+                            isQuadroAdministrativoTab) && (
+                            <tr
+                              className={`bg-gray-50/50 transition-all ${
+                                isExpanded
+                                  ? "border-b border-gray-50 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                                  : "border-b border-transparent duration-300 ease-in-out"
+                              }`}
+                            >
+                              <td colSpan={7} className="p-0">
+                                <div
+                                  className={`overflow-hidden transition-[max-height,opacity] ${
+                                    isExpanded
+                                      ? "max-h-[380px] opacity-100 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                                      : "max-h-0 opacity-0 duration-300 ease-in-out"
+                                  }`}
+                                >
+                                  <div
+                                    className={`grid grid-cols-2 gap-3 px-3 py-3 transition-all md:grid-cols-3 ${
+                                      isExpanded
+                                        ? "translate-y-0 opacity-100 duration-500 delay-75"
+                                        : "-translate-y-1 opacity-0 duration-200"
+                                    }`}
+                                  >
+                                    {(isControleSocietarioTab
+                                      ? [
+                                          {
+                                            label: "Nome",
+                                            value: socio?.nome,
+                                          },
+                                          {
+                                            label: "Documento",
+                                            value: formatDocument(
+                                              socio?.documento,
+                                            ),
+                                          },
+                                          {
+                                            label: "Nascimento",
+                                            value: formatDate(
+                                              info?.info1?.dataNascimento,
+                                            ),
+                                          },
+                                          {
+                                            label: "RG",
+                                            value: info?.info1?.rg,
+                                          },
+                                          {
+                                            label: "Nacionalidade",
+                                            value: socio?.nacionalidade,
+                                          },
+                                          {
+                                            label: "Endereço",
+                                            value: info?.info2?.logradouro,
+                                          },
+                                          {
+                                            label: "Bairro",
+                                            value: info?.info2?.bairro,
+                                          },
+                                          {
+                                            label: "CEP",
+                                            value: formatCEP(info?.info1?.cep),
+                                          },
+                                          {
+                                            label: "Cidade",
+                                            value: info?.info1?.cidade,
+                                          },
+                                          {
+                                            label: "UF",
+                                            value: info?.info1?.uf,
+                                          },
+                                          {
+                                            label: "Telefone",
+                                            value: formatPhone(
+                                              info?.info1?.ddd,
+                                            ),
+                                          },
+                                          {
+                                            label: "Vínculo",
+                                            value: info?.info1?.vinculo,
+                                          },
+                                          {
+                                            label: "Capital Votante",
+                                            value:
+                                              socioPercentual?.percentualCapitalVotante,
+                                          },
+                                          {
+                                            label: "Capital Total",
+                                            value: socio?.percentual,
+                                          },
+                                        ]
+                                      : [
+                                          {
+                                            label: "Vínculo",
+                                            value: info?.info1?.vinculo,
+                                          },
+                                          {
+                                            label: "Data Nascimento",
+                                            value: formatDate(
+                                              info?.info1?.dataNascimento,
+                                            ),
+                                          },
+                                          {
+                                            label: "Telefone",
+                                            value: formatPhone(
+                                              info?.info1?.ddd,
+                                            ),
+                                          },
+                                          {
+                                            label: "RG",
+                                            value: info?.info1?.rg,
+                                          },
+                                          {
+                                            label: "CEP",
+                                            value: formatCEP(info?.info1?.cep),
+                                          },
+                                          {
+                                            label: "Cidade/UF",
+                                            value:
+                                              info?.info1?.cidade ||
+                                              info?.info1?.uf
+                                                ? `${info?.info1?.cidade ?? "-"}/${
+                                                    info?.info1?.uf ?? "-"
+                                                  }`
+                                                : "-",
+                                          },
+                                          {
+                                            label: "Logradouro",
+                                            value: info?.info2?.logradouro,
+                                          },
+                                          {
+                                            label: "Bairro",
+                                            value: info?.info2?.bairro,
+                                          },
+                                        ]
+                                    ).map((field) => (
+                                      <div
+                                        key={`${rowKey}-${field.label}`}
+                                        className="min-w-0"
+                                      >
+                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                                          {field.label}
+                                        </p>
+                                        <p className="truncate text-xs text-gray-700">
+                                          {field.value || "-"}
+                                        </p>
+                                      </div>
+                                    ))}
+                                  </div>
+
+                                  {info?.restricoes && (
+                                    <div className="mx-3 mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2">
+                                      <p className="text-[11px] font-semibold uppercase tracking-wide text-red-700">
+                                        Restrição Encontrada
+                                      </p>
+                                      <p className="text-xs text-red-800 mt-0.5">
+                                        {info?.restricoes?.descricao ?? "-"} |
+                                        Ocorrências:{" "}
+                                        {info?.restricoes
+                                          ?.quantidadeOcorrencias ?? "-"}{" "}
+                                        | Última ocorrência:{" "}
+                                        {formatDate(
+                                          info?.restricoes
+                                            ?.dataUltimaOcorrencia,
+                                        )}{" "}
+                                        | Valor total:{" "}
+                                        {info?.restricoes
+                                          ?.valorTotalOcorrencia ?? "-"}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+
+                          {governancaTab === "participacao-empresa" &&
+                            isExpanded && (
+                              <tr className="border-b border-gray-50 bg-gray-50/50">
+                                <td
+                                  colSpan={
+                                    governancaTab === "controle-societario"
+                                      ? 7
+                                      : governancaTab ===
+                                          "quadro-administrativo"
+                                        ? 5
+                                        : 7
+                                  }
+                                  className="px-3 py-3"
+                                >
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    {[
+                                      {
+                                        label: "Vínculo",
+                                        value: info?.info1?.vinculo,
+                                      },
+                                      {
+                                        label: "Data Nascimento",
+                                        value: formatDate(
+                                          info?.info1?.dataNascimento,
+                                        ),
+                                      },
+                                      {
+                                        label: "Telefone",
+                                        value: formatPhone(info?.info1?.ddd),
+                                      },
+                                      {
+                                        label: "RG",
+                                        value: info?.info1?.rg,
+                                      },
+                                      {
+                                        label: "CEP",
+                                        value: formatCEP(info?.info1?.cep),
+                                      },
+                                      {
+                                        label: "Cidade/UF",
+                                        value:
+                                          info?.info1?.cidade || info?.info1?.uf
+                                            ? `${info?.info1?.cidade ?? "-"}/${
+                                                info?.info1?.uf ?? "-"
+                                              }`
+                                            : "-",
+                                      },
+                                      {
+                                        label: "Logradouro",
+                                        value: info?.info2?.logradouro,
+                                      },
+                                      {
+                                        label: "Bairro",
+                                        value: info?.info2?.bairro,
+                                      },
+                                    ].map((detailItem) => (
+                                      <div
+                                        key={`${rowKey}-${detailItem.label}`}
+                                        className="rounded-md border border-gray-200 bg-white px-3 py-2"
+                                      >
+                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                                          {detailItem.label}
+                                        </p>
+                                        <p className="text-xs font-medium text-gray-800 mt-0.5 break-words">
+                                          {detailItem.value || "-"}
+                                        </p>
+                                      </div>
+                                    ))}
+                                  </div>
+
+                                  {info?.restricoes && (
+                                    <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2">
+                                      <p className="text-[11px] font-semibold uppercase tracking-wide text-red-700">
+                                        Restrição Encontrada
+                                      </p>
+                                      <p className="text-xs text-red-800 mt-0.5">
+                                        {info?.restricoes?.descricao ?? "-"} |
+                                        Ocorrências:{" "}
+                                        {info?.restricoes
+                                          ?.quantidadeOcorrencias ?? "-"}{" "}
+                                        | Última ocorrência:{" "}
+                                        {formatDate(
+                                          info?.restricoes
+                                            ?.dataUltimaOcorrencia,
+                                        )}{" "}
+                                        | Valor total:{" "}
+                                        {info?.restricoes
+                                          ?.valorTotalOcorrencia ?? "-"}
+                                      </p>
+                                    </div>
+                                  )}
+                                </td>
+                              </tr>
+                            )}
+                        </Fragment>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })()}
 
         {(() => {
           const comportamentoDetalhe =
@@ -2669,8 +3551,12 @@ export default function SpcMaxiResultadoPage() {
             return null;
           }
 
-          const gastoInicial = Number(comportamentoDetalhe?.["gasto-total-inicial"] ?? 0);
-          const gastoFinal = Number(comportamentoDetalhe?.["gasto-total-final"] ?? 0);
+          const gastoInicial = Number(
+            comportamentoDetalhe?.["gasto-total-inicial"] ?? 0,
+          );
+          const gastoFinal = Number(
+            comportamentoDetalhe?.["gasto-total-final"] ?? 0,
+          );
           const temFaixaGasto = gastoInicial > 0 || gastoFinal > 0;
 
           const formatarMoeda = (valor: number) =>
@@ -2700,8 +3586,10 @@ export default function SpcMaxiResultadoPage() {
                       <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
                         Gasto médio mensal
                       </span>
+
                       <span className="text-base font-bold text-gray-800">
-                        Entre {formatarMoeda(gastoInicial)} e {formatarMoeda(gastoFinal)}
+                        Entre {formatarMoeda(gastoInicial)} e{" "}
+                        {formatarMoeda(gastoFinal)}
                       </span>
                     </div>
                   ) : (
@@ -2721,6 +3609,7 @@ export default function SpcMaxiResultadoPage() {
                         <th className="text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide pb-2 pr-4">
                           Categoria
                         </th>
+
                         <th className="text-right text-[10px] font-semibold text-gray-400 uppercase tracking-wide pb-2 pr-0">
                           % de Representatividade
                         </th>
@@ -2728,37 +3617,41 @@ export default function SpcMaxiResultadoPage() {
                     </thead>
 
                     <tbody>
-                      {segmentosComportamento.map((segmento: any, index: number) => {
-                        const percentual = Number(
-                          segmento?.["porcentual-representatividade"] ?? 0,
-                        );
-                        const percentualExibicao = Number.isFinite(percentual)
-                          ? percentual
-                          : 0;
+                      {segmentosComportamento.map(
+                        (segmento: any, index: number) => {
+                          const percentual = Number(
+                            segmento?.["porcentual-representatividade"] ?? 0,
+                          );
+                          const percentualExibicao = Number.isFinite(percentual)
+                            ? percentual
+                            : 0;
 
-                        return (
-                          <tr
-                            key={`${segmento?.nome ?? "segmento"}-${index}`}
-                            className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
-                          >
-                            <td className="py-2.5 pr-4 text-gray-700 font-medium">
-                              {segmento?.nome ?? "-"}
-                            </td>
-
-                            <td
-                              className={`py-2.5 pr-0 text-right text-gray-600 whitespace-nowrap ${
-                                percentualExibicao !== 0 ? "font-semibold" : "font-normal"
-                              }`}
+                          return (
+                            <tr
+                              key={`${segmento?.nome ?? "segmento"}-${index}`}
+                              className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
                             >
-                              {percentualExibicao === 0
-                                ? "0%"
-                                : percentualExibicao === 100
-                                  ? "100%"
-                                  : `${percentualExibicao.toFixed(2)}%`}
-                            </td>
-                          </tr>
-                        );
-                      })}
+                              <td className="py-2.5 pr-4 text-gray-700 font-medium">
+                                {segmento?.nome ?? "-"}
+                              </td>
+
+                              <td
+                                className={`py-2.5 pr-0 text-right text-gray-600 whitespace-nowrap ${
+                                  percentualExibicao !== 0
+                                    ? "font-semibold"
+                                    : "font-normal"
+                                }`}
+                              >
+                                {percentualExibicao === 0
+                                  ? "0%"
+                                  : percentualExibicao === 100
+                                    ? "100%"
+                                    : `${percentualExibicao.toFixed(2)}%`}
+                              </td>
+                            </tr>
+                          );
+                        },
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -2819,55 +3712,63 @@ export default function SpcMaxiResultadoPage() {
                     </thead>
 
                     <tbody>
-                      {segmentosPontualidade.map((segmento: any, index: number) => {
-                        const periodosMap = new Map<string, number>(
-                          (segmento?.periodos ?? []).map((periodo: any) => [
-                            periodo?.descricao,
-                            Number(periodo?.porcentual ?? 0),
-                          ]),
-                        );
+                      {segmentosPontualidade.map(
+                        (segmento: any, index: number) => {
+                          const periodosMap = new Map<string, number>(
+                            (segmento?.periodos ?? []).map((periodo: any) => [
+                              periodo?.descricao,
+                              Number(periodo?.porcentual ?? 0),
+                            ]),
+                          );
 
-                        const colunas = [
-                          "PAGAMENTO_EM_DIA",
-                          "PAGAMENTO_ATE_15_DIAS",
-                          "PAGAMENTO_ENTRE_15_E_30_DIAS_APOS_VENCIMENTO",
-                          "PAGAMENTO_ENTRE_30_E_90_DIAS_APOS_VENCIMENTO",
-                          "PAGAMENTO_ACIMA_DE_90_DIAS_APOS_VENCIMENTO",
-                          "SEM_INFORMACOES_PAGAMENTO_ATE_30_DIAS_APOS_VENCIMENTO",
-                          "SEM_INFORMACOES_PAGAMENTO_ACIMA_DE_30_DIAS_APOS_VENCIMENTO",
-                        ];
+                          const colunas = [
+                            "PAGAMENTO_EM_DIA",
+                            "PAGAMENTO_ATE_15_DIAS",
+                            "PAGAMENTO_ENTRE_15_E_30_DIAS_APOS_VENCIMENTO",
+                            "PAGAMENTO_ENTRE_30_E_90_DIAS_APOS_VENCIMENTO",
+                            "PAGAMENTO_ACIMA_DE_90_DIAS_APOS_VENCIMENTO",
+                            "SEM_INFORMACOES_PAGAMENTO_ATE_30_DIAS_APOS_VENCIMENTO",
+                            "SEM_INFORMACOES_PAGAMENTO_ACIMA_DE_30_DIAS_APOS_VENCIMENTO",
+                          ];
 
-                        return (
-                          <tr
-                            key={`${segmento?.nome ?? "categoria"}-${index}`}
-                            className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
-                          >
-                            <td className="py-2.5 pr-4 text-gray-700 font-medium">
-                              {segmento?.nome ?? "-"}
-                            </td>
+                          return (
+                            <tr
+                              key={`${segmento?.nome ?? "categoria"}-${index}`}
+                              className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                            >
+                              <td className="py-2.5 pr-4 text-gray-700 font-medium">
+                                {segmento?.nome ?? "-"}
+                              </td>
 
-                            {colunas.map((descricao) => {
-                              const valor = Number(periodosMap.get(descricao) ?? 0);
-                              const percentual = Number.isFinite(valor) ? valor : 0;
+                              {colunas.map((descricao) => {
+                                const valor = Number(
+                                  periodosMap.get(descricao) ?? 0,
+                                );
+                                const percentual = Number.isFinite(valor)
+                                  ? valor
+                                  : 0;
 
-                              return (
-                                <td
-                                  key={descricao}
-                                  className={`py-2.5 px-1 text-center text-gray-600 whitespace-nowrap ${
-                                    percentual !== 0 ? "font-semibold" : "font-normal"
-                                  }`}
-                                >
-                                  {percentual === 0
-                                    ? "0%"
-                                    : percentual === 100
-                                      ? "100%"
-                                      : `${percentual.toFixed(2)}%`}
-                                </td>
-                              );
-                            })}
-                          </tr>
-                        );
-                      })}
+                                return (
+                                  <td
+                                    key={descricao}
+                                    className={`py-2.5 px-1 text-center text-gray-600 whitespace-nowrap ${
+                                      percentual !== 0
+                                        ? "font-semibold"
+                                        : "font-normal"
+                                    }`}
+                                  >
+                                    {percentual === 0
+                                      ? "0%"
+                                      : percentual === 100
+                                        ? "100%"
+                                        : `${percentual.toFixed(2)}%`}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          );
+                        },
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -3104,7 +4005,353 @@ export default function SpcMaxiResultadoPage() {
           );
         })()}
 
-        <div className="fixed bottom-10 right-6 z-50 flex flex-col gap-2.5">
+        {(() => {
+          const historicoScr =
+            spcData?.["insumo-historico-operacao-scr"]?.[
+              "detalhe-insumo-historico-operacao-scr"
+            ];
+
+          if (!historicoScr) return null;
+
+          const grupoGarantia = historicoScr?.["grupo-garantia"] ?? [];
+          const grupoModalidade = historicoScr?.["grupo-modalidade"] ?? [];
+          const grupoCarteiraAtiva =
+            historicoScr?.["grupo-carteira-ativa"] ?? [];
+          const grupoCarteiraAtivaLabels: Record<string, string> = {
+            ATE90DIAS: "Até 90 dias",
+            DE91ATE360DIAS: "De 91 até 360 dias",
+            DE361ATE1080DIAS: "De 361 até 1080 dias",
+            DE1081ATE1800DIAS: "De 1081 até 1800 dias",
+            DE1801ATE5400DIAS: "De 1801 até 5400 dias",
+            ACIMA5400DIAS: "Acima de 5400 dias",
+          };
+          const grupoCarteiraAtivaColors: Record<string, string> = {
+            ATE90DIAS: "#648FD0",
+            DE91ATE360DIAS: "#4A5FA6",
+            DE361ATE1080DIAS: "#313D77",
+            DE1081ATE1800DIAS: "#E2A742",
+            DE1801ATE5400DIAS: "#E1C12E",
+            ACIMA5400DIAS: "#9B9B9B",
+          };
+          const grupoCarteiraAtivaChartData: Array<{
+            key: string;
+            label: string;
+            percentual: number;
+            color: string;
+          }> = grupoCarteiraAtiva.map(
+            (row: { agrupamento?: string; percentual?: string }) => ({
+              key: row?.agrupamento ?? "-",
+              label:
+                grupoCarteiraAtivaLabels[row?.agrupamento ?? ""] ??
+                row?.agrupamento ??
+                "-",
+              percentual: Number(row?.percentual ?? 0),
+              color:
+                grupoCarteiraAtivaColors[row?.agrupamento ?? ""] ?? "#9B9B9B",
+            }),
+          );
+
+          const renderGrupoTable = (
+            title: string,
+            rows: Array<{ agrupamento?: string; percentual?: string }>,
+          ) => (
+            <div className="rounded-lg border border-gray-100 p-3">
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+                {title}
+              </p>
+
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="text-left pb-2 pr-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                      Agrupamento
+                    </th>
+                    <th className="text-right pb-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                      Percentual
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {rows.map((row, idx) => (
+                    <tr
+                      key={`${title}-${row?.agrupamento ?? "item"}-${idx}`}
+                      className="border-b border-gray-50 last:border-b-0"
+                    >
+                      <td className="py-2 pr-3 text-gray-700">
+                        {row?.agrupamento ?? "-"}
+                      </td>
+                      <td className="py-2 text-right text-gray-700 font-medium">
+                        {row?.percentual ?? "0"}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+
+          return (
+            <div
+              id="section-historico-scr"
+              className="bg-white rounded-xl border border-gray-200 p-5 mb-4"
+            >
+              <h2 className="text-sm font-semibold text-gray-700 mb-4">
+                Historico de Operações no SCR
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
+                <div
+                  className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+                  style={{ backgroundColor: "#F8F9FB" }}
+                >
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                    Quantidade
+                  </span>
+                  <span className="text-base font-bold text-gray-800">
+                    {historicoScr?.quantidade ?? "0"}
+                  </span>
+                </div>
+
+                <div
+                  className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+                  style={{ backgroundColor: "#F8F9FB" }}
+                >
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                    Instituições no SCR
+                  </span>
+                  <span className="text-base font-bold text-gray-800">
+                    {historicoScr?.["quantidade-instituicao-scr"] ?? "0"}
+                  </span>
+                </div>
+
+                <div
+                  className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+                  style={{ backgroundColor: "#F8F9FB" }}
+                >
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                    Quantidade Garantias
+                  </span>
+                  <span className="text-base font-bold text-gray-800">
+                    {historicoScr?.["quantidade-garantia"] ?? "0"}
+                  </span>
+                </div>
+
+                <div
+                  className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+                  style={{ backgroundColor: "#F8F9FB" }}
+                >
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                    Início Relacionamento
+                  </span>
+                  <span className="text-base font-bold text-gray-800">
+                    {formatDate(historicoScr?.["data-inicio-relacionamento"])}
+                  </span>
+                </div>
+
+                <div
+                  className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+                  style={{ backgroundColor: "#F8F9FB" }}
+                >
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                    Venc. Última Parcela
+                  </span>
+                  <span className="text-base font-bold text-gray-800">
+                    {formatDate(historicoScr?.["vencimento-ultima-parcela"])}
+                  </span>
+                </div>
+
+                <div
+                  className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+                  style={{ backgroundColor: "#F8F9FB" }}
+                >
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                    Atualização Base
+                  </span>
+                  <span className="text-base font-bold text-gray-800">
+                    {formatDate(historicoScr?.["data-atualizacao-base"])}
+                  </span>
+                </div>
+
+                <div
+                  className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+                  style={{ backgroundColor: "#F8F9FB" }}
+                >
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                    Contratado Inicial
+                  </span>
+                  <span className="text-base font-bold text-gray-800">
+                    {formatValor(
+                      historicoScr?.["valor-total-contratado-inicial"],
+                    )}
+                  </span>
+                </div>
+
+                <div
+                  className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+                  style={{ backgroundColor: "#F8F9FB" }}
+                >
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                    Contratado Final
+                  </span>
+                  <span className="text-base font-bold text-gray-800">
+                    {formatValor(
+                      historicoScr?.["valor-total-contratado-final"],
+                    )}
+                  </span>
+                </div>
+
+                <div
+                  className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+                  style={{ backgroundColor: "#F8F9FB" }}
+                >
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                    Carteira Ativa Inicial
+                  </span>
+                  <span className="text-base font-bold text-gray-800">
+                    {formatValor(
+                      historicoScr?.["valor-total-carteira-ativa-inicial"],
+                    )}
+                  </span>
+                </div>
+
+                <div
+                  className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+                  style={{ backgroundColor: "#F8F9FB" }}
+                >
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                    Carteira Ativa Final
+                  </span>
+                  <span className="text-base font-bold text-gray-800">
+                    {formatValor(
+                      historicoScr?.["valor-total-carteira-ativa-final"],
+                    )}
+                  </span>
+                </div>
+
+                <div
+                  className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+                  style={{ backgroundColor: "#F8F9FB" }}
+                >
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                    Ativa a Vencer Inicial
+                  </span>
+                  <span className="text-base font-bold text-gray-800">
+                    {formatValor(
+                      historicoScr?.[
+                        "valor-total-carteira-ativa-vencer-inicial"
+                      ],
+                    )}
+                  </span>
+                </div>
+
+                <div
+                  className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+                  style={{ backgroundColor: "#F8F9FB" }}
+                >
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                    Ativa a Vencer Final
+                  </span>
+                  <span className="text-base font-bold text-gray-800">
+                    {formatValor(
+                      historicoScr?.["valor-total-carteira-ativa-vencer-final"],
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+                {renderGrupoTable("Grupo Garantia", grupoGarantia)}
+                {renderGrupoTable("Grupo Modalidade", grupoModalidade)}
+                <div className="rounded-lg border border-gray-100 p-3 lg:col-span-3">
+                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-4">
+                    Carteira ativa a vencer por modalidade
+                  </p>
+
+                  <div className="h-[260px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart
+                        data={grupoCarteiraAtivaChartData}
+                        margin={{ top: 4, right: 16, left: 8, bottom: 55 }}
+                      >
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="#F3F4F6"
+                          vertical={false}
+                        />
+                        <XAxis
+                          dataKey="label"
+                          interval={0}
+                          angle={-35}
+                          textAnchor="end"
+                          height={65}
+                          tickMargin={8}
+                          tick={{ fontSize: 10, fill: "#9CA3AF" }}
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <YAxis
+                          domain={[0, 100]}
+                          ticks={[0, 20, 40, 60, 80, 100]}
+                          tickFormatter={(value: number) => `${value}%`}
+                          tick={{ fontSize: 10, fill: "#9CA3AF" }}
+                          tickLine={false}
+                          axisLine={false}
+                          width={50}
+                        />
+                        <Tooltip
+                          formatter={(value: number, _name, item) => [
+                            `${value}%`,
+                            item?.payload?.label ?? "Faixa",
+                          ]}
+                          labelFormatter={(_label, payload) =>
+                            payload?.[0]?.payload?.label ?? "Faixa"
+                          }
+                          labelStyle={{ fontSize: 11, color: "#374151" }}
+                          contentStyle={{
+                            fontSize: 11,
+                            borderRadius: 8,
+                            border: "1px solid #E5E7EB",
+                          }}
+                          cursor={{ fill: "#F9FAFB" }}
+                        />
+                        <Bar
+                          dataKey="percentual"
+                          fill="#ED884A"
+                          maxBarSize={18}
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="mt-6 border-t border-gray-100 pt-5">
+                    <p className="text-[13px] text-gray-600">
+                      Valor estimado total entre{" "}
+                      <strong className="text-[#2D4F91]">
+                        {formatValor(
+                          historicoScr?.[
+                            "valor-total-carteira-ativa-vencer-inicial"
+                          ],
+                        )}
+                      </strong>{" "}
+                      a{" "}
+                      <strong className="text-[#2D4F91]">
+                        {formatValor(
+                          historicoScr?.[
+                            "valor-total-carteira-ativa-vencer-final"
+                          ],
+                        )}
+                      </strong>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        <div className="fixed bottom-2 right-2 z-50 flex flex-col gap-2">
           {[
             {
               id: "section-identificacao",
@@ -3136,6 +4383,11 @@ export default function SpcMaxiResultadoPage() {
               icon: <Search size={16} />,
               label: "Consultas Realizadas",
             },
+            {
+              id: "section-historico-scr",
+              icon: <ClipboardList size={16} />,
+              label: "Histórico SCR",
+            },
           ].map(({ id, icon, label }) => (
             <div key={id} className="group flex items-center justify-end gap-2">
               <span
@@ -3155,7 +4407,7 @@ export default function SpcMaxiResultadoPage() {
                     window.scrollTo({ top: y, behavior: "smooth" });
                   }
                 }}
-                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-white shadow-md transition-all duration-150 hover:scale-110 hover:shadow-lg active:scale-95"
+                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-white shadow-md transition-all duration-150 hover:scale-110 hover:shadow-lg active:scale-95 cursor-pointer"
                 style={{ backgroundColor: "#ED884A" }}
                 aria-label={label}
               >
