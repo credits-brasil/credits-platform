@@ -3,12 +3,12 @@ import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
-import chatGPTImage from "../../../attached_assets/ChatGPT Image 12 de ago. de 2026, 13_56_11.png";
 
 const creditsLogo = "/login-assets/credits-mark.png";
 const cMonogram = "/login-assets/c-shape-blue.png";
 const cdlSpcLogos = "/login-assets/partners-spc.png";
 const cGlow = "/login-assets/c-shape-glow.png";
+const chatGPTImage = "/attached-assets/credits-brand-primary.png";
 
 interface LoginPageProps {
   onLogin: (username: string, password: string) => boolean;
@@ -27,11 +27,11 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
     const didLogin = onLogin(username, password);
 
-    // if (!didLogin) {
-    //   setError("Credenciais inválidas. Tente novamente.");
+    if (!didLogin) {
+      setError("Credenciais inválidas. Tente novamente.");
 
-    //   return;
-    // }
+      return;
+    }
 
     setError(null);
     setLocation("/verticais/credito-risco/spc-maxi");

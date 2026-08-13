@@ -1,235 +1,26 @@
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
-import {
-  Search,
-  ShieldCheck,
-  TrendingUp,
-  Users,
-  AlertCircle,
-  CheckCircle2,
-  Info,
-  X,
-  Building2,
-  FileText,
-  HatGlasses,
-} from "lucide-react";
+import { Search, AlertCircle } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-
-type DocType = "cpf" | "cnpj";
-
-function detectDocTypeByInput(value: string): DocType {
-  const cleanAlnum = value.replace(/[^a-zA-Z0-9]/g, "");
-  const cleanDigits = value.replace(/\D/g, "");
-
-  if (/[a-zA-Z]/.test(cleanAlnum)) return "cnpj";
-
-  return cleanDigits.length > 11 ? "cnpj" : "cpf";
-}
-
-const CPF_INSUMO_GROUPS: InsumoGroup[] = [
-  {
-    id: "risco-credito",
-    title: "Risco de Crédito",
-    icon: ShieldCheck,
-    items: [
-      { id: "78", label: "Score 12 meses" },
-      { id: "77", label: "Score 3 meses" },
-      {
-        id: "5239",
-        label: "Classificação de Risco dos Débitos Ativos",
-      },
-    ],
-  },
-  {
-    id: "informacoes-positivas",
-    title: "Informações Positivas",
-    icon: TrendingUp,
-    items: [
-      { id: "5228", label: "Score + Positivo" },
-      { id: "5122", label: "Renda Presumida + Positivo" },
-      { id: "5224", label: "Índice de Comportamento de Gastos" },
-      { id: "5227", label: "Índice Pontualidade de Pagamento" },
-    ],
-  },
-  {
-    id: "comportamentais-cadastrais",
-    title: "Comportamentais & Cadastrais",
-    icon: Users,
-    items: [
-      { id: "5142", label: "Limite de Crédito Sugerido" },
-      { id: "5194", label: "Comprometimento de Renda Mensal" },
-    ],
-  },
-  {
-    id: "informacoes-scr",
-    title: "Informações do SCR",
-    icon: FileText,
-    items: [
-      { id: "5256", label: "Operações no SCR" },
-      { id: "5257", label: "Histórico de Operações no SCR" },
-    ],
-  },
-  {
-    id: "solucoes-antifraude",
-    title: "Soluções Antifraude",
-    icon: HatGlasses,
-    items: [
-      { id: "5264", label: "Alerta de CPF suspeito" },
-      { id: "5268", label: "SPC Valida Celular" },
-      { id: "5262", label: "Alerta de Identidade à Fraude" },
-    ],
-  },
-];
-
-const CNPJ_INSUMO_GROUPS: InsumoGroup[] = [
-  {
-    id: "risco-credito",
-    title: "Risco de Crédito",
-    icon: ShieldCheck,
-    items: [
-      { id: "78", label: "Score 12 meses" },
-      { id: "77", label: "Score 3 meses" },
-      { id: "5229", label: "Score PJ" },
-      { id: "5186", label: "Quadro Social Mais Completo PJ" },
-      { id: "5247", label: "Score PJ MEI" },
-    ],
-  },
-  {
-    id: "comportamentais-cadastrais",
-    title: "Comportamentais & Cadastrais",
-    icon: Users,
-    items: [
-      { id: "5179", label: "Limite de Crédito PJ" },
-      { id: "5265", label: "Participação no Mercado de Capitais" },
-      { id: "5267", label: "Quantidade de funcionários" },
-    ],
-  },
-  {
-    id: "socios-administradores",
-    title: "Sócios & Administradores",
-    icon: Building2,
-    items: [
-      { id: "24", label: "Participação Empresa" },
-      { id: "49", label: "Quadro administrativo" },
-      { id: "23", label: "Controle Societário" },
-    ],
-  },
-  {
-    id: "informacoes-positivas",
-    title: "Informações Positivas",
-    icon: TrendingUp,
-    items: [
-      { id: "5185", label: "Gasto Financeiro Estimado PJ " },
-      { id: "5178", label: "Faturamento Presumido" },
-      { id: "5224", label: "Índice de Comportamento de Gastos" },
-      { id: "5227", label: "Índice Pontualidade de Pagamento" },
-    ],
-  },
-  {
-    id: "informacoes-scr",
-    title: "Informações do SCR",
-    icon: FileText,
-    items: [
-      { id: "5256", label: "Operações no SCR" },
-      { id: "5257", label: "Histórico de Operações no SCR" },
-    ],
-  },
-];
-
-function formatCpf(value: string) {
-  return value
-    .replace(/\D/g, "")
-    .slice(0, 11)
-    .replace(/(\d{3})(\d)/, "$1.$2")
-    .replace(/(\d{3})(\d)/, "$1.$2")
-    .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-}
-
-function formatCnpj(value: string) {
-  // Allow alphanumeric: strip everything except letters and digits, uppercase
-  const clean = value
-    .replace(/[^a-zA-Z0-9]/g, "")
-    .toUpperCase()
-    .slice(0, 14);
-  const p1 = clean.slice(0, 2);
-  const p2 = clean.slice(2, 5);
-  const p3 = clean.slice(5, 8);
-  const p4 = clean.slice(8, 12);
-  const p5 = clean.slice(12, 14);
-  if (clean.length <= 2) return p1;
-  if (clean.length <= 5) return `${p1}.${p2}`;
-  if (clean.length <= 8) return `${p1}.${p2}.${p3}`;
-  if (clean.length <= 12) return `${p1}.${p2}.${p3}/${p4}`;
-  return `${p1}.${p2}.${p3}/${p4}-${p5}`;
-}
-
-function cnpjCharValue(ch: string): number {
-  // Receita Federal spec: use charCode - 48 for all chars
-  // digits: '0'=0 … '9'=9 | letters: 'A'=17 … 'Z'=42
-  return ch.toUpperCase().charCodeAt(0) - 48;
-}
-
-function validateCpf(cpf: string): boolean {
-  const digits = cpf.replace(/\D/g, "");
-  if (digits.length !== 11) return false;
-  if (/^(\d)\1+$/.test(digits)) return false;
-  let sum = 0;
-  for (let i = 0; i < 9; i++) sum += parseInt(digits[i]) * (10 - i);
-  let rest = (sum * 10) % 11;
-  if (rest === 10 || rest === 11) rest = 0;
-  if (rest !== parseInt(digits[9])) return false;
-  sum = 0;
-  for (let i = 0; i < 10; i++) sum += parseInt(digits[i]) * (11 - i);
-  rest = (sum * 10) % 11;
-  if (rest === 10 || rest === 11) rest = 0;
-  return rest === parseInt(digits[10]);
-}
-
-function validateCnpj(cnpj: string): boolean {
-  const clean = cnpj.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
-  if (clean.length !== 14) return false;
-  // Reject all-same sequences
-  if (/^(.)\1+$/.test(clean)) return false;
-  // Last 2 must be digits (check digits)
-  if (!/^\d$/.test(clean[12]) || !/^\d$/.test(clean[13])) return false;
-
-  const w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-  const w2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-
-  const calcDigit = (weights: number[]) => {
-    const sum = weights.reduce(
-      (acc, w, i) => acc + cnpjCharValue(clean[i]) * w,
-      0,
-    );
-    const rest = sum % 11;
-    return rest < 2 ? 0 : 11 - rest;
-  };
-
-  return (
-    calcDigit(w1) === parseInt(clean[12]) &&
-    calcDigit(w2) === parseInt(clean[13])
-  );
-}
-
-interface Insumo {
-  id: string;
-  label: string;
-}
-
-interface InsumoGroup {
-  id: string;
-  title: string;
-  icon: React.ElementType;
-  items: Insumo[];
-}
-
-function formatTelefone(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 11);
-
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-}
+import {
+  DocTypeToggleComponent,
+  FilterCheckboxComponent,
+  InputComponent,
+} from "@/components";
+import { InsumoGroupCard } from "@/containers/SpcMaxi/components/InsumoGroupCard";
+import {
+  CNPJ_INSUMO_GROUPS,
+  CPF_INSUMO_GROUPS,
+} from "@/constants/insumo-groups";
+import type { DocType } from "@/types/docType";
+import {
+  detectDocTypeByInput,
+  formatCnpj,
+  formatCpf,
+  formatPhone,
+  validateCNPJ,
+  validateCPF,
+} from "@/utils";
 
 const DEFAULT_SELECTED = new Set<string>([]);
 
@@ -237,7 +28,7 @@ export default function SpcMaxiPage() {
   const queryClient = useQueryClient();
 
   const [loading, setLoading] = useState(false);
-  const [docType, setDocType] = useState<DocType>("cpf");
+  const [docType, setDocType] = useState<DocType>("CPF");
   const [documento, setDocumento] = useState("");
   const [telefone, setTelefone] = useState("");
   const [touched, setTouched] = useState(false);
@@ -245,10 +36,9 @@ export default function SpcMaxiPage() {
   const [selected, setSelected] = useState<Set<string>>(
     new Set(DEFAULT_SELECTED),
   );
-  const [activeModal, setActiveModal] = useState<string | null>(null);
 
   const insumoGroups = useMemo(
-    () => (docType === "cpf" ? CPF_INSUMO_GROUPS : CNPJ_INSUMO_GROUPS),
+    () => (docType === "CPF" ? CPF_INSUMO_GROUPS : CNPJ_INSUMO_GROUPS),
     [docType],
   );
 
@@ -262,16 +52,16 @@ export default function SpcMaxiPage() {
     allSelectableIds.every((id) => selected.has(id));
 
   const rawClean =
-    docType === "cpf"
+    docType === "CPF"
       ? documento.replace(/\D/g, "")
       : documento.replace(/[^a-zA-Z0-9]/g, "");
   const telefoneClean = telefone.replace(/\D/g, "");
-  const shouldRequireTelefone = docType === "cpf" && selected.has("5268");
+  const shouldRequireTelefone = docType === "CPF" && selected.has("5268");
   const isComplete =
-    docType === "cpf" ? rawClean.length === 11 : rawClean.length === 14;
+    docType === "CPF" ? rawClean.length === 11 : rawClean.length === 14;
   const isValid = useMemo(() => {
     if (!isComplete) return null;
-    return docType === "cpf" ? validateCpf(documento) : validateCnpj(documento);
+    return docType === "CPF" ? validateCPF(documento) : validateCNPJ(documento);
   }, [documento, docType, isComplete]);
   const isTelefoneComplete =
     !shouldRequireTelefone || telefoneClean.length === 11;
@@ -286,10 +76,10 @@ export default function SpcMaxiPage() {
   const handleDocTypeChange = (type: DocType) => {
     setDocType(type);
     setDocumento((prev) =>
-      type === "cpf" ? formatCpf(prev) : formatCnpj(prev),
+      type === "CPF" ? formatCpf(prev, "input") : formatCnpj(prev, "input"),
     );
 
-    if (type === "cnpj") {
+    if (type === "CNPJ") {
       setTelefone("");
       setTouchedTelefone(false);
     }
@@ -300,9 +90,13 @@ export default function SpcMaxiPage() {
     const detectedType = detectDocTypeByInput(raw);
 
     setDocType(detectedType);
-    setDocumento(detectedType === "cpf" ? formatCpf(raw) : formatCnpj(raw));
+    setDocumento(
+      detectedType === "CPF"
+        ? formatCpf(raw, "input")
+        : formatCnpj(raw, "input"),
+    );
 
-    if (detectedType === "cnpj") {
+    if (detectedType === "CNPJ") {
       setTelefone("");
       setTouchedTelefone(false);
     }
@@ -311,7 +105,7 @@ export default function SpcMaxiPage() {
   };
 
   const handleTelefone = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTelefone(formatTelefone(e.target.value));
+    setTelefone(formatPhone(e.target.value));
     if (!touchedTelefone) setTouchedTelefone(true);
   };
 
@@ -346,7 +140,7 @@ export default function SpcMaxiPage() {
 
       queryClient.setQueryData(["spc-maxi-request"], {
         document: rawClean,
-        typeDocument: docType === "cpf" ? "CPF" : "CNPJ",
+        typeDocument: docType,
         telefone: shouldRequireTelefone ? telefoneClean : undefined,
         insumos: Array.from(selected),
       });
@@ -368,7 +162,6 @@ export default function SpcMaxiPage() {
         </p>
       </div>
 
-      {/* Query block */}
       <form
         onSubmit={handleConsultar}
         className="bg-white rounded-xl border border-gray-200 p-5 mb-6"
@@ -378,104 +171,37 @@ export default function SpcMaxiPage() {
             <p className="text-sm font-medium text-gray-700 mb-2">Documento</p>
 
             <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-100 p-0.5 flex-shrink-0">
-                {(["cpf", "cnpj"] as DocType[]).map((type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    disabled={loading}
-                    onClick={() => handleDocTypeChange(type)}
-                    className="rounded-md px-3 py-1.5 text-xs font-semibold transition-all"
-                    style={{
-                      backgroundColor:
-                        docType === type ? "#243871" : "transparent",
-                      color: docType === type ? "white" : "#6b7280",
-                    }}
-                  >
-                    {type.toUpperCase()}
-                  </button>
-                ))}
-              </div>
+              <DocTypeToggleComponent
+                value={docType}
+                disabled={loading}
+                onChange={handleDocTypeChange}
+              />
 
-              <div className="relative">
-                <input
-                  type="text"
-                  value={documento}
-                  onChange={handleDocumento}
-                  onBlur={() => setTouched(true)}
-                  placeholder={
-                    docType === "cpf" ? "000.000.000-00" : "AB.CDE.FGH/0001-00"
-                  }
-                  autoComplete="on"
-                  disabled={loading}
-                  className="w-56 rounded-lg border px-3.5 py-2 pr-9 text-sm text-gray-800 placeholder-gray-400 outline-none transition"
-                  style={{
-                    borderColor: showError
-                      ? "#ef4444"
-                      : showSuccess
-                        ? "#22c55e"
-                        : "#d1d5db",
-                    boxShadow: showError
-                      ? "0 0 0 2px rgba(239,68,68,0.12)"
-                      : showSuccess
-                        ? "0 0 0 2px rgba(34,197,94,0.12)"
-                        : undefined,
-                  }}
-                />
-                {showError && (
-                  <AlertCircle
-                    size={15}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 pointer-events-none"
-                  />
-                )}
-                {showSuccess && (
-                  <CheckCircle2
-                    size={15}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 pointer-events-none"
-                  />
-                )}
-              </div>
+              <InputComponent
+                value={documento}
+                onChange={handleDocumento}
+                onBlur={() => setTouched(true)}
+                placeholder={
+                  docType === "CPF" ? "000.000.000-00" : "AB.CDE.FGH/0001-00"
+                }
+                autoComplete="on"
+                disabled={loading}
+                showError={showError}
+                showSuccess={showSuccess}
+              />
 
               {shouldRequireTelefone && (
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={telefone}
-                    onChange={handleTelefone}
-                    onBlur={() => setTouchedTelefone(true)}
-                    placeholder="(00) 00000-0000"
-                    autoComplete="tel"
-                    disabled={loading}
-                    required
-                    className="w-56 rounded-lg border px-3.5 py-2 pr-9 text-sm text-gray-800 placeholder-gray-400 outline-none transition"
-                    style={{
-                      borderColor: showTelefoneError
-                        ? "#ef4444"
-                        : showTelefoneSuccess
-                          ? "#22c55e"
-                          : "#d1d5db",
-                      boxShadow: showTelefoneError
-                        ? "0 0 0 2px rgba(239,68,68,0.12)"
-                        : showTelefoneSuccess
-                          ? "0 0 0 2px rgba(34,197,94,0.12)"
-                          : undefined,
-                    }}
-                  />
-
-                  {showTelefoneError && (
-                    <AlertCircle
-                      size={15}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 pointer-events-none"
-                    />
-                  )}
-
-                  {showTelefoneSuccess && (
-                    <CheckCircle2
-                      size={15}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 pointer-events-none"
-                    />
-                  )}
-                </div>
+                <InputComponent
+                  value={telefone}
+                  onChange={handleTelefone}
+                  onBlur={() => setTouchedTelefone(true)}
+                  placeholder="(00) 00000-0000"
+                  autoComplete="tel"
+                  disabled={loading}
+                  required
+                  showError={showTelefoneError}
+                  showSuccess={showTelefoneSuccess}
+                />
               )}
 
               <button
@@ -505,7 +231,7 @@ export default function SpcMaxiPage() {
             {showError && (
               <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1">
                 <AlertCircle size={11} />
-                {docType === "cpf"
+                {docType === "CPF"
                   ? "CPF inválido. Verifique os dígitos informados."
                   : "CNPJ inválido. Verifique os dígitos informados."}
               </p>
@@ -514,51 +240,25 @@ export default function SpcMaxiPage() {
         </div>
       </form>
 
-      {/* Insumos Opcionais */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-sm font-semibold text-gray-700">
           Insumos Opcionais
         </h2>
 
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2.5 px-3 py-1.5 cursor-pointer group">
-            <span className="text-sm text-gray-600 group-hover:text-gray-800 transition-colors">
-              Selecionar todos
-            </span>
-
-            <input
-              type="checkbox"
-              checked={isAllSelected}
-              onChange={() => {
-                if (isAllSelected) {
-                  handleClearAllFilters();
-                } else {
-                  handleSelectAllFilters();
-                }
-              }}
-              className="hidden"
-            />
-
-            <span
-              className="flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-all"
-              style={{
-                backgroundColor: isAllSelected ? "#243871" : "white",
-                borderColor: isAllSelected ? "#243871" : "#d1d5db",
-              }}
-            >
-              {isAllSelected && (
-                <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
-                  <path
-                    d="M1 3.5L3.5 6L8 1"
-                    stroke="white"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              )}
-            </span>
-          </label>
+          <FilterCheckboxComponent
+            checked={isAllSelected}
+            onChange={() => {
+              if (isAllSelected) {
+                handleClearAllFilters();
+              } else {
+                handleSelectAllFilters();
+              }
+            }}
+            label="Selecionar todos"
+            labelFirst
+            className="px-3 py-1.5"
+          />
 
           <span className="px-3 py-1 text-xs font-semibold text-gray-600">
             {selected.size} selecionada{selected.size !== 1 ? "s" : ""}
@@ -568,135 +268,16 @@ export default function SpcMaxiPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {insumoGroups.map((group) => {
-          const Icon = group.icon;
           return (
-            <div
+            <InsumoGroupCard
               key={group.id}
-              className="bg-white rounded-xl border border-gray-200 p-4"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Icon size={15} className="text-gray-500" />
-
-                  <span className="text-sm font-semibold text-gray-700">
-                    {group.title}
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveModal(group.id)}
-                  className="text-gray-300 hover:text-gray-500 transition-colors"
-                >
-                  <Info size={15} />
-                </button>
-              </div>
-
-              <hr className="border-gray-100 mb-3" />
-
-              <div className="space-y-3.5">
-                {group.items.map((item) => {
-                  const checked = selected.has(item.id);
-                  return (
-                    <label
-                      key={item.id}
-                      className="flex items-center gap-2.5 cursor-pointer group"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => toggleInsumo(item.id)}
-                        className="hidden"
-                      />
-
-                      <span
-                        className="flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-all"
-                        style={{
-                          backgroundColor: checked ? "#243871" : "white",
-                          borderColor: checked ? "#243871" : "#d1d5db",
-                        }}
-                      >
-                        {checked && (
-                          <svg
-                            width="9"
-                            height="7"
-                            viewBox="0 0 9 7"
-                            fill="none"
-                          >
-                            <path
-                              d="M1 3.5L3.5 6L8 1"
-                              stroke="white"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        )}
-                      </span>
-
-                      <span className="text-sm text-gray-600 group-hover:text-gray-800 transition-colors">
-                        {item.label}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
+              group={group}
+              selected={selected}
+              onToggleInsumo={toggleInsumo}
+            />
           );
         })}
       </div>
-
-      {/* ── Info Modal ── */}
-      {activeModal &&
-        (() => {
-          const group = insumoGroups.find((g) => g.id === activeModal)!;
-          const GroupIcon = group.icon;
-          return (
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center"
-              style={{ backgroundColor: "rgba(0,0,0,0.35)" }}
-              onClick={() => setActiveModal(null)}
-            >
-              <div
-                className="bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4 overflow-hidden"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Header */}
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                  <div className="flex items-center gap-2">
-                    <GroupIcon size={16} className="text-gray-500" />
-                    <span className="text-sm font-semibold text-gray-800">
-                      {group.title}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setActiveModal(null)}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-                {/* Body */}
-                <div className="px-5 py-5 space-y-3">
-                  {group.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3"
-                    >
-                      <p className="text-sm font-medium text-gray-700">
-                        {item.label}
-                      </p>
-                      <p className="mt-1 text-xs text-gray-400 italic">
-                        Conteúdo a definir.
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          );
-        })()}
     </div>
   );
 }

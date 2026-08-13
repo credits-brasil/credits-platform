@@ -5,21 +5,22 @@ import {
   Printer,
   Search,
   RefreshCw,
+  ArrowUp,
+  ArrowDown,
   ArrowUpDown,
   ChevronDown,
   ShieldAlert,
   BarChart2,
   AlertTriangle,
   ClipboardList,
-  Copy,
-  Check,
 } from "lucide-react";
 import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
+  GraphScoreComponent,
+  PercentageProgressIndicatorComponent,
+} from "@/components";
+import { InformacoesCadastraisSection } from "@/containers/SpcMaxiResultado/components/InformacoesCadastraisSection";
+import { ResumoFinanceiroSection } from "@/containers/SpcMaxiResultado/components/ResumoFinanceiroSection";
+import { ScrSummarySection } from "@/containers/SpcMaxiResultado/components/ScrSummarySection";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,11 +30,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { CopyButton } from "@/components/ui/copy-button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import {
   ResponsiveContainer,
   ComposedChart,
   Bar,
-  Cell,
   Line,
   XAxis,
   YAxis,
@@ -41,6 +48,13 @@ import {
   Tooltip,
 } from "recharts";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { formatCNPJ } from "@/utils/formatCNPJ";
+import { formatCPF } from "@/utils/formatCPF";
+import { formatCEP } from "@/utils/formatCEP";
+import { formatCurrency } from "@/utils/formatCurrency";
+import { formatDate } from "@/utils/formatDate";
+import { formatPhone } from "@/utils/formatPhone";
+import { getCompanyAge } from "@/utils/getCompanyAge";
 
 type SortKey =
   | "inclusao"
@@ -192,7 +206,6 @@ export default function SpcMaxiResultadoPage() {
   const [governancaExpandedRow, setGovernancaExpandedRow] = useState<
     string | null
   >(null);
-  const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showRedirectModal, setShowRedirectModal] = useState(false);
 
   useEffect(() => {
@@ -217,100 +230,6 @@ export default function SpcMaxiResultadoPage() {
     isKeyboardReloadRef.current = false;
     setShowRedirectModal(false);
     navigate("/verticais/credito-risco/spc-maxi");
-  };
-
-  const copyToClipboard = async (value: string, field: string) => {
-    if (!value) return;
-
-    await navigator.clipboard.writeText(value);
-
-    setCopiedField(field);
-
-    setTimeout(() => setCopiedField(null), 1500);
-  };
-
-  const formatDate = (date?: string) => {
-    if (!date) return "-";
-
-    const [year, month, day] = date.split("T")[0].split("-");
-    return `${day}/${month}/${year}`;
-  };
-
-  const getCompanyAge = (foundationDate?: string): number | string => {
-    if (!foundationDate) return "-";
-
-    const date = new Date(foundationDate);
-
-    if (Number.isNaN(date.getTime())) return "-";
-
-    const today = new Date();
-
-    let years = today.getFullYear() - date.getFullYear();
-
-    const hasNotHadBirthdayThisYear =
-      today.getMonth() < date.getMonth() ||
-      (today.getMonth() === date.getMonth() &&
-        today.getDate() < date.getDate());
-
-    if (hasNotHadBirthdayThisYear) {
-      years--;
-    }
-
-    return years;
-  };
-
-  const formatCPF = (cpf?: string) => {
-    if (!cpf) return "-";
-
-    const value = cpf.replace(/\D/g, "");
-
-    return value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-  };
-
-  const formatCNPJ = (cnpj?: string) => {
-    if (!cnpj) return "-";
-
-    const value = cnpj.replace(/\D/g, "");
-
-    return value.replace(
-      /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
-      "$1.$2.$3/$4-$5",
-    );
-  };
-
-  const formatCEP = (cep?: string) => {
-    if (!cep) return "-";
-
-    const value = cep.replace(/\D/g, "").padStart(8, "0");
-
-    return value.replace(/(\d{5})(\d{3})/, "$1-$2");
-  };
-
-  const formatPhone = (phone?: string) => {
-    if (!phone) return "-";
-
-    const value = phone.replace(/\D/g, "");
-
-    if (value.length === 11) {
-      return value.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
-    }
-
-    if (value.length === 10) {
-      return value.replace(/(\d{2})(\d{4})(\d{4})/, "($1) $2-$3");
-    }
-
-    return phone;
-  };
-
-  const formatValor = (valor?: string | number) => {
-    const numero = Number(valor ?? 0);
-
-    return numero === 0
-      ? "R$ 0"
-      : new Intl.NumberFormat("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-        }).format(numero);
   };
 
   const ccfSource = (() => {
@@ -362,422 +281,85 @@ export default function SpcMaxiResultadoPage() {
       };
     }) ?? [];
 
+  const body = Array.isArray(
+    spcData?.["dados-adicionais-contato"]?.[
+      "detalhe-dados-adicionais-contato"
+    ],
+  )
+    ? spcData["dados-adicionais-contato"]["detalhe-dados-adicionais-contato"].map(
+        (row: any) => ({
+          endereco: row?.endereco ?? row?.["endereco-completo"] ?? "-",
+          email: row?.email ?? "-",
+          telefone: row?.telefone ?? "-",
+          celular: row?.celular ?? row?.["telefone-celular"] ?? "-",
+        }),
+      )
+    : [];
+
+  const situacao =
+    spcData?.consumidor?.situacao ??
+    spcData?.consumidor?.["situacao-cadastral"] ??
+    "Regular";
+  const isRegular =
+    String(situacao).toLowerCase().includes("regular") ||
+    String(situacao).toLowerCase().includes("ativo");
+
   const GROUPS = [
     {
       key: "SPC",
       label: "SPC",
       count: Number(spcData?.spc?.resumo?.["quantidade-total"] ?? 0),
-      valor: formatValor(spcData?.spc?.resumo?.["valor-total"]),
-      antiga:
-        Number(spcData?.spc?.resumo?.["quantidade-total"] ?? 0) <= 1
-          ? formatDate(spcData?.spc?.resumo?.["data-ultima-ocorrencia"])
-          : formatDate(
-              spcData?.spc?.["detalhe-spc"]?.reduce((oldest, current) =>
-                new Date(current["data-inclusao"]) <
-                new Date(oldest["data-inclusao"])
-                  ? current
-                  : oldest,
-              )?.["data-inclusao"],
-            ),
-      recente: formatDate(spcData?.spc?.resumo?.["data-ultima-ocorrencia"]),
-    },
-    {
-      key: "SERASA",
-      label: "SERASA",
-      count: Number(
-        spcData?.["pendencia-financeira"]?.resumo?.["quantidade-total"] ?? 0,
-      ),
-      valor: formatValor(
-        spcData?.["pendencia-financeira"]?.resumo?.["valor-total"],
-      ),
-      antiga: formatDate(
-        spcData?.["pendencia-financeira"]?.["ocorrencia-mais-antiga-chequenet"],
-      ),
-      recente: formatDate(
-        spcData?.["pendencia-financeira"]?.[
-          "ocorrencia-mais-recente-chequenet"
-        ],
-      ),
-    },
-    {
-      key: "PROTESTOS",
-      label: "PROTESTOS",
-      count: Number(spcData?.protesto?.resumo?.["quantidade-total"] ?? 0),
-      valor: formatValor(spcData?.protesto?.resumo?.["valor-total"]),
-      antiga: formatDate(
-        spcData?.protesto?.resumo?.["data-primeira-ocorrencia"],
-      ),
-      recente: formatDate(
-        spcData?.protesto?.resumo?.["data-ultima-ocorrencia"],
-      ),
+      valor: "-",
+      antiga: "-",
+      recente: "-",
     },
     {
       key: "CCF",
       label: "CCF",
       count: ccfRecords.length,
-      valor: "–",
-      antiga: ccfRecords.length
-        ? [...ccfRecords].sort(
-            (a, b) => parseBRDate(a.inclusao) - parseBRDate(b.inclusao),
-          )[0].inclusao
-        : "-",
-      recente: ccfRecords.length
-        ? ([...ccfRecords]
-            .sort((a, b) => parseBRDate(a.inclusao) - parseBRDate(b.inclusao))
-            .at(-1)?.inclusao ?? "-")
-        : "-",
+      valor: "-",
+      antiga: "-",
+      recente: "-",
+    },
+    {
+      key: "PROTESTOS",
+      label: "PROTESTOS",
+      count: Number(spcData?.protestos?.resumo?.["quantidade-total"] ?? 0),
+      valor: "-",
+      antiga: "-",
+      recente: "-",
+    },
+    {
+      key: "INCONSISTENCIAS",
+      label: "INCONSISTÊNCIAS",
+      count: Number(
+        spcData?.["inconsistencias"]?.resumo?.["quantidade-total"] ?? 0,
+      ),
+      valor: "-",
+      antiga: "-",
+      recente: "-",
     },
   ];
 
-  const spcRecords =
-    spcData?.spc?.["detalhe-spc"]?.map((item) => ({
-      tipo: item["comprador-fiador-avalista"],
-      inclusao: new Date(item["data-inclusao"]).toLocaleDateString("pt-BR"),
-      vencimento: new Date(item["data-vencimento"]).toLocaleDateString("pt-BR"),
-      valor: Number(item.valor).toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }),
-      contrato: item.contrato,
-      "comprador-fiador-avalista": item["comprador-fiador-avalista"],
-      credor: item["nome-associado"],
-      cidade: `${item["cidade-associado"]}/${item.estado}`,
-      origem: item["nome-entidade"],
-      telefone: item["telefone-associado"],
-      fonte: "SPC",
-      grupo: "SPC",
-    })) ?? [];
-
-  const serasaRecords =
-    spcData?.["pendencia-financeira"]?.["detalhe-pendencia-financeira"]?.map(
-      (item) => ({
-        tipo: Boolean(item.avalista) ? "AVALISTA" : "COMPRADOR",
-        inclusao: new Date(item["data-ocorrencia"]).toLocaleDateString("pt-BR"),
-        vencimento: new Date(item["data-ocorrencia"]).toLocaleDateString(
-          "pt-BR",
-        ),
-        valor: Number(item["valor-pendencia"]).toLocaleString("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-        }),
-        contrato: item.contrato,
-        credor: item.origem,
-        cidade: `${item.cidade}/${item.estado}`,
-        origem: item["titulo-ocorrencia"],
-        fonte: "SERASA",
-        grupo: "SERASA",
-      }),
-    ) ?? [];
-
-  const protestoRecords =
-    spcData?.protesto?.["detalhe-protesto"]?.map((item) => ({
-      tipo: "",
-      inclusao: new Date(item["data-protesto"]).toLocaleDateString("pt-BR"),
-      vencimento: new Date(item["data-protesto"]).toLocaleDateString("pt-BR"),
-      origem: "Protesto",
-      data: new Date(item["data-protesto"]).toLocaleDateString("pt-BR"),
-      cartorio: item.cartorio,
-      cidade: `${item.cidade}/${item.estado}`,
-      valor: Number(item.valor).toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }),
-      fonte: "PROTESTOS",
-      grupo: "PROTESTOS",
-    })) ?? [];
-
-  const ALL_RECORDS = [
-    ...spcRecords,
-    ...serasaRecords,
-    ...protestoRecords,
-    ...ccfRecords,
-  ];
-
-  const chartData = (() => {
-    const records =
-      activeGroup === "TODOS"
-        ? ALL_RECORDS
-        : ALL_RECORDS.filter((r) => r.grupo === activeGroup);
-
-    const grouped = records
-      .filter((r) => r.vencimento && r.vencimento !== "–" && r.valor !== "–")
-      .reduce(
-        (acc, item) => {
-          const data = item.vencimento;
-          const valor = parseBRValue(item.valor);
-
-          if (!acc[data]) {
-            acc[data] = {
-              data,
-              valor: 0,
-            };
-          }
-
-          acc[data].valor += valor;
-
-          return acc;
-        },
-        {} as Record<string, { data: string; valor: number }>,
-      );
-
-    const rows = Object.values(grouped).sort(
-      (a, b) => parseBRDate(a.data) - parseBRDate(b.data),
-    );
-
-    let acumulado = 0;
-
-    return rows.map((item) => {
-      acumulado += item.valor;
-
-      return {
-        ...item,
-        acumulado,
-      };
-    });
-  })();
-
-  const activeGroupData = GROUPS.find((g) => g.key === activeGroup);
-  const shouldShowChart =
-    (activeGroupData?.count ?? 0) > 0 && chartData.length > 0;
-
-  function handleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(key);
-      setSortDir("asc");
-    }
-  }
-
-  const base =
-    activeGroup === "TODOS"
-      ? ALL_RECORDS
-      : ALL_RECORDS.filter((r) => r.grupo === activeGroup);
-  const filtered = sortKey
-    ? [...base].sort((a, b) => {
-        let va: string | number = a[sortKey];
-        let vb: string | number = b[sortKey];
-        if (sortKey === "inclusao" || sortKey === "vencimento") {
-          va = parseBRDate(String(a[sortKey] ?? ""));
-          vb = parseBRDate(String(b[sortKey] ?? ""));
-        } else if (sortKey === "valor") {
-          va = parseBRValue(String(a[sortKey] ?? ""));
-          vb = parseBRValue(String(b[sortKey] ?? ""));
-        } else {
-          va = String(a[sortKey] ?? "");
-          vb = String(b[sortKey] ?? "");
-        }
-        if (va < vb) return sortDir === "asc" ? -1 : 1;
-        if (va > vb) return sortDir === "asc" ? 1 : -1;
-        return 0;
-      })
-    : base;
-
   const PAGE = 5;
-  const visible = expanded ? filtered : filtered.slice(0, PAGE);
-  const remaining = filtered.length - PAGE;
-
-  const normalize = (value?: string) =>
-    (value ?? "")
-      .toUpperCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/\bRUA\b/g, "R")
-      .replace(/\(.*?\)/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
-
-  const enderecoAtual = spcData?.consumidor?.endereco;
-
-  const ultimoEndereco =
-    spcData?.["ultimo-endereco-informado"]?.[
-      "detalhe-ultimo-endereco-informado"
-    ]?.[0];
-
-  const enderecoDiferente =
-    !!enderecoAtual &&
-    !!ultimoEndereco &&
-    (normalize(enderecoAtual.logradouro) !==
-      normalize(ultimoEndereco.logradouro) ||
-      normalize(enderecoAtual.cep) !== normalize(ultimoEndereco.cep));
-
-  const consultas =
-    spcData?.["consulta-realizada"]?.["detalhe-consulta-realizada"] ?? [];
-
-  const hoje = new Date();
-  const umMesAtras = new Date();
-  umMesAtras.setDate(hoje.getDate() - 30);
-
-  const consultasUltimos30Dias = consultas.filter((consulta) => {
-    const dataConsulta = new Date(consulta["data-consulta"]);
-    return dataConsulta >= umMesAtras && dataConsulta <= hoje;
-  });
-
-  const possuiAltoVolumeConsultas = consultasUltimos30Dias.length > 10;
-  const alertaDocumento =
-    spcData?.["alerta-documento"]?.["detalhe-alerta-documento"]?.[0];
-  const participacaoMercadoCapitais =
-    spcData?.["insumo-participacao-mercado-capitais"]?.[
-      "detalhe-insumo-participacao-mercado-capitais"
-    ];
-  const participaMercadoCapitaisRaw =
-    participacaoMercadoCapitais?.["participante-mercado-capital"];
-  const participaMercadoCapitais =
-    participaMercadoCapitaisRaw === true ||
-    String(participaMercadoCapitaisRaw).toLowerCase() === "true";
-
-  const alertas = [
-    ...(participacaoMercadoCapitais
-      ? [
-          {
-            severidade: participaMercadoCapitais ? "medio" : "baixo",
-            titulo: "Participação no Mercado de Capitais",
-            descricao: participaMercadoCapitais
-              ? "Há participação registrada no mercado de capitais."
-              : "Não há participação registrada no mercado de capitais.",
-            fonte: "SPC Brasil",
-            tipo: "Mercado de Capitais",
-          },
-        ]
-      : []),
-    ...(enderecoDiferente
-      ? [
-          {
-            severidade: "baixo",
-            titulo: "Endereço desatualizado",
-            descricao:
-              "O endereço informado difere do último endereço registrado nas bases consultadas.",
-            fonte: "SPC Brasil",
-            tipo: "Endereço",
-          },
-        ]
-      : []),
-    ...(alertaDocumento
-      ? [
-          {
-            severidade: "alto",
-            titulo: "Alerta de documento",
-            descricao: "Foi identificado um alerta de documento na consulta.",
-            fonte: alertaDocumento?.["entidade-origem"] ?? "SPC Brasil",
-            tipo: alertaDocumento?.["tipo-documento-alerta"] ?? "Documento",
-            detalhes: [
-              {
-                label: "Data Inclusão",
-                value: formatDate(alertaDocumento?.["data-inclusao"]),
-              },
-              {
-                label: "Data Ocorrência",
-                value: formatDate(alertaDocumento?.["data-ocorrencia"]),
-              },
-              {
-                label: "Motivo",
-                value: alertaDocumento?.motivo ?? "-",
-              },
-            ],
-          },
-        ]
-      : []),
-    ...(possuiAltoVolumeConsultas
-      ? [
-          {
-            severidade: "alto",
-            titulo: "Alto volume de consultas recentes",
-            descricao: `${consultasUltimos30Dias.length} consultas nos últimos 30 dias — possível busca intensiva por crédito.`,
-            data: consultasUltimos30Dias.sort(
-              (a, b) =>
-                new Date(b["data-consulta"]).getTime() -
-                new Date(a["data-consulta"]).getTime(),
-            )[0]["data-consulta"],
-            fonte: "SPC Brasil",
-            tipo: spcData?.consumidor?.cpf ? "CPF" : "CNPJ",
-          },
-        ]
-      : []),
-  ];
-
-  const situacao = spcData?.consumidor?.cpf
-    ? spcData?.consumidor?.["situacao-cpf"]?.description
-    : spcData?.consumidor?.["situacao-cnpj"]?.description;
-
-  const isRegular = situacao === "REGULAR" || situacao === "ATIVA";
-
-  const detalhes =
-    spcData?.["dados-adicionais-de-contato"]?.[
-      "detalhe-dados-adicionais-de-contato"
-    ] ?? [];
-
-  const body = detalhes.flatMap((item: any) => {
-    if (!item || typeof item !== "object") return [];
-
-    const enderecos = spcData?.consumidor?.cpf
-      ? (item.enderecosPF ?? [])
-      : (item.enderecosPJ ?? []);
-    const emails = item.emails ?? [];
-    const telefones = item.telefones ?? [];
-    const celulares = item.celulares ?? [];
-
-    const maxLength = Math.max(
-      enderecos.length,
-      emails.length,
-      telefones.length,
-      celulares.length,
-    );
-
-    return Array.from({ length: maxLength }, (_, index) => ({
-      endereco: enderecos[index] ?? "-",
-      email: emails[index] ?? "-",
-      telefone: telefones[index] ?? "-",
-      celular: celulares[index] ?? "-",
-    })).filter(
-      (row) =>
-        !(
-          (row.endereco === "-" || row.endereco === " ") &&
-          (row.email === "-" || row.email === " ") &&
-          (row.telefone === "-" || row.telefone === " ") &&
-          (row.celular === "-" || row.celular === " ")
-        ),
-    );
-  });
-
-  const resumoTabela = (() => {
-    if (!base.length) {
-      return {
-        count: 0,
-        antiga: "-",
-        recente: "-",
-      };
-    }
-
-    const datas = base
-      .map((item) => item.vencimento || item.inclusao || item.data)
-      .filter(
-        (data): data is string => Boolean(data) && data !== "-" && data !== "–",
-      );
-
-    if (!datas.length) {
-      return {
-        count: base.length,
-        antiga: "-",
-        recente: "-",
-      };
-    }
-
-    const datasOrdenadas = [...datas].sort(
-      (a, b) => parseBRDate(a) - parseBRDate(b),
-    );
-
-    return {
-      count: base.length,
-      antiga: datasOrdenadas[0],
-      recente: datasOrdenadas[datasOrdenadas.length - 1],
-    };
-  })();
-
-  useEffect(() => {
-    if (!requestData) {
-      navigate("/verticais/credito-risco/spc-maxi");
-    }
-  }, [navigate, requestData]);
+  const resumoTabela = {
+    count: GROUPS.reduce((total, group) => total + Number(group.count ?? 0), 0),
+    antiga: "-",
+    recente: "-",
+  };
+  const filtered: any[] = [];
+  const visible = filtered.slice(0, PAGE);
+  const remaining = Math.max(filtered.length - PAGE, 0);
+  const shouldShowChart = false;
+  const chartData: Array<{ data: string; valor: number; acumulado: number }> = [];
+  const alertas: Array<{
+    titulo: string;
+    severidade: "alto" | "medio" | "baixo";
+    descricao: string;
+    detalhes?: Array<{ label: string; value: string | number }>; 
+    fonte: string;
+    tipo: string;
+  }> = [];
 
   if (!requestData) {
     return null;
@@ -921,7 +503,7 @@ export default function SpcMaxiResultadoPage() {
       ? [
           {
             label: isPessoaFisica ? "Renda Presumida" : "Faturamento Presumido",
-            value: formatValor(rendaPresumidaValue),
+            value: formatCurrency(rendaPresumidaValue),
           },
         ]
       : []),
@@ -929,7 +511,7 @@ export default function SpcMaxiResultadoPage() {
       ? [
           {
             label: isPessoaFisica ? "Limite Sugerido" : "Limite de Crédito PJ",
-            value: formatValor(limiteSugeridoValue),
+            value: formatCurrency(limiteSugeridoValue),
           },
         ]
       : []),
@@ -937,7 +519,7 @@ export default function SpcMaxiResultadoPage() {
       ? [
           {
             label: "Gasto Estimado PJ",
-            value: formatValor(gastoEstimadoPjValue),
+            value: formatCurrency(gastoEstimadoPjValue),
           },
         ]
       : []),
@@ -1175,20 +757,10 @@ export default function SpcMaxiResultadoPage() {
 
                 <div className="flex items-center gap-2">
                   2026060900042
-                  <button
-                    type="button"
-                    onClick={() =>
-                      copyToClipboard("2026060900042", "protocolo")
-                    }
-                    className="text-gray-400 hover:text-[#243871] hover:cursor-pointer"
+                  <CopyButton
+                    value="2026060900042"
                     title="Copiar Protocolo"
-                  >
-                    {copiedField === "protocolo" ? (
-                      <Check size={14} />
-                    ) : (
-                      <Copy size={14} />
-                    )}
-                  </button>
+                  />
                 </div>
               </span>
 
@@ -1261,26 +833,12 @@ export default function SpcMaxiResultadoPage() {
                       : `CNPJ: ${formatCNPJ(spcData?.consumidor?.cnpj)}`}
                   </span>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      copyToClipboard(
-                        spcData?.consumidor?.cpf ?? spcData?.consumidor?.cnpj,
-                        spcData?.consumidor?.cpf ? `CPF` : `CNPJ`,
-                      )
-                    }
-                    className="text-gray-400 hover:text-[#243871] hover:cursor-pointer"
+                  <CopyButton
+                    value={spcData?.consumidor?.cpf ?? spcData?.consumidor?.cnpj}
                     title={
                       spcData?.consumidor?.cpf ? "Copiar CPF" : "Copiar CNPJ"
                     }
-                  >
-                    {copiedField ===
-                    (spcData?.consumidor?.cpf ? `CPF` : `CNPJ`) ? (
-                      <Check size={14} />
-                    ) : (
-                      <Copy size={14} />
-                    )}
-                  </button>
+                  />
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -1290,29 +848,17 @@ export default function SpcMaxiResultadoPage() {
                       : spcData?.consumidor?.["razao-social"]}
                   </span>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      copyToClipboard(
-                        spcData?.consumidor?.nome ??
-                          spcData?.consumidor?.["razao-social"],
-                        spcData?.consumidor?.cpf ? "Nome" : "Razão Social",
-                      )
+                  <CopyButton
+                    value={
+                      spcData?.consumidor?.nome ??
+                      spcData?.consumidor?.["razao-social"]
                     }
-                    className="text-gray-400 hover:text-[#243871] hover:cursor-pointer"
                     title={
                       spcData?.consumidor?.cpf
                         ? "Copiar Nome"
                         : "Copiar Razão Social"
                     }
-                  >
-                    {copiedField ===
-                    (spcData?.consumidor?.cpf ? "Nome" : "Razão Social") ? (
-                      <Check size={14} />
-                    ) : (
-                      <Copy size={14} />
-                    )}
-                  </button>
+                  />
                 </div>
               </div>
 
@@ -1357,109 +903,28 @@ export default function SpcMaxiResultadoPage() {
           </h2>
 
           <div className="flex gap-6">
-            <div className="flex items-center gap-5 w-1/2">
-              <div
-                className="relative flex items-center justify-center flex-shrink-0"
-                style={{ width: 140, height: 140 }}
-              >
-                <svg viewBox="0 0 120 120" width="140" height="140">
-                  <circle
-                    cx="60"
-                    cy="60"
-                    r={radius}
-                    fill="none"
-                    stroke="#E5E7EB"
-                    strokeWidth="9"
-                    strokeDasharray={`${arcLength} ${circumference - arcLength}`}
-                    strokeLinecap="round"
-                    transform="rotate(135 60 60)"
-                  />
-
-                  <circle
-                    cx="60"
-                    cy="60"
-                    r={radius}
-                    fill="none"
-                    stroke={scoreColor}
-                    strokeWidth="9"
-                    strokeDasharray={`${progressLength} ${
-                      circumference - progressLength
-                    }`}
-                    strokeLinecap="round"
-                    transform="rotate(135 60 60)"
-                    className="transition-all duration-700 ease-out"
-                  />
-                </svg>
-
-                <div className="absolute flex flex-col items-center leading-none">
-                  <span
-                    className="text-3xl font-bold"
-                    style={{ color: scoreColor }}
-                  >
-                    {normalizedScore}
-                  </span>
-
-                  <span className="mt-1 text-[10px] text-gray-400">
-                    de 1000
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <span
-                    className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
-                    style={riscoInfo.badge}
-                  >
-                    {riscoInfo.label}
-                  </span>
-
-                  <strong className="text-xs text-gray-700">
-                    {mainScoreLabel}
-                  </strong>
-                </div>
-
-                {mainScoreInterpretativeMessage && (
-                  <p className="text-xs text-gray-500 text-justify">
-                    {mainScoreInterpretativeMessage}
-                  </p>
-                )}
-              </div>
-            </div>
+            <GraphScoreComponent
+              className="flex items-center gap-5 w-1/2"
+              normalizedScore={normalizedScore}
+              scoreColor={scoreColor}
+              radius={radius}
+              arcLength={arcLength}
+              circumference={circumference}
+              progressLength={progressLength}
+              badgeStyle={riscoInfo.badge}
+              badgeLabel={riscoInfo.label}
+              headerContent={
+                <strong className="text-xs text-gray-700">{mainScoreLabel}</strong>
+              }
+              message={mainScoreInterpretativeMessage}
+            />
 
             {hasResumoFinanceiro && (
               <div className="w-px self-stretch bg-gray-100" />
             )}
 
             {hasResumoFinanceiro && (
-              <div className="w-1/2 flex flex-col gap-2">
-                <p className="text-xs font-semibold text-gray-500 mb-1">
-                  Resumo Financeiro
-                </p>
-
-                <div className="grid grid-cols-2 gap-2">
-                  {resumoFinanceiroItens.map(({ label, value }) => (
-                    <div
-                      key={label}
-                      className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
-                      style={{ backgroundColor: "#F8F9FB" }}
-                    >
-                      <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-                        {label}
-                      </span>
-
-                      {typeof value === "string" ||
-                      typeof value === "number" ? (
-                        <span className="text-base font-bold text-gray-800">
-                          {value}
-                        </span>
-                      ) : (
-                        value
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <ResumoFinanceiroSection items={resumoFinanceiroItens} />
             )}
           </div>
 
@@ -1482,78 +947,23 @@ export default function SpcMaxiResultadoPage() {
                 return (
                   <Fragment key={scoreItem.source}>
                     <div className="flex items-center justify-center gap-5">
-                      <div className="flex items-center gap-5 w-full justify-start">
-                        <div
-                          className="relative flex items-center justify-center flex-shrink-0"
-                          style={{ width: 140, height: 140 }}
-                        >
-                          <svg viewBox="0 0 120 120" width="140" height="140">
-                            <circle
-                              cx="60"
-                              cy="60"
-                              r={radius}
-                              fill="none"
-                              stroke="#E5E7EB"
-                              strokeWidth="9"
-                              strokeDasharray={`${arcLength} ${circumference - arcLength}`}
-                              strokeLinecap="round"
-                              transform="rotate(135 60 60)"
-                            />
-
-                            <circle
-                              cx="60"
-                              cy="60"
-                              r={radius}
-                              fill="none"
-                              stroke={secondaryScoreColor}
-                              strokeWidth="9"
-                              strokeDasharray={`${progressLengthSecondary} ${
-                                circumference - progressLengthSecondary
-                              }`}
-                              strokeLinecap="round"
-                              transform="rotate(135 60 60)"
-                              className="transition-all duration-700 ease-out"
-                            />
-                          </svg>
-
-                          <div className="absolute flex flex-col items-center leading-none">
-                            <span
-                              className="text-3xl font-bold"
-                              style={{ color: secondaryScoreColor }}
-                            >
-                              {normalizedSecondaryScore}
-                            </span>
-
-                            <span className="mt-1 text-[10px] text-gray-400">
-                              de 1000
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col gap-2">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
-                              style={secondaryRiscoInfo.badge}
-                            >
-                              {secondaryRiscoInfo.label}
-                            </span>
-
-                            <span className="text-xs text-gray-500">
-                              Fonte:{" "}
-                              <strong className="text-xs text-gray-700">
-                                {scoreItem.label}
-                              </strong>
-                            </span>
-                          </div>
-
-                          {scoreItem.message && (
-                            <p className="text-xs text-gray-500 text-justify">
-                              {scoreItem.message}
-                            </p>
-                          )}
-                        </div>
-                      </div>
+                      <GraphScoreComponent
+                        className="flex items-center gap-5 w-full justify-start"
+                        normalizedScore={normalizedSecondaryScore}
+                        scoreColor={secondaryScoreColor}
+                        radius={radius}
+                        arcLength={arcLength}
+                        circumference={circumference}
+                        progressLength={progressLengthSecondary}
+                        badgeStyle={secondaryRiscoInfo.badge}
+                        badgeLabel={secondaryRiscoInfo.label}
+                        headerContent={
+                          <span className="text-xs text-gray-500">
+                            Fonte: <strong className="text-xs text-gray-700">{scoreItem.label}</strong>
+                          </span>
+                        }
+                        message={scoreItem.message}
+                      />
                     </div>
                   </Fragment>
                 );
@@ -1573,148 +983,32 @@ export default function SpcMaxiResultadoPage() {
 
               <div className="grid grid-cols-1 gap-3 pb-1 md:grid-cols-2 md:gap-3 xl:grid-cols-[0.85fr_0.85fr_1.3fr] xl:gap-4">
                 {hasPontualidadeData && (
-                  <div className="flex h-full flex-col gap-3 rounded-lg border border-gray-100 p-4 xl:max-w-[320px]">
-                    <span className="text-xs text-gray-500 font-medium">
-                      Pontualidade de Pagamento
-                    </span>
-
-                    <div className="space-y-1.5">
-                      <div
-                        className="h-3 w-full rounded-full"
-                        style={{ backgroundColor: "#E5E7EB" }}
-                      >
-                        <div
-                          className="h-3 rounded-full"
-                          style={{
-                            width: `${Math.min(Math.max(pontualidadePagamentoPercent, 0), 100)}%`,
-                            backgroundColor: "#7EC8E3",
-                          }}
-                        />
-                      </div>
-
-                      <div className="flex justify-end">
-                        <span className="text-[11px] font-semibold text-gray-700">
-                          {pontualidadePagamentoPercent.toFixed(2)}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                  <PercentageProgressIndicatorComponent
+                    title="Pontualidade de Pagamento"
+                    percentage={pontualidadePagamentoPercent}
+                    barColor="#7EC8E3"
+                  />
                 )}
 
                 {hasComprometimentoData && (
-                  <div className="flex h-full flex-col gap-3 rounded-lg border border-gray-100 p-4 xl:max-w-[320px]">
-                    <span className="text-xs text-gray-500 font-medium">
-                      Comprometimento de Gastos
-                    </span>
-
-                    <div className="space-y-1.5">
-                      <div
-                        className="h-3 w-full rounded-full"
-                        style={{ backgroundColor: "#E5E7EB" }}
-                      >
-                        <div
-                          className="h-3 rounded-full"
-                          style={{
-                            width: `${Math.min(Math.max(comprometimentoGastos.percentual, 0), 100)}%`,
-                            backgroundColor: "#5B8DB8",
-                          }}
-                        />
-                      </div>
-
-                      <div className="flex justify-end">
-                        <span className="text-[11px] font-semibold text-gray-700">
-                          {comprometimentoGastos.percentual.toFixed(2)}%
-                        </span>
-                      </div>
-                    </div>
-
-                    <span className="text-xs text-gray-500">
-                      Maior concentração:{" "}
-                      <strong className="text-xs text-gray-700">
-                        {comprometimentoGastos.nome}
-                      </strong>
-                    </span>
-                  </div>
+                  <PercentageProgressIndicatorComponent
+                    title="Comprometimento de Gastos"
+                    percentage={comprometimentoGastos.percentual}
+                    barColor="#5B8DB8"
+                    footer={
+                      <span className="text-xs text-gray-500">
+                        Maior concentração: <strong className="text-xs text-gray-700">{comprometimentoGastos.nome}</strong>
+                      </span>
+                    }
+                  />
                 )}
 
                 {(hasScrData || historicoScrScoreData) && (
-                  <div className="flex h-full flex-col gap-3 rounded-lg border border-gray-100 p-4 md:col-span-2 xl:col-span-1">
-                    <span className="text-xs text-gray-500 font-medium">
-                      SCR
-                    </span>
-
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      {hasScrData && (
-                        <>
-                          <div className="flex flex-col gap-0.5">
-                            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-                              Operações
-                            </span>
-
-                            <span className="text-base font-bold text-gray-800">
-                              {scrOperacao.quantidade}
-                            </span>
-                          </div>
-
-                          <div className="flex flex-col gap-0.5">
-                            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-                              Contratado Inicial
-                            </span>
-
-                            <span className="text-base font-bold text-gray-800">
-                              {formatValor(scrOperacao.contratadoInicial)}
-                            </span>
-                          </div>
-
-                          <div className="flex flex-col gap-0.5">
-                            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-                              Contratado Final
-                            </span>
-
-                            <span className="text-base font-bold text-gray-800">
-                              {formatValor(scrOperacao.contratadoFinal)}
-                            </span>
-                          </div>
-                        </>
-                      )}
-
-                      {historicoScrScoreData && (
-                        <>
-                          <div className="flex flex-col gap-0.5">
-                            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-                              Score SCR
-                            </span>
-
-                            <span className="text-base font-bold text-gray-800">
-                              {historicoScrScoreData?.score ?? "-"}
-                            </span>
-                          </div>
-
-                          <div className="flex flex-col gap-0.5">
-                            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-                              Risco de Crédito
-                            </span>
-
-                            <span className="text-base font-bold text-gray-800">
-                              {historicoScrScoreData?.["indice-risco-credito-score"] ?? "-"}
-                            </span>
-                          </div>
-
-                          <div className="flex flex-col gap-0.5">
-                            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-                              Prob. Inadimplência
-                            </span>
-
-                            <span className="text-base font-bold text-gray-800">
-                              {historicoScrScoreData?.["probabilidade-inadimplencia"]
-                                ? `${historicoScrScoreData?.["probabilidade-inadimplencia"]}%`
-                                : "-"}
-                            </span>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
+                  <ScrSummarySection
+                    hasScrData={Boolean(hasScrData)}
+                    scrOperacao={scrOperacao}
+                    historicoScrScoreData={historicoScrScoreData}
+                  />
                 )}
               </div>
             </div>
@@ -1934,12 +1228,6 @@ export default function SpcMaxiResultadoPage() {
                       key={rowKey}
                       className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
                     >
-                      {activeGroup === "TODOS" && (
-                        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                          {r.tipo}
-                        </td>
-                      )}
-
                       {activeGroup === "PROTESTOS" && (
                         <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
                           {r.data}
@@ -2500,21 +1788,11 @@ export default function SpcMaxiResultadoPage() {
                           </p>
 
                           {COPYABLE_FIELDS.has(f.label) && f.value && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                copyToClipboard(String(f.value), f.label)
-                              }
-                              className="shrink-0 text-gray-400 transition-colors hover:cursor-pointer hover:text-[#243871]"
+                            <CopyButton
+                              value={String(f.value)}
                               title={`Copiar ${f.label}`}
-                              aria-label={`Copiar ${f.label}`}
-                            >
-                              {copiedField === f.label ? (
-                                <Check size={14} aria-hidden="true" />
-                              ) : (
-                                <Copy size={14} aria-hidden="true" />
-                              )}
-                            </button>
+                              className="shrink-0 text-gray-400 transition-colors hover:cursor-pointer hover:text-[#243871]"
+                            />
                           )}
                         </div>
                       </div>
@@ -2590,20 +1868,11 @@ export default function SpcMaxiResultadoPage() {
                           "Logradouro",
                         ].includes(f.label) &&
                           f.value && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                copyToClipboard(String(f.value), f.label)
-                              }
-                              className="text-gray-400 hover:text-[#243871] transition-colors hover:cursor-pointer"
+                            <CopyButton
+                              value={String(f.value)}
                               title={`Copiar ${f.label}`}
-                            >
-                              {copiedField === f.label ? (
-                                <Check size={14} />
-                              ) : (
-                                <Copy size={14} />
-                              )}
-                            </button>
+                              className="text-gray-400 hover:text-[#243871] transition-colors hover:cursor-pointer"
+                            />
                           )}
                       </div>
                     </div>
@@ -3559,14 +2828,6 @@ export default function SpcMaxiResultadoPage() {
           );
           const temFaixaGasto = gastoInicial > 0 || gastoFinal > 0;
 
-          const formatarMoeda = (valor: number) =>
-            new Intl.NumberFormat("pt-BR", {
-              style: "currency",
-              currency: "BRL",
-            })
-              .format(valor)
-              .replace(/\s/g, "");
-
           return (
             <div
               id="section-informacoes-positivas"
@@ -3588,8 +2849,8 @@ export default function SpcMaxiResultadoPage() {
                       </span>
 
                       <span className="text-base font-bold text-gray-800">
-                        Entre {formatarMoeda(gastoInicial)} e{" "}
-                        {formatarMoeda(gastoFinal)}
+                        Entre {formatCurrency(gastoInicial).replace(/\s/g, "")} e{" "}
+                        {formatCurrency(gastoFinal).replace(/\s/g, "")}
                       </span>
                     </div>
                   ) : (
@@ -3804,8 +3065,6 @@ export default function SpcMaxiResultadoPage() {
               (agora.getTime() - data.getTime()) / (1000 * 60 * 60 * 24) <= 90
             );
           }).length;
-
-          const total = consultas.length;
 
           const consultasMes = Object.values(
             consultas.reduce(
@@ -4181,7 +3440,7 @@ export default function SpcMaxiResultadoPage() {
                     Contratado Inicial
                   </span>
                   <span className="text-base font-bold text-gray-800">
-                    {formatValor(
+                    {formatCurrency(
                       historicoScr?.["valor-total-contratado-inicial"],
                     )}
                   </span>
@@ -4195,7 +3454,7 @@ export default function SpcMaxiResultadoPage() {
                     Contratado Final
                   </span>
                   <span className="text-base font-bold text-gray-800">
-                    {formatValor(
+                    {formatCurrency(
                       historicoScr?.["valor-total-contratado-final"],
                     )}
                   </span>
@@ -4209,7 +3468,7 @@ export default function SpcMaxiResultadoPage() {
                     Carteira Ativa Inicial
                   </span>
                   <span className="text-base font-bold text-gray-800">
-                    {formatValor(
+                    {formatCurrency(
                       historicoScr?.["valor-total-carteira-ativa-inicial"],
                     )}
                   </span>
@@ -4223,7 +3482,7 @@ export default function SpcMaxiResultadoPage() {
                     Carteira Ativa Final
                   </span>
                   <span className="text-base font-bold text-gray-800">
-                    {formatValor(
+                    {formatCurrency(
                       historicoScr?.["valor-total-carteira-ativa-final"],
                     )}
                   </span>
@@ -4237,7 +3496,7 @@ export default function SpcMaxiResultadoPage() {
                     Ativa a Vencer Inicial
                   </span>
                   <span className="text-base font-bold text-gray-800">
-                    {formatValor(
+                    {formatCurrency(
                       historicoScr?.[
                         "valor-total-carteira-ativa-vencer-inicial"
                       ],
@@ -4253,7 +3512,7 @@ export default function SpcMaxiResultadoPage() {
                     Ativa a Vencer Final
                   </span>
                   <span className="text-base font-bold text-gray-800">
-                    {formatValor(
+                    {formatCurrency(
                       historicoScr?.["valor-total-carteira-ativa-vencer-final"],
                     )}
                   </span>
@@ -4329,7 +3588,7 @@ export default function SpcMaxiResultadoPage() {
                     <p className="text-[13px] text-gray-600">
                       Valor estimado total entre{" "}
                       <strong className="text-[#2D4F91]">
-                        {formatValor(
+                        {formatCurrency(
                           historicoScr?.[
                             "valor-total-carteira-ativa-vencer-inicial"
                           ],
@@ -4337,7 +3596,7 @@ export default function SpcMaxiResultadoPage() {
                       </strong>{" "}
                       a{" "}
                       <strong className="text-[#2D4F91]">
-                        {formatValor(
+                        {formatCurrency(
                           historicoScr?.[
                             "valor-total-carteira-ativa-vencer-final"
                           ],
