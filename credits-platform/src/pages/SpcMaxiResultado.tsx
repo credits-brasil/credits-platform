@@ -347,9 +347,152 @@ export default function SpcMaxiResultadoPage() {
     antiga: "-",
     recente: "-",
   };
-  const filtered: any[] = [];
-  const visible = filtered.slice(0, PAGE);
-  const remaining = Math.max(filtered.length - PAGE, 0);
+
+  const toArray = (value: any): any[] => {
+    if (Array.isArray(value)) return value;
+    if (!value || typeof value !== "object") return [];
+
+    const candidates = [
+      value["detalhe-spc"],
+      value["detalhe-protestos"],
+      value["detalhe-inconsistencias"],
+      value["detalhe"],
+      value["detalhes"],
+      value["dados"],
+      value["registros"],
+      value["itens"],
+      value["ocorrencias"],
+    ];
+
+    const firstArray = candidates.find(Array.isArray);
+    return firstArray ?? [];
+  };
+
+  const normalizeDateValue = (value: any) => {
+    if (!value || value === "–") return "-";
+    const text = String(value).trim();
+    const [day, month, year] = text.split("T")[0].split("-");
+
+    if (day && month && year) {
+      return `${day}/${month}/${year}`;
+    }
+
+    return text;
+  };
+
+  const normalizeMoneyValue = (value: any) => {
+    if (value === null || value === undefined || value === "–") return "-";
+    return String(value);
+  };
+
+  const spcGroupRows = toArray(
+    spcData?.spc?.["detalhe-spc"] ??
+      spcData?.spc?.detalhe ??
+      spcData?.spc?.dados ??
+      spcData?.["spc"],
+  ).map((item: any) => ({
+    inclusao: normalizeDateValue(
+      item?.["data-inclusao"] ??
+        item?.["data-ocorrencia"] ??
+        item?.["data"] ??
+        item?.["data-operacao"] ??
+        item?.inclusao ??
+        item?.$?.["data-inclusao"],
+    ),
+    vencimento: normalizeDateValue(
+      item?.["data-vencimento"] ?? item?.["vencimento"] ?? item?.vencimento,
+    ),
+    valor: normalizeMoneyValue(
+      item?.valor ??
+        item?.["valor-total"] ??
+        item?.["valor-original"] ??
+        item?.["valor-emprestimo"],
+    ),
+    credor: item?.credor ?? item?.origem ?? item?.instituicao ?? item?.nome ?? "-",
+    cidade: item?.cidade ? `${item.cidade}/${item.estado ?? ""}` : "-",
+    origem: item?.origem ?? item?.fonte ?? "SPC",
+    motivo: item?.motivo ?? item?.["motivo-descricao"] ?? item?.["tipo-ocorrencia"] ?? "-",
+  }));
+
+  const protestosSource = toArray(
+    spcData?.protestos?.["detalhe-protestos"] ??
+      spcData?.protestos?.detalhe ??
+      spcData?.protestos?.dados ??
+      spcData?.protestos,
+  );
+
+  const protestosRows = protestosSource.map((item: any) => ({
+    data: normalizeDateValue(
+      item?.["data-protesto"] ?? item?.data ?? item?.["data-ocorrencia"],
+    ),
+    cartorio: item?.cartorio ?? item?.["nome-cartorio"] ?? "-",
+    valor: normalizeMoneyValue(
+      item?.valor ?? item?.["valor-protesto"] ?? item?.["valor-total"],
+    ),
+    cidade: item?.cidade ? `${item.cidade}/${item.estado ?? ""}` : "-",
+  }));
+
+  const inconsistenciasSource = toArray(
+    spcData?.["inconsistencias"]?.["detalhe-inconsistencias"] ??
+      spcData?.["inconsistencias"]?.detalhe ??
+      spcData?.["inconsistencias"]?.dados ??
+      spcData?.["inconsistencias"],
+  );
+
+  const inconsistenciasRows = inconsistenciasSource.map((item: any) => ({
+    inclusao: normalizeDateValue(
+      item?.["data-inclusao"] ?? item?.data ?? item?.["data-ocorrencia"],
+    ),
+    vencimento: normalizeDateValue(
+      item?.["data-vencimento"] ?? item?.vencimento ?? "-",
+    ),
+    valor: normalizeMoneyValue(
+      item?.valor ?? item?.["valor-total"] ?? item?.["valor-inconsistencia"],
+    ),
+    credor: item?.credor ?? item?.origem ?? item?.instituicao ?? "-",
+    cidade: item?.cidade ? `${item.cidade}/${item.estado ?? ""}` : "-",
+    origem: item?.origem ?? item?.fonte ?? "INCONSISTÊNCIA",
+    motivo: item?.motivo ?? item?.["descricao-inconsistencia"] ?? "-",
+  }));
+
+  const recordsByGroup: Record<string, any[]> = {
+    SPC: spcGroupRows,
+    CCF: ccfRecords,
+    PROTESTOS: protestosRows,
+    INCONSISTENCIAS: inconsistenciasRows,
+  };
+
+  const filtered = (recordsByGroup[activeGroup] ?? []).filter(Boolean);
+
+  const sortedFiltered = (() => {
+    if (!sortKey) return filtered;
+
+    return [...filtered].sort((a, b) => {
+      const left = a[sortKey] ?? "";
+      const right = b[sortKey] ?? "";
+
+      if (sortKey === "valor") {
+        const leftValue = parseBRValue(String(left));
+        const rightValue = parseBRValue(String(right));
+        return (leftValue - rightValue) * (sortDir === "asc" ? 1 : -1);
+      }
+
+      if (["inclusao", "vencimento", "data"].includes(sortKey)) {
+        const leftValue = parseBRDate(String(left));
+        const rightValue = parseBRDate(String(right));
+        return (leftValue - rightValue) * (sortDir === "asc" ? 1 : -1);
+      }
+
+      const comparison = String(left).localeCompare(String(right), "pt-BR", {
+        numeric: true,
+      });
+
+      return comparison * (sortDir === "asc" ? 1 : -1);
+    });
+  })();
+
+  const visible = sortedFiltered.slice(0, expanded ? sortedFiltered.length : PAGE);
+  const remaining = Math.max(sortedFiltered.length - PAGE, 0);
   const shouldShowChart = false;
   const chartData: Array<{ data: string; valor: number; acumulado: number }> = [];
   const alertas: Array<{
@@ -848,40 +991,48 @@ export default function SpcMaxiResultadoPage() {
 
           {hasComportamentoFinanceiroData && (
             <div className="space-y-3">
-              <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
-                Comportamento Financeiro
-              </p>
+              <div className="grid w-full items-start gap-3 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1.75fr)]">
+                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
+                  Comportamento Financeiro
+                </p>
 
-              <div className="grid w-full gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2fr)]">
-                {hasPontualidadeData && (
-                  <div className="min-w-0">
-                    <PercentageProgressIndicatorComponent
-                      title="Pontualidade de Pagamento"
-                      percentage={pontualidadePagamentoPercent}
-                      barColor="#7EC8E3"
-                      className="flex h-full flex-col gap-2 rounded-xl border border-gray-200 bg-white p-3 shadow-sm"
-                    />
-                  </div>
-                )}
+                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
+                  SCR
+                </p>
+              </div>
 
-                {hasComprometimentoData && (
-                  <div className="min-w-0">
-                    <PercentageProgressIndicatorComponent
-                      title="Comprometimento de Gastos"
-                      percentage={comprometimentoGastos.percentual}
-                      barColor="#5B8DB8"
-                      className="flex h-full flex-col gap-2 rounded-xl border border-gray-200 bg-white p-3 shadow-sm"
-                      footer={
-                        <span className="text-[11px] text-gray-500">
-                          Maior concentração: <strong className="text-[11px] text-gray-700">{comprometimentoGastos.nome}</strong>
-                        </span>
-                      }
-                    />
-                  </div>
-                )}
+              <div className="grid w-full items-stretch gap-3 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1.75fr)]">
+                <div className="grid min-w-0 w-full gap-3 self-stretch">
+                  {hasPontualidadeData && (
+                    <div className="min-w-0 w-full h-full">
+                      <PercentageProgressIndicatorComponent
+                        title="Pontualidade de Pagamento"
+                        percentage={pontualidadePagamentoPercent}
+                        barColor="#7EC8E3"
+                        className="flex h-full w-full flex-col gap-2 rounded-xl border border-gray-200 bg-white p-3 shadow-sm"
+                      />
+                    </div>
+                  )}
+
+                  {hasComprometimentoData && (
+                    <div className="min-w-0 w-full h-full">
+                      <PercentageProgressIndicatorComponent
+                        title="Comprometimento de Gastos"
+                        percentage={comprometimentoGastos.percentual}
+                        barColor="#5B8DB8"
+                        className="flex h-full w-full flex-col gap-2 rounded-xl border border-gray-200 bg-white p-3 shadow-sm"
+                        footer={
+                          <span className="text-[11px] text-gray-500">
+                            Maior concentração: <strong className="text-[11px] text-gray-700">{comprometimentoGastos.nome}</strong>
+                          </span>
+                        }
+                      />
+                    </div>
+                  )}
+                </div>
 
                 {(hasScrData || historicoScrScoreData) && (
-                  <div className="min-w-0">
+                  <div className="min-w-0 w-full h-full self-stretch">
                     <ScrSummarySection
                       hasScrData={Boolean(hasScrData)}
                       scrOperacao={scrOperacao}

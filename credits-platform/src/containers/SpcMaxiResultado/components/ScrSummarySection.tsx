@@ -125,52 +125,51 @@ function ScrDataItem({ label, value }: { label: string; value: string | number |
 }
 
 export function ScrSummarySection({ hasScrData, scrOperacao }: ScrSummarySectionProps) {
+  const items = [
+    {
+      label: "Quantidade total",
+      value: scrOperacao.resumoQuantidadeTotal ?? scrOperacao.quantidade ?? "-",
+    },
+    {
+      label: "Data início relacionamento",
+      value: formatDate(String(scrOperacao["data-inicio-relacionamento"] ?? "")),
+    },
+    {
+      label: "Valor contratado",
+      value: `${formatCurrency(scrOperacao["valor-total-contratado-inicial"])} a ${formatCurrency(scrOperacao["valor-total-contratado-final"])}`,
+    },
+    {
+      label: "Quantidade instituição",
+      value: scrOperacao["quantidade-instituicao-scr"] ?? "-",
+    },
+  ];
+
   return (
-    <div className="flex h-full flex-col gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
-      <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500">SCR</span>
-
+    <div className="flex h-full w-full flex-col gap-2">
       {hasScrData ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
-              Quantidade total
-            </span>
-            <span className="text-3xl font-bold leading-none text-gray-800">
-              <AnimatedScrValue
-                value={scrOperacao.resumoQuantidadeTotal ?? scrOperacao.quantidade ?? "-"}
-              />
-            </span>
-          </div>
+        <div className="grid grid-cols-2 gap-2">
+          {items.map(({ label, value }) => (
+            <div
+              key={label}
+              className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+              style={{ backgroundColor: "#F8F9FB" }}
+            >
+              <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                {label}
+              </span>
 
-          <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
-              Data início relacionamento
-            </span>
-            <span className="text-xl font-bold text-gray-800">
-              {formatDate(String(scrOperacao["data-inicio-relacionamento"] ?? ""))}
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
-              Valor contratado
-            </span>
-            <span className="text-lg font-bold text-gray-800">
-              {formatCurrency(scrOperacao["valor-total-contratado-inicial"])} a {formatCurrency(scrOperacao["valor-total-contratado-final"])}
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
-              Quantidade instituição
-            </span>
-            <span className="text-xl font-bold text-gray-800">
-              <AnimatedScrValue value={scrOperacao["quantidade-instituicao-scr"] ?? "-"} />
-            </span>
-          </div>
+              <span className="text-base font-bold text-gray-800">
+                {typeof value === "string" || typeof value === "number" ? (
+                  <AnimatedScrValue value={value} />
+                ) : (
+                  value
+                )}
+              </span>
+            </div>
+          ))}
         </div>
       ) : (
-        <div className="flex h-full min-h-[90px] items-center justify-center text-sm text-gray-400">
+        <div className="flex h-full min-h-[90px] items-center justify-center rounded-lg bg-[#F8F9FB] text-sm text-gray-400">
           Nenhum dado de SCR disponível
         </div>
       )}

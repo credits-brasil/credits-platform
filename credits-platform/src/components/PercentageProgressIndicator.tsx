@@ -46,25 +46,29 @@ export function PercentageProgressIndicatorComponent({
 
   return (
     <div className={className}>
-      <span className="text-[11px] text-gray-500 font-medium">{title}</span>
+      <div className="flex w-full items-center gap-3">
+        <span className="min-w-0 flex-1 text-[12px] font-medium text-gray-600">
+          {title}
+        </span>
 
-      <div className="space-y-0.5">
-        <div className="h-2 w-full rounded-full" style={{ backgroundColor: "#E5E7EB" }}>
-          <div
-            className="h-2 rounded-full"
-            style={{
-              width: `${animatedPercentage}%`,
-              backgroundColor: barColor,
-            }}
-          />
-        </div>
+        <div className="flex min-w-0 flex-[1.6] items-center gap-2">
+          <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-gray-200">
+            <div
+              className="h-full rounded-full"
+              style={{
+                width: `${animatedPercentage}%`,
+                backgroundColor: barColor,
+              }}
+            />
+          </div>
 
-        <div className="flex justify-end">
-          <span className="text-[10px] font-semibold text-gray-700">{animatedPercentage.toFixed(2)}%</span>
+          <span className="w-[52px] text-right text-[10px] font-semibold text-gray-700">
+            {animatedPercentage.toFixed(2)}%
+          </span>
         </div>
       </div>
 
-      {footer}
+      {footer ? <div className="mt-2">{footer}</div> : null}
     </div>
   );
 }
