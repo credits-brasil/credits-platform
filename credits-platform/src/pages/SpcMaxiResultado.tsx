@@ -309,200 +309,364 @@ export default function SpcMaxiResultadoPage() {
       key: "SPC",
       label: "SPC",
       count: Number(spcData?.spc?.resumo?.["quantidade-total"] ?? 0),
-      valor: "-",
-      antiga: "-",
-      recente: "-",
+      valor: formatCurrency(spcData?.spc?.resumo?.["valor-total"]),
+      antiga:
+        Number(spcData?.spc?.resumo?.["quantidade-total"] ?? 0) <= 1
+          ? formatDate(spcData?.spc?.resumo?.["data-ultima-ocorrencia"])
+          : formatDate(
+              spcData?.spc?.["detalhe-spc"]?.reduce((oldest, current) =>
+                new Date(current["data-inclusao"]) <
+                new Date(oldest["data-inclusao"])
+                  ? current
+                  : oldest,
+              )?.["data-inclusao"],
+            ),
+      recente: formatDate(spcData?.spc?.resumo?.["data-ultima-ocorrencia"]),
+    },
+    {
+      key: "SERASA",
+      label: "SERASA",
+      count: Number(
+        spcData?.["pendencia-financeira"]?.resumo?.["quantidade-total"] ?? 0,
+      ),
+      valor: formatCurrency(
+        spcData?.["pendencia-financeira"]?.resumo?.["valor-total"],
+      ),
+      antiga: formatDate(
+        spcData?.["pendencia-financeira"]?.["ocorrencia-mais-antiga-chequenet"],
+      ),
+      recente: formatDate(
+        spcData?.["pendencia-financeira"]?.[
+          "ocorrencia-mais-recente-chequenet"
+        ],
+      ),
+    },
+    {
+      key: "PROTESTOS",
+      label: "PROTESTOS",
+      count: Number(spcData?.protesto?.resumo?.["quantidade-total"] ?? 0),
+      valor: formatCurrency(spcData?.protesto?.resumo?.["valor-total"]),
+      antiga: formatDate(
+        spcData?.protesto?.resumo?.["data-primeira-ocorrencia"],
+      ),
+      recente: formatDate(
+        spcData?.protesto?.resumo?.["data-ultima-ocorrencia"],
+      ),
     },
     {
       key: "CCF",
       label: "CCF",
       count: ccfRecords.length,
-      valor: "-",
-      antiga: "-",
-      recente: "-",
-    },
-    {
-      key: "PROTESTOS",
-      label: "PROTESTOS",
-      count: Number(spcData?.protestos?.resumo?.["quantidade-total"] ?? 0),
-      valor: "-",
-      antiga: "-",
-      recente: "-",
-    },
-    {
-      key: "INCONSISTENCIAS",
-      label: "INCONSISTÊNCIAS",
-      count: Number(
-        spcData?.["inconsistencias"]?.resumo?.["quantidade-total"] ?? 0,
-      ),
-      valor: "-",
-      antiga: "-",
-      recente: "-",
+      valor: "–",
+      antiga: ccfRecords.length
+        ? [...ccfRecords].sort(
+            (a, b) => parseBRDate(a.inclusao) - parseBRDate(b.inclusao),
+          )[0].inclusao
+        : "-",
+      recente: ccfRecords.length
+        ? ([...ccfRecords]
+            .sort((a, b) => parseBRDate(a.inclusao) - parseBRDate(b.inclusao))
+            .at(-1)?.inclusao ?? "-")
+        : "-",
     },
   ];
 
-  const PAGE = 5;
-  const resumoTabela = {
-    count: GROUPS.reduce((total, group) => total + Number(group.count ?? 0), 0),
-    antiga: "-",
-    recente: "-",
-  };
+  const spcRecords =
+    spcData?.spc?.["detalhe-spc"]?.map((item) => ({
+      tipo: item["comprador-fiador-avalista"],
+      inclusao: new Date(item["data-inclusao"]).toLocaleDateString("pt-BR"),
+      vencimento: new Date(item["data-vencimento"]).toLocaleDateString("pt-BR"),
+      valor: Number(item.valor).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      }),
+      contrato: item.contrato,
+      "comprador-fiador-avalista": item["comprador-fiador-avalista"],
+      credor: item["nome-associado"],
+      cidade: `${item["cidade-associado"]}/${item.estado}`,
+      origem: item["nome-entidade"],
+      telefone: item["telefone-associado"],
+      fonte: "SPC",
+      grupo: "SPC",
+    })) ?? [];
 
-  const toArray = (value: any): any[] => {
-    if (Array.isArray(value)) return value;
-    if (!value || typeof value !== "object") return [];
+  const serasaRecords =
+    spcData?.["pendencia-financeira"]?.["detalhe-pendencia-financeira"]?.map(
+      (item) => ({
+        tipo: Boolean(item.avalista) ? "AVALISTA" : "COMPRADOR",
+        inclusao: new Date(item["data-ocorrencia"]).toLocaleDateString("pt-BR"),
+        vencimento: new Date(item["data-ocorrencia"]).toLocaleDateString(
+          "pt-BR",
+        ),
+        valor: Number(item["valor-pendencia"]).toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }),
+        contrato: item.contrato,
+        credor: item.origem,
+        cidade: `${item.cidade}/${item.estado}`,
+        origem: item["titulo-ocorrencia"],
+        fonte: "SERASA",
+        grupo: "SERASA",
+      }),
+    ) ?? [];
 
-    const candidates = [
-      value["detalhe-spc"],
-      value["detalhe-protestos"],
-      value["detalhe-inconsistencias"],
-      value["detalhe"],
-      value["detalhes"],
-      value["dados"],
-      value["registros"],
-      value["itens"],
-      value["ocorrencias"],
-    ];
+  const protestoRecords =
+    spcData?.protesto?.["detalhe-protesto"]?.map((item) => ({
+      tipo: "",
+      inclusao: new Date(item["data-protesto"]).toLocaleDateString("pt-BR"),
+      vencimento: new Date(item["data-protesto"]).toLocaleDateString("pt-BR"),
+      origem: "Protesto",
+      data: new Date(item["data-protesto"]).toLocaleDateString("pt-BR"),
+      cartorio: item.cartorio,
+      cidade: `${item.cidade}/${item.estado}`,
+      valor: Number(item.valor).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      }),
+      fonte: "PROTESTOS",
+      grupo: "PROTESTOS",
+    })) ?? [];
 
-    const firstArray = candidates.find(Array.isArray);
-    return firstArray ?? [];
-  };
+  const ALL_RECORDS = [
+    ...spcRecords,
+    ...serasaRecords,
+    ...protestoRecords,
+    ...ccfRecords,
+  ];
 
-  const normalizeDateValue = (value: any) => {
-    if (!value || value === "–") return "-";
-    const text = String(value).trim();
-    const [day, month, year] = text.split("T")[0].split("-");
+  const chartData = (() => {
+    const records =
+      activeGroup === "TODOS"
+        ? ALL_RECORDS
+        : ALL_RECORDS.filter((r) => r.grupo === activeGroup);
 
-    if (day && month && year) {
-      return `${day}/${month}/${year}`;
-    }
+    const grouped = records
+      .filter((r) => r.vencimento && r.vencimento !== "–" && r.valor !== "–")
+      .reduce(
+        (acc, item) => {
+          const data = item.vencimento;
+          const valor = parseBRValue(item.valor);
 
-    return text;
-  };
+          if (!acc[data]) {
+            acc[data] = {
+              data,
+              valor: 0,
+            };
+          }
 
-  const normalizeMoneyValue = (value: any) => {
-    if (value === null || value === undefined || value === "–") return "-";
-    return String(value);
-  };
+          acc[data].valor += valor;
 
-  const spcGroupRows = toArray(
-    spcData?.spc?.["detalhe-spc"] ??
-      spcData?.spc?.detalhe ??
-      spcData?.spc?.dados ??
-      spcData?.["spc"],
-  ).map((item: any) => ({
-    inclusao: normalizeDateValue(
-      item?.["data-inclusao"] ??
-        item?.["data-ocorrencia"] ??
-        item?.["data"] ??
-        item?.["data-operacao"] ??
-        item?.inclusao ??
-        item?.$?.["data-inclusao"],
-    ),
-    vencimento: normalizeDateValue(
-      item?.["data-vencimento"] ?? item?.["vencimento"] ?? item?.vencimento,
-    ),
-    valor: normalizeMoneyValue(
-      item?.valor ??
-        item?.["valor-total"] ??
-        item?.["valor-original"] ??
-        item?.["valor-emprestimo"],
-    ),
-    credor: item?.credor ?? item?.origem ?? item?.instituicao ?? item?.nome ?? "-",
-    cidade: item?.cidade ? `${item.cidade}/${item.estado ?? ""}` : "-",
-    origem: item?.origem ?? item?.fonte ?? "SPC",
-    motivo: item?.motivo ?? item?.["motivo-descricao"] ?? item?.["tipo-ocorrencia"] ?? "-",
-  }));
+          return acc;
+        },
+        {} as Record<string, { data: string; valor: number }>,
+      );
 
-  const protestosSource = toArray(
-    spcData?.protestos?.["detalhe-protestos"] ??
-      spcData?.protestos?.detalhe ??
-      spcData?.protestos?.dados ??
-      spcData?.protestos,
-  );
+    const rows = Object.values(grouped).sort(
+      (a, b) => parseBRDate(a.data) - parseBRDate(b.data),
+    );
 
-  const protestosRows = protestosSource.map((item: any) => ({
-    data: normalizeDateValue(
-      item?.["data-protesto"] ?? item?.data ?? item?.["data-ocorrencia"],
-    ),
-    cartorio: item?.cartorio ?? item?.["nome-cartorio"] ?? "-",
-    valor: normalizeMoneyValue(
-      item?.valor ?? item?.["valor-protesto"] ?? item?.["valor-total"],
-    ),
-    cidade: item?.cidade ? `${item.cidade}/${item.estado ?? ""}` : "-",
-  }));
+    let acumulado = 0;
 
-  const inconsistenciasSource = toArray(
-    spcData?.["inconsistencias"]?.["detalhe-inconsistencias"] ??
-      spcData?.["inconsistencias"]?.detalhe ??
-      spcData?.["inconsistencias"]?.dados ??
-      spcData?.["inconsistencias"],
-  );
+    return rows.map((item) => {
+      acumulado += item.valor;
 
-  const inconsistenciasRows = inconsistenciasSource.map((item: any) => ({
-    inclusao: normalizeDateValue(
-      item?.["data-inclusao"] ?? item?.data ?? item?.["data-ocorrencia"],
-    ),
-    vencimento: normalizeDateValue(
-      item?.["data-vencimento"] ?? item?.vencimento ?? "-",
-    ),
-    valor: normalizeMoneyValue(
-      item?.valor ?? item?.["valor-total"] ?? item?.["valor-inconsistencia"],
-    ),
-    credor: item?.credor ?? item?.origem ?? item?.instituicao ?? "-",
-    cidade: item?.cidade ? `${item.cidade}/${item.estado ?? ""}` : "-",
-    origem: item?.origem ?? item?.fonte ?? "INCONSISTÊNCIA",
-    motivo: item?.motivo ?? item?.["descricao-inconsistencia"] ?? "-",
-  }));
-
-  const recordsByGroup: Record<string, any[]> = {
-    SPC: spcGroupRows,
-    CCF: ccfRecords,
-    PROTESTOS: protestosRows,
-    INCONSISTENCIAS: inconsistenciasRows,
-  };
-
-  const filtered = (recordsByGroup[activeGroup] ?? []).filter(Boolean);
-
-  const sortedFiltered = (() => {
-    if (!sortKey) return filtered;
-
-    return [...filtered].sort((a, b) => {
-      const left = a[sortKey] ?? "";
-      const right = b[sortKey] ?? "";
-
-      if (sortKey === "valor") {
-        const leftValue = parseBRValue(String(left));
-        const rightValue = parseBRValue(String(right));
-        return (leftValue - rightValue) * (sortDir === "asc" ? 1 : -1);
-      }
-
-      if (["inclusao", "vencimento", "data"].includes(sortKey)) {
-        const leftValue = parseBRDate(String(left));
-        const rightValue = parseBRDate(String(right));
-        return (leftValue - rightValue) * (sortDir === "asc" ? 1 : -1);
-      }
-
-      const comparison = String(left).localeCompare(String(right), "pt-BR", {
-        numeric: true,
-      });
-
-      return comparison * (sortDir === "asc" ? 1 : -1);
+      return {
+        ...item,
+        acumulado,
+      };
     });
   })();
 
-  const visible = sortedFiltered.slice(0, expanded ? sortedFiltered.length : PAGE);
-  const remaining = Math.max(sortedFiltered.length - PAGE, 0);
-  const shouldShowChart = false;
-  const chartData: Array<{ data: string; valor: number; acumulado: number }> = [];
-  const alertas: Array<{
-    titulo: string;
-    severidade: "alto" | "medio" | "baixo";
-    descricao: string;
-    detalhes?: Array<{ label: string; value: string | number }>; 
-    fonte: string;
-    tipo: string;
-  }> = [];
+  const activeGroupData = GROUPS.find((g) => g.key === activeGroup);
+  const shouldShowChart =
+    (activeGroupData?.count ?? 0) > 0 && chartData.length > 0;
+
+  const base =
+    activeGroup === "TODOS"
+      ? ALL_RECORDS
+      : ALL_RECORDS.filter((r) => r.grupo === activeGroup);
+  const filtered = sortKey
+    ? [...base].sort((a, b) => {
+        let va: string | number = a[sortKey];
+        let vb: string | number = b[sortKey];
+        if (sortKey === "inclusao" || sortKey === "vencimento") {
+          va = parseBRDate(String(a[sortKey] ?? ""));
+          vb = parseBRDate(String(b[sortKey] ?? ""));
+        } else if (sortKey === "valor") {
+          va = parseBRValue(String(a[sortKey] ?? ""));
+          vb = parseBRValue(String(b[sortKey] ?? ""));
+        } else {
+          va = String(a[sortKey] ?? "");
+          vb = String(b[sortKey] ?? "");
+        }
+        if (va < vb) return sortDir === "asc" ? -1 : 1;
+        if (va > vb) return sortDir === "asc" ? 1 : -1;
+        return 0;
+      })
+    : base;
+
+  const PAGE = 5;
+  const visible = expanded ? filtered : filtered.slice(0, PAGE);
+  const remaining = filtered.length - PAGE;
+
+  const normalize = (value?: string) =>
+    (value ?? "")
+      .toUpperCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\bRUA\b/g, "R")
+      .replace(/\(.*?\)/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const enderecoAtual = spcData?.consumidor?.endereco;
+
+  const ultimoEndereco =
+    spcData?.["ultimo-endereco-informado"]?.[
+      "detalhe-ultimo-endereco-informado"
+    ]?.[0];
+
+  const enderecoDiferente =
+    !!enderecoAtual &&
+    !!ultimoEndereco &&
+    (normalize(enderecoAtual.logradouro) !==
+      normalize(ultimoEndereco.logradouro) ||
+      normalize(enderecoAtual.cep) !== normalize(ultimoEndereco.cep));
+
+  const consultas =
+    spcData?.["consulta-realizada"]?.["detalhe-consulta-realizada"] ?? [];
+
+  const hoje = new Date();
+  const umMesAtras = new Date();
+  umMesAtras.setDate(hoje.getDate() - 30);
+
+  const consultasUltimos30Dias = consultas.filter((consulta) => {
+    const dataConsulta = new Date(consulta["data-consulta"]);
+    return dataConsulta >= umMesAtras && dataConsulta <= hoje;
+  });
+
+  const possuiAltoVolumeConsultas = consultasUltimos30Dias.length > 10;
+  const alertaDocumento =
+    spcData?.["alerta-documento"]?.["detalhe-alerta-documento"]?.[0];
+  const participacaoMercadoCapitais =
+    spcData?.["insumo-participacao-mercado-capitais"]?.[
+      "detalhe-insumo-participacao-mercado-capitais"
+    ];
+  const participaMercadoCapitaisRaw =
+    participacaoMercadoCapitais?.["participante-mercado-capital"];
+  const participaMercadoCapitais =
+    participaMercadoCapitaisRaw === true ||
+    String(participaMercadoCapitaisRaw).toLowerCase() === "true";
+
+  const alertas = [
+    ...(participacaoMercadoCapitais
+      ? [
+          {
+            severidade: participaMercadoCapitais ? "medio" : "baixo",
+            titulo: "Participação no Mercado de Capitais",
+            descricao: participaMercadoCapitais
+              ? "Há participação registrada no mercado de capitais."
+              : "Não há participação registrada no mercado de capitais.",
+            fonte: "SPC Brasil",
+            tipo: "Mercado de Capitais",
+          },
+        ]
+      : []),
+    ...(enderecoDiferente
+      ? [
+          {
+            severidade: "baixo",
+            titulo: "Endereço desatualizado",
+            descricao:
+              "O endereço informado difere do último endereço registrado nas bases consultadas.",
+            fonte: "SPC Brasil",
+            tipo: "Endereço",
+          },
+        ]
+      : []),
+    ...(alertaDocumento
+      ? [
+          {
+            severidade: "alto",
+            titulo: "Alerta de documento",
+            descricao: "Foi identificado um alerta de documento na consulta.",
+            fonte: alertaDocumento?.["entidade-origem"] ?? "SPC Brasil",
+            tipo: alertaDocumento?.["tipo-documento-alerta"] ?? "Documento",
+            detalhes: [
+              {
+                label: "Data Inclusão",
+                value: formatDate(alertaDocumento?.["data-inclusao"]),
+              },
+              {
+                label: "Data Ocorrência",
+                value: formatDate(alertaDocumento?.["data-ocorrencia"]),
+              },
+              {
+                label: "Motivo",
+                value: alertaDocumento?.motivo ?? "-",
+              },
+            ],
+          },
+        ]
+      : []),
+    ...(possuiAltoVolumeConsultas
+      ? [
+          {
+            severidade: "alto",
+            titulo: "Alto volume de consultas recentes",
+            descricao: `${consultasUltimos30Dias.length} consultas nos últimos 30 dias — possível busca intensiva por crédito.`,
+            data: consultasUltimos30Dias.sort(
+              (a, b) =>
+                new Date(b["data-consulta"]).getTime() -
+                new Date(a["data-consulta"]).getTime(),
+            )[0]["data-consulta"],
+            fonte: "SPC Brasil",
+            tipo: spcData?.consumidor?.cpf ? "CPF" : "CNPJ",
+          },
+        ]
+      : []),
+  ];
+
+  const resumoTabela = (() => {
+    if (!base.length) {
+      return {
+        count: 0,
+        antiga: "-",
+        recente: "-",
+      };
+    }
+
+    const datas = base
+      .map((item) => item.vencimento || item.inclusao || item.data)
+      .filter(
+        (data): data is string => Boolean(data) && data !== "-" && data !== "–",
+      );
+
+    if (!datas.length) {
+      return {
+        count: base.length,
+        antiga: "-",
+        recente: "-",
+      };
+    }
+
+    const datasOrdenadas = [...datas].sort(
+      (a, b) => parseBRDate(a) - parseBRDate(b),
+    );
+
+    return {
+      count: base.length,
+      antiga: datasOrdenadas[0],
+      recente: datasOrdenadas[datasOrdenadas.length - 1],
+    };
+  })();
+
+  useEffect(() => {
+    if (!requestData) {
+      navigate("/verticais/credito-risco/spc-maxi");
+    }
+  }, [navigate, requestData]);
 
   if (!requestData) {
     return null;

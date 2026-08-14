@@ -61,6 +61,11 @@ interface NegativosConsolidadosSectionProps {
   spcData: any;
 }
 
+type NegativosTableColumn = {
+  label: string;
+  key: SortKey | null;
+};
+
 export function NegativosConsolidadosSection({
   groups,
   activeGroup,
@@ -82,15 +87,15 @@ export function NegativosConsolidadosSection({
   return (
     <div
       id="section-negativos"
-      className="mb-4 rounded-xl border border-gray-200 bg-white p-5"
+      className="bg-white rounded-xl border border-gray-200 p-5 mb-4"
     >
-      <div className="mb-4 flex items-center">
+      <div className="flex items-center mb-4">
         <h2 className="text-sm font-semibold text-gray-700">
           Negativos Consolidados
         </h2>
       </div>
 
-      <div className="mb-5 grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-4 gap-3 mb-5">
         {groups.map((g) => {
           const isActive = activeGroup === g.key;
           return (
@@ -101,17 +106,17 @@ export function NegativosConsolidadosSection({
                 setActiveGroup(g.key);
                 setExpanded(false);
               }}
-              className="rounded-xl border p-3 text-left transition-all"
+              className="text-left rounded-xl border p-3 transition-all"
               style={{
                 borderColor: isActive ? "#ED884A" : "#E5E7EB",
                 backgroundColor: isActive ? "#FFFBF7" : "#fff",
               }}
             >
-              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-700">
+              <p className="text-[10px] font-semibold text-gray-700 uppercase tracking-wide mb-2">
                 {g.label}
               </p>
-              <hr className="mb-2 border-gray-200" />
-              <div className="mb-2 flex items-baseline justify-between">
+              <hr className="border-gray-200 mb-2" />
+              <div className="flex items-baseline justify-between mb-2">
                 <span
                   className="text-xl font-bold"
                   style={{ color: isActive ? "#ED884A" : "#1F2937" }}
@@ -127,7 +132,7 @@ export function NegativosConsolidadosSection({
               </div>
               <div className="flex justify-between">
                 <div>
-                  <p className="text-[9px] uppercase tracking-wide text-gray-400">
+                  <p className="text-[9px] text-gray-400 uppercase tracking-wide">
                     Antiga
                   </p>
                   <p className="text-xs font-medium text-gray-600">
@@ -135,7 +140,7 @@ export function NegativosConsolidadosSection({
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[9px] uppercase tracking-wide text-gray-400">
+                  <p className="text-[9px] text-gray-400 uppercase tracking-wide">
                     Recente
                   </p>
                   <p className="text-xs font-medium text-gray-600">
@@ -148,7 +153,7 @@ export function NegativosConsolidadosSection({
         })}
       </div>
 
-      <div className="mt-10 mb-3 flex items-center gap-3 border-b border-gray-100 pb-3 text-xs text-gray-500">
+      <div className="flex items-center gap-3 text-xs text-gray-500 mt-10 mb-3 pb-3 border-b border-gray-100">
         <span>
           Total:{" "}
           <span className="font-semibold text-gray-800">
@@ -175,7 +180,7 @@ export function NegativosConsolidadosSection({
         </span>
       </div>
 
-      <table className="w-full table-fixed text-xs">
+      <table className="w-full text-xs table-fixed">
         {activeGroup === "CCF" ? (
           <colgroup>
             <col style={{ width: "120px" }} />
@@ -231,7 +236,7 @@ export function NegativosConsolidadosSection({
                     { label: "", key: null },
                   ] as { label: string; key: SortKey | null }[])
             ).map(({ label, key }) => (
-              <th key={label} className="pb-2 pr-4 text-left last:pr-0">
+              <th key={label} className="text-left pb-2 pr-4 last:pr-0">
                 {key ? (
                   <button
                     type="button"
@@ -291,64 +296,70 @@ export function NegativosConsolidadosSection({
               <>
                 <tr
                   key={rowKey}
-                  className="border-b border-gray-50 transition-colors hover:bg-gray-50"
+                  className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
                 >
+                  {activeGroup === "TODOS" && (
+                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+                      {r.tipo}
+                    </td>
+                  )}
+
                   {activeGroup === "PROTESTOS" && (
-                    <td className="whitespace-nowrap py-2.5 pr-4 text-gray-600">
+                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
                       {r.data}
                     </td>
                   )}
 
                   {activeGroup === "PROTESTOS" && (
-                    <td className="whitespace-nowrap py-2.5 pr-4 text-gray-600">
+                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
                       {r.cartorio}
                     </td>
                   )}
 
                   {activeGroup === "CCF" && (
-                    <td className="whitespace-nowrap py-2.5 pr-4 text-gray-600">
+                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
                       {r.inclusao}
                     </td>
                   )}
 
                   {activeGroup === "CCF" && (
-                    <td className="whitespace-nowrap py-2.5 pr-4 text-gray-600">
+                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
                       {r.motivo}
                     </td>
                   )}
 
                   {activeGroup === "CCF" && (
-                    <td className="whitespace-nowrap py-2.5 pr-4 text-gray-600">
+                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
                       {r.agencia}
                     </td>
                   )}
 
                   {activeGroup === "CCF" && (
-                    <td className="whitespace-nowrap py-2.5 pr-4 text-gray-600">
+                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
                       {r.banco}
                     </td>
                   )}
 
                   {activeGroup === "CCF" && (
-                    <td className="whitespace-nowrap py-2.5 pr-4 text-gray-600">
+                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
                       {r.origem}
                     </td>
                   )}
 
                   {activeGroup !== "PROTESTOS" && activeGroup !== "CCF" && (
-                    <td className="whitespace-nowrap py-2.5 pr-4 text-gray-600">
+                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
                       {r.inclusao}
                     </td>
                   )}
 
                   {activeGroup !== "PROTESTOS" && activeGroup !== "CCF" && (
-                    <td className="whitespace-nowrap py-2.5 pr-4 text-gray-600">
+                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
                       {r.vencimento}
                     </td>
                   )}
 
                   {activeGroup !== "CCF" && (
-                    <td className="whitespace-nowrap py-2.5 pr-4 font-medium text-gray-800">
+                    <td className="py-2.5 pr-4 text-gray-800 font-medium whitespace-nowrap">
                       {r.valor}
                     </td>
                   )}
@@ -360,7 +371,7 @@ export function NegativosConsolidadosSection({
                   )}
 
                   {activeGroup !== "CCF" && (
-                    <td className="whitespace-nowrap py-2.5 pr-4 text-gray-600">
+                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
                       {r.cidade}
                     </td>
                   )}
@@ -380,9 +391,11 @@ export function NegativosConsolidadosSection({
                             prev === rowKey ? null : rowKey,
                           )
                         }
-                        className="cursor-pointer rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                        className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer p-1 rounded-full hover:bg-gray-100"
                         aria-label={
-                          isRowExpanded ? "Recolher detalhes" : "Expandir detalhes"
+                          isRowExpanded
+                            ? "Recolher detalhes"
+                            : "Expandir detalhes"
                         }
                       >
                         <ChevronDown
@@ -454,7 +467,7 @@ export function NegativosConsolidadosSection({
         </button>
       )}
 
-      {expanded && visible.length > 5 && (
+      {expanded && filtered.length > PAGE && (
         <button
           type="button"
           onClick={() => setExpanded(false)}
@@ -466,9 +479,9 @@ export function NegativosConsolidadosSection({
       )}
 
       {shouldShowChart && (
-        <div className="mt-8 border-t border-gray-100 pt-6">
-          <div className="mb-4 flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">
+        <div className="mt-8 pt-6 border-t border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
               Variação de Endividamento
             </p>
           </div>
@@ -558,18 +571,18 @@ export function NegativosConsolidadosSection({
           return null;
 
         return (
-          <div className="mt-6 flex w-full flex-col gap-2">
-            <p className="mb-1 text-xs font-semibold text-gray-500">
+          <div className="w-full flex flex-col gap-2 mt-6">
+            <p className="text-xs font-semibold text-gray-500 mb-1">
               Risco de Crédito
             </p>
 
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               {classeRisco ? (
                 <div
                   className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
                   style={{ backgroundColor: "#F8F9FB" }}
                 >
-                  <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
                     Classe do Risco
                   </span>
 
@@ -584,7 +597,7 @@ export function NegativosConsolidadosSection({
                   className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
                   style={{ backgroundColor: "#F8F9FB" }}
                 >
-                  <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
                     Risco
                   </span>
 
@@ -599,7 +612,7 @@ export function NegativosConsolidadosSection({
                   className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
                   style={{ backgroundColor: "#F8F9FB" }}
                 >
-                  <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
                     Taxa Mal Pagador
                   </span>
 
@@ -616,7 +629,7 @@ export function NegativosConsolidadosSection({
                   className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
                   style={{ backgroundColor: "#F8F9FB" }}
                 >
-                  <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
                     Descrição
                   </span>
 
