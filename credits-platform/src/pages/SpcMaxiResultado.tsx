@@ -1040,7 +1040,7 @@ export default function SpcMaxiResultadoPage() {
 
         <div
           id="section-score"
-          className="bg-white rounded-xl border border-gray-200 p-5 mb-4"
+          className="bg-white rounded-xl border border-gray-200 p-5 mb-4 mt-2"
         >
           <h2 className="text-sm font-semibold text-gray-700 mb-4">
             {scoreSectionTitle}

@@ -19,8 +19,8 @@ export function InsumoGroupCard({
 
   return (
     <>
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <div className="flex items-center justify-between mb-3">
+      <div className="h-full rounded-xl border border-gray-200 bg-white p-3">
+        <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Icon size={15} className="text-gray-500" />
 
@@ -36,9 +36,9 @@ export function InsumoGroupCard({
           </button>
         </div>
 
-        <hr className="border-gray-100 mb-3" />
+        <hr className="mb-2 border-gray-100" />
 
-        <div className="space-y-3.5">
+        <div className="space-y-2">
           {group.items.map((item) => {
             const checked = selected.has(item.id);
 

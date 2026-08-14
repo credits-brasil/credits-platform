@@ -13,15 +13,37 @@ interface LayoutProps {
 export default function Layout({ children, onLogout }: LayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [location] = useLocation();
+  const isSearchPage = location === "/verticais/credito-risco/spc-maxi";
+  const isResultPage =
+    location === "/verticais/credito-risco/spc-maxi/resultado";
 
   useEffect(() => {
-    if (location === "/verticais/credito-risco/spc-maxi/resultado") {
+    if (isResultPage) {
       setCollapsed(true);
     }
-  }, [location]);
+  }, [isResultPage]);
+
+  useEffect(() => {
+    if (!isSearchPage) {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      return;
+    }
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, [isSearchPage]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen bg-background">
       <Sidebar
         collapsed={collapsed}
         onToggle={() => setCollapsed((c) => !c)}
@@ -29,15 +51,25 @@ export default function Layout({ children, onLogout }: LayoutProps) {
       />
       <Header sidebarCollapsed={collapsed} onLogout={onLogout} />
       <main
-        className="py-8 px-6 lg:px-10"
-        style={{
-          marginLeft: collapsed ? "64px" : "240px",
-          marginTop: `${HEADER_HEIGHT}px`,
-          transition: "margin-left 0.3s ease",
-          minHeight: `calc(100vh - ${HEADER_HEIGHT}px)`,
-        }}
+        className={isSearchPage ? "overflow-hidden px-6 py-6 lg:px-10" : "px-6 py-6 lg:px-10"}
+        style={
+          isSearchPage
+            ? {
+                marginLeft: collapsed ? "64px" : "240px",
+                marginTop: `${HEADER_HEIGHT}px`,
+                transition: "margin-left 0.3s ease",
+                height: `calc(100vh - ${HEADER_HEIGHT}px)`,
+                minHeight: `calc(100vh - ${HEADER_HEIGHT}px)`,
+                overflow: "hidden",
+              }
+            : {
+                marginLeft: collapsed ? "64px" : "240px",
+                marginTop: `${HEADER_HEIGHT}px`,
+                transition: "margin-left 0.3s ease",
+              }
+        }
       >
-        <div className="w-full mx-auto">
+        <div className={isSearchPage ? "mx-auto h-full w-full overflow-hidden" : "mx-auto w-full"}>
           {children}
         </div>
       </main>
