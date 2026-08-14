@@ -13,7 +13,7 @@ export function PercentageProgressIndicatorComponent({
   percentage,
   barColor,
   footer,
-  className = "flex h-full flex-col gap-3 rounded-lg border border-gray-100 p-4 xl:max-w-[320px]",
+  className = "flex h-full flex-col gap-0.5 rounded-md border border-gray-100 p-1.5 xl:max-w-[320px]",
 }: PercentageProgressIndicatorComponentProps) {
   const normalized = Math.min(Math.max(percentage, 0), 100);
   const [animatedPercentage, setAnimatedPercentage] = useState(0);
@@ -46,12 +46,12 @@ export function PercentageProgressIndicatorComponent({
 
   return (
     <div className={className}>
-      <span className="text-xs text-gray-500 font-medium">{title}</span>
+      <span className="text-[11px] text-gray-500 font-medium">{title}</span>
 
-      <div className="space-y-1.5">
-        <div className="h-3 w-full rounded-full" style={{ backgroundColor: "#E5E7EB" }}>
+      <div className="space-y-0.5">
+        <div className="h-2 w-full rounded-full" style={{ backgroundColor: "#E5E7EB" }}>
           <div
-            className="h-3 rounded-full"
+            className="h-2 rounded-full"
             style={{
               width: `${animatedPercentage}%`,
               backgroundColor: barColor,
@@ -60,7 +60,7 @@ export function PercentageProgressIndicatorComponent({
         </div>
 
         <div className="flex justify-end">
-          <span className="text-[11px] font-semibold text-gray-700">{animatedPercentage.toFixed(2)}%</span>
+          <span className="text-[10px] font-semibold text-gray-700">{animatedPercentage.toFixed(2)}%</span>
         </div>
       </div>
 

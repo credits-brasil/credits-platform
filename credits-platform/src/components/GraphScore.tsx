@@ -11,6 +11,11 @@ type GraphScoreComponentProps = {
   badgeLabel: string;
   headerContent: ReactNode;
   message?: string | null;
+  secondaryBadge?: {
+    label: string;
+    value: string;
+    style?: CSSProperties;
+  } | null;
   className?: string;
 };
 
@@ -25,6 +30,7 @@ export function GraphScoreComponent({
   badgeLabel,
   headerContent,
   message,
+  secondaryBadge = null,
   className = "flex items-center gap-5",
 }: GraphScoreComponentProps) {
   const [animatedScore, setAnimatedScore] = useState(0);
@@ -114,6 +120,22 @@ export function GraphScoreComponent({
         </div>
 
         {message && <p className="text-xs text-gray-500 text-justify">{message}</p>}
+
+        {secondaryBadge && (
+          <span
+            className="inline-flex w-fit items-center gap-2 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]"
+            style={{
+              backgroundColor: secondaryBadge.style?.backgroundColor ?? "#F8FAFC",
+              borderColor: secondaryBadge.style?.borderColor ?? "#E2E8F0",
+              color: secondaryBadge.style?.color ?? "#243871",
+            }}
+          >
+            {secondaryBadge.label}
+            <strong className="text-[11px]" style={{ color: secondaryBadge.style?.color ?? "#243871" }}>
+              {secondaryBadge.value}
+            </strong>
+          </span>
+        )}
       </div>
     </div>
   );

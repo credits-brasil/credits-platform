@@ -1,22 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { formatDate } from "@/utils/formatDate";
 
 type ScrOperacao = {
   quantidade?: string | number | null;
-  contratadoInicial?: string | number | null;
-  contratadoFinal?: string | number | null;
-};
-
-type HistoricoScrScoreData = {
-  score?: string | number | null;
-  "indice-risco-credito-score"?: string | number | null;
-  "probabilidade-inadimplencia"?: string | number | null;
+  "data-inicio-relacionamento"?: string | number | null;
+  "valor-total-contratado-inicial"?: string | number | null;
+  "valor-total-contratado-final"?: string | number | null;
+  "quantidade-instituicao-scr"?: string | number | null;
+  resumoQuantidadeTotal?: string | number | null;
 };
 
 type ScrSummarySectionProps = {
   hasScrData: boolean;
   scrOperacao: ScrOperacao;
-  historicoScrScoreData?: HistoricoScrScoreData | null;
 };
 
 type ParsedDisplayNumber = {
@@ -127,48 +124,56 @@ function ScrDataItem({ label, value }: { label: string; value: string | number |
   );
 }
 
-export function ScrSummarySection({ hasScrData, scrOperacao, historicoScrScoreData }: ScrSummarySectionProps) {
+export function ScrSummarySection({ hasScrData, scrOperacao }: ScrSummarySectionProps) {
   return (
-    <div className="flex h-full flex-col gap-3 rounded-lg border border-gray-100 p-4 md:col-span-2 xl:col-span-1">
-      <span className="text-xs text-gray-500 font-medium">SCR</span>
+    <div className="flex h-full flex-col gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+      <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500">SCR</span>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {hasScrData && (
-          <>
-            <ScrDataItem label="Operações" value={scrOperacao.quantidade} />
+      {hasScrData ? (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+              Quantidade total
+            </span>
+            <span className="text-3xl font-bold leading-none text-gray-800">
+              <AnimatedScrValue
+                value={scrOperacao.resumoQuantidadeTotal ?? scrOperacao.quantidade ?? "-"}
+              />
+            </span>
+          </div>
 
-            <ScrDataItem
-              label="Contratado Inicial"
-              value={formatCurrency(scrOperacao.contratadoInicial)}
-            />
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+              Data início relacionamento
+            </span>
+            <span className="text-xl font-bold text-gray-800">
+              {formatDate(String(scrOperacao["data-inicio-relacionamento"] ?? ""))}
+            </span>
+          </div>
 
-            <ScrDataItem
-              label="Contratado Final"
-              value={formatCurrency(scrOperacao.contratadoFinal)}
-            />
-          </>
-        )}
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+              Valor contratado
+            </span>
+            <span className="text-lg font-bold text-gray-800">
+              {formatCurrency(scrOperacao["valor-total-contratado-inicial"])} a {formatCurrency(scrOperacao["valor-total-contratado-final"])}
+            </span>
+          </div>
 
-        {historicoScrScoreData && (
-          <>
-            <ScrDataItem label="Score SCR" value={historicoScrScoreData?.score ?? "-"} />
-
-            <ScrDataItem
-              label="Risco de Crédito"
-              value={historicoScrScoreData?.["indice-risco-credito-score"] ?? "-"}
-            />
-
-            <ScrDataItem
-              label="Prob. Inadimplência"
-              value={
-                historicoScrScoreData?.["probabilidade-inadimplencia"]
-                  ? `${historicoScrScoreData?.["probabilidade-inadimplencia"]}%`
-                  : "-"
-              }
-            />
-          </>
-        )}
-      </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+              Quantidade instituição
+            </span>
+            <span className="text-xl font-bold text-gray-800">
+              <AnimatedScrValue value={scrOperacao["quantidade-instituicao-scr"] ?? "-"} />
+            </span>
+          </div>
+        </div>
+      ) : (
+        <div className="flex h-full min-h-[90px] items-center justify-center text-sm text-gray-400">
+          Nenhum dado de SCR disponível
+        </div>
+      )}
     </div>
   );
 }

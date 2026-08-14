@@ -98,9 +98,8 @@ export function InformacoesCadastraisSection({
                       {
                         label: "CNAE",
                         value:
-                          spcData?.consumidor?.[
-                            "atividade-economica-principal"
-                          ]?.code ??
+                          spcData?.consumidor?.["atividade-economica-principal"]
+                            ?.code ??
                           spcData?.["atividade-empresa"]?.[
                             "detalhe-atividade-empresa"
                           ]?.["ramo-atividade"]?.code,
@@ -108,9 +107,8 @@ export function InformacoesCadastraisSection({
                       {
                         label: "Descrição do CNAE",
                         value:
-                          spcData?.consumidor?.[
-                            "atividade-economica-principal"
-                          ]?.description ??
+                          spcData?.consumidor?.["atividade-economica-principal"]
+                            ?.description ??
                           spcData?.["atividade-empresa"]?.[
                             "detalhe-atividade-empresa"
                           ]?.["ramo-atividade"]?.description,
@@ -312,6 +310,11 @@ export function InformacoesCadastraisSection({
               <AccordionContent>
                 <div className="mt-5 border-t border-gray-100 pt-4">
                   <table className="w-full text-xs table-fixed">
+                    <colgroup>
+                      <col style={{ width: "100px" }}/>
+                      <col style={{ width: "100%" }} />
+                    </colgroup>
+
                     <thead>
                       <tr className="border-b border-gray-100">
                         {["CNAE", "DESCRIÇÃO CNAE"].map((h) => (
