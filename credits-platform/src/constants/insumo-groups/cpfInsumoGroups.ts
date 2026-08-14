@@ -56,7 +56,7 @@ export const CPF_INSUMO_GROUPS: InsumoGroup[] = [
     icon: HatGlasses,
     items: [
       { id: "5264", label: "Alerta de CPF suspeito" },
-      { id: "5268", label: "SPC Valida Celular" },
+      // { id: "5268", label: "SPC Valida Celular" },
       { id: "5262", label: "Alerta de Identidade à Fraude" },
     ],
   },

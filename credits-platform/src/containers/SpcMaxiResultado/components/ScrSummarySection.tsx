@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { formatDate } from "@/utils/formatDate";
 
@@ -144,32 +144,94 @@ export function ScrSummarySection({ hasScrData, scrOperacao }: ScrSummarySection
     },
   ];
 
+  function AnimatedResumoValue({ value }: { value: string | number | ReactNode }) {
+    const parsed = useMemo(() => {
+      if (typeof value === "number") {
+        return {
+          prefix: "",
+          suffix: "",
+          target: value,
+          decimals: Number.isInteger(value) ? 0 : 2,
+        } as ParsedDisplayNumber;
+      }
+  
+      if (typeof value === "string") {
+        return parseDisplayNumber(value);
+      }
+  
+      return null;
+    }, [value]);
+  
+    const [animatedValue, setAnimatedValue] = useState(0);
+  
+    useEffect(() => {
+      if (!parsed) {
+        return;
+      }
+  
+      const duration = 900;
+      const start = performance.now();
+  
+      setAnimatedValue(0);
+  
+      let frameId = 0;
+      const animate = (now: number) => {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const easedProgress = 1 - Math.pow(1 - progress, 3);
+  
+        setAnimatedValue(parsed.target * easedProgress);
+  
+        if (progress < 1) {
+          frameId = requestAnimationFrame(animate);
+        }
+      };
+  
+      frameId = requestAnimationFrame(animate);
+  
+      return () => {
+        cancelAnimationFrame(frameId);
+      };
+    }, [parsed]);
+  
+    if (!parsed) {
+      return <>{value}</>;
+    }
+  
+    const formattedNumber = Math.max(animatedValue, 0).toLocaleString("pt-BR", {
+      minimumFractionDigits: parsed.decimals,
+      maximumFractionDigits: parsed.decimals,
+    });
+  
+    return <>{`${parsed.prefix}${formattedNumber}${parsed.suffix}`}</>;
+  }
+
   return (
-    <div className="flex h-full w-full flex-col gap-2">
+    <div className="flex h-full w-full flex-col gap-2 self-stretch">
       {hasScrData ? (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid h-full grid-cols-2 items-stretch gap-1.5">
           {items.map(({ label, value }) => (
             <div
-              key={label}
-              className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
-              style={{ backgroundColor: "#F8F9FB" }}
-            >
-              <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
-                {label}
-              </span>
+            key={label}
+            className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+            style={{ backgroundColor: "#F8F9FB" }}
+          >
+            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+              {label}
+            </span>
 
+            {typeof value === "string" || typeof value === "number" ? (
               <span className="text-base font-bold text-gray-800">
-                {typeof value === "string" || typeof value === "number" ? (
-                  <AnimatedScrValue value={value} />
-                ) : (
-                  value
-                )}
+                <AnimatedResumoValue value={value} />
               </span>
-            </div>
+            ) : (
+              value
+            )}
+          </div>
           ))}
         </div>
       ) : (
-        <div className="flex h-full min-h-[90px] items-center justify-center rounded-lg bg-[#F8F9FB] text-sm text-gray-400">
+        <div className="flex h-full min-h-[65px] max-h-[65px] items-center justify-center rounded-lg border border-gray-200 bg-[#F8F9FB] text-xs text-gray-400">
           Nenhum dado de SCR disponível
         </div>
       )}

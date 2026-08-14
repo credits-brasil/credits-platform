@@ -64,8 +64,7 @@ export function HistoricoOperacoesScrSection({
         row?.agrupamento ??
         "-",
       percentual: Number(row?.percentual ?? 0),
-      color:
-        grupoCarteiraAtivaColors[row?.agrupamento ?? ""] ?? "#9B9B9B",
+      color: grupoCarteiraAtivaColors[row?.agrupamento ?? ""] ?? "#9B9B9B",
     }),
   );
 
@@ -179,8 +178,9 @@ export function HistoricoOperacoesScrSection({
                       borderColor: "#86EFAC",
                       color: "#166534",
                     }
-                  : Number(historicoScr?.["probabilidade-inadimplencia"] ?? 0) <=
-                      10
+                  : Number(
+                        historicoScr?.["probabilidade-inadimplencia"] ?? 0,
+                      ) <= 10
                     ? {
                         backgroundColor: "#FEF3C7",
                         borderColor: "#FCD34D",
@@ -264,6 +264,7 @@ export function HistoricoOperacoesScrSection({
           <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
             Atualização Base
           </span>
+          
           <span className="text-base font-bold text-gray-800">
             {formatDate(historicoScr?.["data-atualizacao-base"])}
           </span>
@@ -274,21 +275,11 @@ export function HistoricoOperacoesScrSection({
           style={{ backgroundColor: "#F8F9FB" }}
         >
           <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
-            Contratado Inicial
+            Contratado
           </span>
-          <span className="text-base font-bold text-gray-800">
-            {formatCurrency(historicoScr?.["valor-total-contratado-inicial"])}
-          </span>
-        </div>
 
-        <div
-          className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
-          style={{ backgroundColor: "#F8F9FB" }}
-        >
-          <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
-            Contratado Final
-          </span>
           <span className="text-base font-bold text-gray-800">
+            {formatCurrency(historicoScr?.["valor-total-contratado-inicial"])} a{" "}
             {formatCurrency(historicoScr?.["valor-total-contratado-final"])}
           </span>
         </div>
@@ -300,21 +291,12 @@ export function HistoricoOperacoesScrSection({
           <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
             Carteira Ativa Inicial
           </span>
+
           <span className="text-base font-bold text-gray-800">
             {formatCurrency(
               historicoScr?.["valor-total-carteira-ativa-inicial"],
-            )}
-          </span>
-        </div>
-
-        <div
-          className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
-          style={{ backgroundColor: "#F8F9FB" }}
-        >
-          <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
-            Carteira Ativa Final
-          </span>
-          <span className="text-base font-bold text-gray-800">
+            )}{" "}
+            a{" "}
             {formatCurrency(historicoScr?.["valor-total-carteira-ativa-final"])}
           </span>
         </div>
@@ -324,23 +306,14 @@ export function HistoricoOperacoesScrSection({
           style={{ backgroundColor: "#F8F9FB" }}
         >
           <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
-            Ativa a Vencer Inicial
+            Ativa a Vencer
           </span>
+
           <span className="text-base font-bold text-gray-800">
             {formatCurrency(
               historicoScr?.["valor-total-carteira-ativa-vencer-inicial"],
-            )}
-          </span>
-        </div>
-
-        <div
-          className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
-          style={{ backgroundColor: "#F8F9FB" }}
-        >
-          <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
-            Ativa a Vencer Final
-          </span>
-          <span className="text-base font-bold text-gray-800">
+            )}{" "}
+            a{" "}
             {formatCurrency(
               historicoScr?.["valor-total-carteira-ativa-vencer-final"],
             )}

@@ -13,9 +13,9 @@ export function PercentageProgressIndicatorComponent({
   percentage,
   barColor,
   footer,
-  className = "flex h-full flex-col gap-0.5 rounded-md border border-gray-100 p-1.5 xl:max-w-[320px]",
+  className = "flex h-full justify-between flex-col rounded-md border border-gray-100 p-1.5",
 }: PercentageProgressIndicatorComponentProps) {
-  const normalized = Math.min(Math.max(percentage, 0), 100);
+  const normalizedPercentage = Math.min(Math.max(percentage, 0), 100);
   const [animatedPercentage, setAnimatedPercentage] = useState(0);
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export function PercentageProgressIndicatorComponent({
       const progress = Math.min(elapsed / duration, 1);
       const easedProgress = 1 - Math.pow(1 - progress, 3);
 
-      setAnimatedPercentage(normalized * easedProgress);
+      setAnimatedPercentage(normalizedPercentage * easedProgress);
 
       if (progress < 1) {
         frameId = requestAnimationFrame(animate);
@@ -42,16 +42,22 @@ export function PercentageProgressIndicatorComponent({
     return () => {
       cancelAnimationFrame(frameId);
     };
-  }, [normalized]);
+  }, [normalizedPercentage]);
 
   return (
-    <div className={className}>
-      <div className="flex w-full items-center gap-3">
-        <span className="min-w-0 flex-1 text-[12px] font-medium text-gray-600">
-          {title}
-        </span>
+    <div
+      className={["flex h-full w-full flex-col justify-between", className]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      <div className="flex justify-between w-full h-full flex-col">
+        <div className="flex w-full items-center justify-between">
+          <span className="text-[12px] font-medium text-gray-600">{title}</span>
 
-        <div className="flex min-w-0 flex-[1.6] items-center gap-2">
+          {footer ? <div>{footer}</div> : null}
+        </div>
+
+        <div className="flex w-full items-center justify-between gap-2">
           <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-gray-200">
             <div
               className="h-full rounded-full"
@@ -62,13 +68,11 @@ export function PercentageProgressIndicatorComponent({
             />
           </div>
 
-          <span className="w-[52px] text-right text-[10px] font-semibold text-gray-700">
+          <span className="w-[52px] shrink-0 text-right text-[10px] font-semibold text-gray-700">
             {animatedPercentage.toFixed(2)}%
           </span>
         </div>
       </div>
-
-      {footer ? <div className="mt-2">{footer}</div> : null}
     </div>
   );
 }

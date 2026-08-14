@@ -1165,29 +1165,29 @@ export default function SpcMaxiResultadoPage() {
                 </p>
               </div>
 
-              <div className="grid w-full items-stretch gap-3 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1.75fr)]">
-                <div className="grid min-w-0 w-full gap-3 self-stretch">
+              <div className="grid h-full w-full items-stretch gap-1.5 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1.75fr)]">
+                <div className="flex h-full min-h-[146px] min-w-0 w-full flex-col gap-1.5 self-stretch">
                   {hasPontualidadeData && (
-                    <div className="min-w-0 w-full h-full">
+                    <div className="h-full min-w-0 w-full">
                       <PercentageProgressIndicatorComponent
                         title="Pontualidade de Pagamento"
                         percentage={pontualidadePagamentoPercent}
                         barColor="#7EC8E3"
-                        className="flex h-full w-full flex-col gap-2 rounded-xl border border-gray-200 bg-white p-3 shadow-sm"
+                        className="flex max-h-[70px] w-full flex-col justify-between rounded-lg bg-[#F8F9FB] p-2 shadow-none"
                       />
                     </div>
                   )}
 
                   {hasComprometimentoData && (
-                    <div className="min-w-0 w-full h-full">
+                    <div className="h-full min-w-0 w-full">
                       <PercentageProgressIndicatorComponent
                         title="Comprometimento de Gastos"
                         percentage={comprometimentoGastos.percentual}
                         barColor="#5B8DB8"
-                        className="flex h-full w-full flex-col gap-2 rounded-xl border border-gray-200 bg-white p-3 shadow-sm"
+                        className="flex max-h-[70px] w-full flex-col justify-between rounded-lg bg-[#F8F9FB] p-2 shadow-none"
                         footer={
-                          <span className="text-[11px] text-gray-500">
-                            Maior concentração: <strong className="text-[11px] text-gray-700">{comprometimentoGastos.nome}</strong>
+                          <span className="text-[8px] text-gray-500">
+                            Maior concentração: <strong className="text-[8px] text-gray-700">{comprometimentoGastos.nome}</strong>
                           </span>
                         }
                       />
@@ -1196,7 +1196,7 @@ export default function SpcMaxiResultadoPage() {
                 </div>
 
                 {(hasScrData || historicoScrScoreData) && (
-                  <div className="min-w-0 w-full h-full self-stretch">
+                  <div className="h-full min-h-[146px] min-w-0 w-full">
                     <ScrSummarySection
                       hasScrData={Boolean(hasScrData)}
                       scrOperacao={scrOperacao}
