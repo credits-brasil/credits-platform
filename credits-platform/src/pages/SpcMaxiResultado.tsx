@@ -1,20 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import {
-  User,
-  Printer,
-  Search,
-  RefreshCw,
-  ArrowUp,
-  ArrowDown,
-  ArrowUpDown,
-  ChevronDown,
-  ShieldAlert,
-  BarChart2,
-  AlertTriangle,
-  ClipboardList,
-} from "lucide-react";
-import {
   GraphScoreComponent,
   PercentageProgressIndicatorComponent,
 } from "@/components";
@@ -30,30 +16,11 @@ import { ResumoFinanceiroSection } from "@/containers/SpcMaxiResultado/component
 import { ScrSummarySection } from "@/containers/SpcMaxiResultado/components/ScrSummarySection";
 import { NegativosConsolidadosSection } from "@/containers/SpcMaxiResultado/components/NegativosConsolidadosSection";
 import { AlertasSection } from "@/containers/SpcMaxiResultado/components/AlertasSection";
-import { CopyButton } from "@/components/ui/copy-button";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  ResponsiveContainer,
-  ComposedChart,
-  Bar,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-} from "recharts";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatCNPJ } from "@/utils/formatCNPJ";
 import { formatCPF } from "@/utils/formatCPF";
-import { formatCEP } from "@/utils/formatCEP";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { formatDate } from "@/utils/formatDate";
-import { formatPhone } from "@/utils/formatPhone";
 import { getCompanyAge } from "@/utils/getCompanyAge";
 
 type SortKey =
@@ -117,8 +84,8 @@ export default function SpcMaxiResultadoPage() {
       }
 
       const response = await fetch(
-        // "http://localhost:3333/api/325-spc-maxi",
-        "https://credits-core.onrender.com/api/325-spc-maxi",
+        "http://localhost:3333/api/325-spc-maxi",
+        // "https://credits-core.onrender.com/api/325-spc-maxi",
         {
           method: "POST",
           headers: {
@@ -192,8 +159,6 @@ export default function SpcMaxiResultadoPage() {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [navigate]);
-
-  console.log("SPC DATA:", spcData);
 
   const [activeGroup, setActiveGroup] = useState("SPC");
   const [expanded, setExpanded] = useState(false);
@@ -283,18 +248,16 @@ export default function SpcMaxiResultadoPage() {
     }) ?? [];
 
   const body = Array.isArray(
-    spcData?.["dados-adicionais-contato"]?.[
-      "detalhe-dados-adicionais-contato"
-    ],
+    spcData?.["dados-adicionais-contato"]?.["detalhe-dados-adicionais-contato"],
   )
-    ? spcData["dados-adicionais-contato"]["detalhe-dados-adicionais-contato"].map(
-        (row: any) => ({
-          endereco: row?.endereco ?? row?.["endereco-completo"] ?? "-",
-          email: row?.email ?? "-",
-          telefone: row?.telefone ?? "-",
-          celular: row?.celular ?? row?.["telefone-celular"] ?? "-",
-        }),
-      )
+    ? spcData["dados-adicionais-contato"][
+        "detalhe-dados-adicionais-contato"
+      ].map((row: any) => ({
+        endereco: row?.endereco ?? row?.["endereco-completo"] ?? "-",
+        email: row?.email ?? "-",
+        telefone: row?.telefone ?? "-",
+        celular: row?.celular ?? row?.["telefone-celular"] ?? "-",
+      }))
     : [];
 
   const situacao =
@@ -792,9 +755,9 @@ export default function SpcMaxiResultadoPage() {
 
   const limiteSugeridoValue = isPessoaFisica
     ? spcData?.["limite-credito-sugerido"]?.resumo?.["valor-total"]
-    : (spcData?.["limite-credito-pj"]?.["detalhe-limite-credito-pj"]?.[
+    : spcData?.["limite-credito-pj"]?.["detalhe-limite-credito-pj"]?.[
         "valor-limite-credito"
-      ]);
+      ];
 
   const gastoEstimadoPjValue = isPessoaFisica
     ? null
@@ -984,6 +947,8 @@ export default function SpcMaxiResultadoPage() {
 
   const progressLength = (normalizedScore / 1000) * arcLength;
 
+  console.log("spcData", spcData);
+
   if (isLoading) {
     return (
       <div className="flex min-h-[500px] items-center justify-center">
@@ -1093,7 +1058,9 @@ export default function SpcMaxiResultadoPage() {
               badgeStyle={riscoInfo.badge}
               badgeLabel={riscoInfo.label}
               headerContent={
-                <strong className="text-xs text-gray-700">{mainScoreLabel}</strong>
+                <strong className="text-xs text-gray-700">
+                  {mainScoreLabel}
+                </strong>
               }
               message={mainScoreInterpretativeMessage}
             />
@@ -1109,7 +1076,7 @@ export default function SpcMaxiResultadoPage() {
 
           {shouldShowDedicatedPeriodScores && (
             <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
-              {secondaryScoreCandidates.map((scoreItem, index) => {
+              {secondaryScoreCandidates.map((scoreItem) => {
                 const normalizedSecondaryScore = Math.min(
                   Math.max(scoreItem.score, 0),
                   1000,
@@ -1138,7 +1105,10 @@ export default function SpcMaxiResultadoPage() {
                         badgeLabel={secondaryRiscoInfo.label}
                         headerContent={
                           <span className="text-xs text-gray-500">
-                            Fonte: <strong className="text-xs text-gray-700">{scoreItem.label}</strong>
+                            Fonte:{" "}
+                            <strong className="text-xs text-gray-700">
+                              {scoreItem.label}
+                            </strong>
                           </span>
                         }
                         message={scoreItem.message}
@@ -1182,13 +1152,20 @@ export default function SpcMaxiResultadoPage() {
                   {hasComprometimentoData && (
                     <div className="h-full min-w-0 w-full">
                       <PercentageProgressIndicatorComponent
-                        title="Comprometimento de Gastos"
+                        title={
+                          spcData?.consumidor?.cpf
+                            ? "Comprometimento de Gastos"
+                            : "Comportamento de Gastos"
+                        }
                         percentage={comprometimentoGastos.percentual}
                         barColor="#5B8DB8"
                         className="flex max-h-[70px] w-full flex-col justify-between rounded-lg bg-[#F8F9FB] p-2 shadow-none"
                         footer={
                           <span className="text-[8px] text-gray-500">
-                            Maior concentração: <strong className="text-[8px] text-gray-700">{comprometimentoGastos.nome}</strong>
+                            Maior concentração:{" "}
+                            <strong className="text-[8px] text-gray-700">
+                              {comprometimentoGastos.nome}
+                            </strong>
                           </span>
                         }
                       />

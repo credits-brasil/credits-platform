@@ -33,6 +33,126 @@ export function HistoricoOperacoesScrSection({
   const grupoModalidade = historicoScr?.["grupo-modalidade"] ?? [];
   const grupoCarteiraAtiva = historicoScr?.["grupo-carteira-ativa"] ?? [];
 
+  const agrupamentoLabels: Record<string, string> = {
+    A: "Anticrise",
+    C: "Caução",
+    H: "Hipoteca",
+    O: "Outros",
+    P: "Penhor",
+  };
+
+  const grupoModalidadeLabels: Record<string, string> = {
+    F: "Financiamentos",
+    A: "Adiantamentos",
+    E: "Emprestimos",
+    O: "Outras Operações ou Contratos",
+    OA: "Operações de Arrendamento",
+  };
+
+  const grupoCarteiraAtivaVencerPorModalidadeLabels: Record<string, string> = {
+    E: "Emprestimos",
+    A: "Adiantamenos",
+    F: "Financiamentos",
+    O: "Outras Operações ou Contratos",
+    OA: "Operações de Arrendamento",
+    CA: "Cartão de Credito",
+  };
+
+  const grupoCarteiraAtivaVencidaPorModalidadeLabels: Record<string, string> = {
+    E: "Emprestimos",
+    A: "Adiantamenos",
+    F: "Financiamentos",
+    O: "Outras Operações",
+    C: "Contratos",
+    OA: "Operações de Arrendamento",
+  };
+
+  const grupoCarteiraAtivaVencidaPrejuizoPorModalidadeLabels: Record<
+    string,
+    string
+  > = {
+    E: "Emprestimos",
+    A: "Adiantamenos",
+    F: "Financiamentos",
+    O: "Outras Operações",
+    OA: "Operações de Arrendamento",
+  };
+
+  const valorEstimadoCarteiraAtivaInicial = Number(
+    historicoScr?.["valor-total-carteira-ativa-inicial"] ?? 0,
+  );
+  const valorEstimadoCarteiraAtivaFinal = Number(
+    historicoScr?.["valor-total-carteira-ativa-final"] ?? 0,
+  );
+  const valorEstimadoCarteiraAtivaVencerInicial = Number(
+    historicoScr?.["valor-total-carteira-ativa-vencer-inicial"] ?? 0,
+  );
+  const valorEstimadoCarteiraAtivaVencerFinal = Number(
+    historicoScr?.["valor-total-carteira-ativa-vencer-final"] ?? 0,
+  );
+  const valorEstimadoCarteiraAtivaVencerPorModalidadeInicial = Number(
+    historicoScr?.[
+      "valor-total-carteira-ativa-vencer-por-modalidade-inicial"
+    ] ?? 0,
+  );
+  const valorEstimadoCarteiraAtivaVencerPorModalidadeFinal = Number(
+    historicoScr?.["valor-total-carteira-ativa-vencer-por-modalidade-final"] ??
+      0,
+  );
+  const valorEstimadoCarteiraAtivaVencidaPorModalidadeInicial = Number(
+    historicoScr?.[
+      "valor-total-carteira-ativa-vencida-por-modalidade-inicial"
+    ] ?? 0,
+  );
+  const valorEstimadoCarteiraAtivaVencidaPorModalidadeFinal = Number(
+    historicoScr?.["valor-total-carteira-ativa-vencida-por-modalidade-final"] ??
+      0,
+  );
+  const valorEstimadoCarteiraAtivaVencidaPrejuizoPorModalidadeInicial = Number(
+    historicoScr?.[
+      "valor-total-carteira-ativa-vencida-prejuizo-por-modalidade-inicial"
+    ] ?? 0,
+  );
+  const valorEstimadoCarteiraAtivaVencidaPrejuizoPorModalidadeFinal = Number(
+    historicoScr?.[
+      "valor-total-carteira-ativa-vencida-prejuizo-por-modalidade-final"
+    ] ?? 0,
+  );
+
+  const getValorEstimadoTotal = (title: string) => {
+    switch (title) {
+      case "Total Garantia":
+      case "Carteira Ativa Total":
+        return {
+          inicial: valorEstimadoCarteiraAtivaInicial,
+          final: valorEstimadoCarteiraAtivaFinal,
+        };
+      case "Carteira Ativa a Vencer por Modalidade":
+        return {
+          inicial: valorEstimadoCarteiraAtivaVencerPorModalidadeInicial,
+          final: valorEstimadoCarteiraAtivaVencerPorModalidadeFinal,
+        };
+      case "Carteira Ativa Vencida por Modalidade":
+        return {
+          inicial: valorEstimadoCarteiraAtivaVencidaPorModalidadeInicial,
+          final: valorEstimadoCarteiraAtivaVencidaPorModalidadeFinal,
+        };
+      case "Carteiras Vencidas em Prejuizo por Modalidade":
+        return {
+          inicial:
+            valorEstimadoCarteiraAtivaVencidaPrejuizoPorModalidadeInicial,
+          final: valorEstimadoCarteiraAtivaVencidaPrejuizoPorModalidadeFinal,
+        };
+      case "Carteira ativa a vencer":
+        return {
+          inicial: valorEstimadoCarteiraAtivaVencerInicial,
+          final: valorEstimadoCarteiraAtivaVencerFinal,
+        };
+      default:
+        return { inicial: 0, final: 0 };
+    }
+  };
+
   const grupoCarteiraAtivaLabels: Record<string, string> = {
     ATE90DIAS: "Até 90 dias",
     DE91ATE360DIAS: "De 91 até 360 dias",
@@ -71,42 +191,79 @@ export function HistoricoOperacoesScrSection({
   const renderGrupoTable = (
     title: string,
     rows: Array<{ agrupamento?: string; percentual?: string }>,
-  ) => (
-    <div className="rounded-lg border border-gray-100 p-3">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
-        {title}
-      </p>
+    useAgrupamentoLabel = false,
+    labelMap: Record<string, string> = agrupamentoLabels,
+    valorInicial?: number,
+    valorFinal?: number,
+  ) => {
+    const valoresDoTitulo = getValorEstimadoTotal(title);
+    const valorTotalInicial = valorInicial ?? valoresDoTitulo.inicial;
+    const valorTotalFinal = valorFinal ?? valoresDoTitulo.final;
+    const headerLabel =
+      title === "Carteira ativa a vencer" ? "Faixa" : "Classificação";
 
-      <table className="w-full text-xs">
-        <thead>
-          <tr className="border-b border-gray-100">
-            <th className="pb-2 pr-3 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-              Agrupamento
-            </th>
-            <th className="pb-2 text-right text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-              Percentual
-            </th>
-          </tr>
-        </thead>
+    return (
+      <div className="rounded-lg border border-gray-100 p-3">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+          {title}
+        </p>
 
-        <tbody>
-          {rows.map((row, idx) => (
-            <tr
-              key={`${title}-${row?.agrupamento ?? "item"}-${idx}`}
-              className="border-b border-gray-50 last:border-b-0"
-            >
-              <td className="py-2 pr-3 text-gray-700">
-                {row?.agrupamento ?? "-"}
-              </td>
-              <td className="py-2 text-right font-medium text-gray-700">
-                {row?.percentual ?? "0"}%
-              </td>
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b border-gray-100">
+              <th className="pb-2 pr-3 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                {headerLabel}
+              </th>
+
+              <th className="pb-2 text-right text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                Percentual
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+          </thead>
+
+          <tbody>
+            {rows.map((row, idx) => {
+              const agrupamentoKey = String(
+                row?.agrupamento ?? "",
+              ).toUpperCase();
+              const agrupamentoLabel = useAgrupamentoLabel
+                ? (labelMap[agrupamentoKey] ?? row?.agrupamento ?? "-")
+                : (row?.agrupamento ?? "-");
+
+              return (
+                <tr
+                  key={`${title}-${row?.agrupamento ?? "item"}-${idx}`}
+                  className="border-b border-gray-50 last:border-b-0"
+                >
+                  <td className="py-2 pr-3 text-gray-700">
+                    {agrupamentoLabel}
+                  </td>
+                  <td className="py-2 text-right font-bold text-gray-700">
+                    {row?.percentual ?? "0"}%
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+
+        {title !== "Total Garantia" && (
+          <div className="mt-4 border-t border-gray-100 pt-3">
+            <p className="text-[12px] text-gray-600">
+              Valor estimado total entre{" "}
+              <strong className="text-[#2D4F91]">
+                {formatCurrency(valorTotalInicial)}
+              </strong>{" "}
+              a{" "}
+              <strong className="text-[#2D4F91]">
+                {formatCurrency(valorTotalFinal)}
+              </strong>
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const scoreScr = Number(historicoScr?.score ?? scorePj ?? 0);
   const normalizedScoreScr = Math.min(Math.max(scoreScr, 0), 1000);
@@ -145,7 +302,7 @@ export function HistoricoOperacoesScrSection({
         Historico de Operações no SCR
       </h2>
 
-      <div className="mb-5 flex flex-col gap-4 rounded-xl border border-gray-100 bg-[#F8FAFC] p-4 md:flex-row md:items-center md:justify-between">
+      <div className="mb-5 flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center justify-center md:justify-start">
           <GraphScoreComponent
             className="flex items-center gap-5"
@@ -264,9 +421,35 @@ export function HistoricoOperacoesScrSection({
           <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
             Atualização Base
           </span>
-          
+
           <span className="text-base font-bold text-gray-800">
             {formatDate(historicoScr?.["data-atualizacao-base"])}
+          </span>
+        </div>
+
+        <div
+          className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+          style={{ backgroundColor: "#F8F9FB" }}
+        >
+          <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+            Total de Vencidos em Prejuízo
+          </span>
+
+          <span className="text-base font-bold text-gray-800">
+            {historicoScr?.["quantidade-operacoes-prejuizo"]}
+          </span>
+        </div>
+
+        <div
+          className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+          style={{ backgroundColor: "#F8F9FB" }}
+        >
+          <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+            Quantidade de Operações Vencidas
+          </span>
+
+          <span className="text-base font-bold text-gray-800">
+            {historicoScr?.["quantidade-operacoes-vencidas"]}
           </span>
         </div>
 
@@ -283,127 +466,65 @@ export function HistoricoOperacoesScrSection({
             {formatCurrency(historicoScr?.["valor-total-contratado-final"])}
           </span>
         </div>
-
-        <div
-          className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
-          style={{ backgroundColor: "#F8F9FB" }}
-        >
-          <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
-            Carteira Ativa Inicial
-          </span>
-
-          <span className="text-base font-bold text-gray-800">
-            {formatCurrency(
-              historicoScr?.["valor-total-carteira-ativa-inicial"],
-            )}{" "}
-            a{" "}
-            {formatCurrency(historicoScr?.["valor-total-carteira-ativa-final"])}
-          </span>
-        </div>
-
-        <div
-          className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
-          style={{ backgroundColor: "#F8F9FB" }}
-        >
-          <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
-            Ativa a Vencer
-          </span>
-
-          <span className="text-base font-bold text-gray-800">
-            {formatCurrency(
-              historicoScr?.["valor-total-carteira-ativa-vencer-inicial"],
-            )}{" "}
-            a{" "}
-            {formatCurrency(
-              historicoScr?.["valor-total-carteira-ativa-vencer-final"],
-            )}
-          </span>
-        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-        {renderGrupoTable("Grupo Garantia", grupoGarantia)}
-        {renderGrupoTable("Grupo Modalidade", grupoModalidade)}
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        {renderGrupoTable(
+          "Total Garantia",
+          grupoGarantia,
+          true,
+          agrupamentoLabels,
+        )}
 
-        <div className="rounded-lg border border-gray-100 p-3 lg:col-span-3">
-          <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-gray-600">
-            Carteira ativa a vencer por modalidade
-          </p>
+        {renderGrupoTable(
+          "Carteira Ativa Total",
+          grupoModalidade,
+          true,
+          grupoModalidadeLabels,
+          valorEstimadoCarteiraAtivaInicial,
+          valorEstimadoCarteiraAtivaFinal,
+        )}
 
-          <div className="h-[260px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart
-                data={grupoCarteiraAtivaChartData}
-                margin={{ top: 4, right: 16, left: 8, bottom: 55 }}
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#F3F4F6"
-                  vertical={false}
-                />
-                <XAxis
-                  dataKey="label"
-                  interval={0}
-                  angle={-35}
-                  textAnchor="end"
-                  height={65}
-                  tickMargin={8}
-                  tick={{ fontSize: 10, fill: "#9CA3AF" }}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  domain={[0, 100]}
-                  ticks={[0, 20, 40, 60, 80, 100]}
-                  tickFormatter={(value: number) => `${value}%`}
-                  tick={{ fontSize: 10, fill: "#9CA3AF" }}
-                  tickLine={false}
-                  axisLine={false}
-                  width={50}
-                />
-                <Tooltip
-                  formatter={(value: number, _name, item) => [
-                    `${value}%`,
-                    item?.payload?.label ?? "Faixa",
-                  ]}
-                  labelFormatter={(_label, payload) =>
-                    payload?.[0]?.payload?.label ?? "Faixa"
-                  }
-                  labelStyle={{ fontSize: 11, color: "#374151" }}
-                  contentStyle={{
-                    fontSize: 11,
-                    borderRadius: 8,
-                    border: "1px solid #E5E7EB",
-                  }}
-                  cursor={{ fill: "#F9FAFB" }}
-                />
-                <Bar
-                  dataKey="percentual"
-                  fill="#ED884A"
-                  maxBarSize={18}
-                  radius={[4, 4, 0, 0]}
-                />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
+        {renderGrupoTable(
+          "Carteiras Vencidas em Prejuizo por Modalidade",
+          historicoScr?.[
+            "grupo-carteira-ativa-vencida-prejuizo-por-modalidade"
+          ] ?? [],
+          true,
+          grupoCarteiraAtivaVencidaPrejuizoPorModalidadeLabels,
+          valorEstimadoCarteiraAtivaVencidaPrejuizoPorModalidadeInicial,
+          valorEstimadoCarteiraAtivaVencidaPrejuizoPorModalidadeFinal,
+        )}
 
-          <div className="mt-6 border-t border-gray-100 pt-5">
-            <p className="text-[13px] text-gray-600">
-              Valor estimado total entre{" "}
-              <strong className="text-[#2D4F91]">
-                {formatCurrency(
-                  historicoScr?.["valor-total-carteira-ativa-vencer-inicial"],
-                )}
-              </strong>{" "}
-              a{" "}
-              <strong className="text-[#2D4F91]">
-                {formatCurrency(
-                  historicoScr?.["valor-total-carteira-ativa-vencer-final"],
-                )}
-              </strong>
-            </p>
-          </div>
-        </div>
+        {renderGrupoTable(
+          "Carteira Ativa Vencida por Modalidade",
+          historicoScr?.["grupo-carteira-ativa-vencida-por-modalidade"] ?? [],
+          true,
+          grupoCarteiraAtivaVencidaPorModalidadeLabels,
+          valorEstimadoCarteiraAtivaVencidaPorModalidadeInicial,
+          valorEstimadoCarteiraAtivaVencidaPorModalidadeFinal,
+        )}
+
+        {renderGrupoTable(
+          "Carteira Ativa a Vencer por Modalidade",
+          historicoScr?.["grupo-carteira-ativa-vencer-por-modalidade"] ?? [],
+          true,
+          grupoCarteiraAtivaVencerPorModalidadeLabels,
+          valorEstimadoCarteiraAtivaVencerPorModalidadeInicial,
+          valorEstimadoCarteiraAtivaVencerPorModalidadeFinal,
+        )}
+
+        {renderGrupoTable(
+          "Carteira ativa a vencer",
+          grupoCarteiraAtivaChartData.map((row) => ({
+            agrupamento: row.label,
+            percentual: String(row.percentual),
+          })),
+          false,
+          grupoCarteiraAtivaLabels,
+          valorEstimadoCarteiraAtivaVencerInicial,
+          valorEstimadoCarteiraAtivaVencerFinal,
+        )}
       </div>
     </div>
   );

@@ -10,7 +10,6 @@ export const CNPJ_INSUMO_GROUPS: InsumoGroup[] = [
       { id: "78", label: "Score 12 meses" },
       { id: "77", label: "Score 3 meses" },
       { id: "5229", label: "Score PJ" },
-      { id: "5186", label: "Quadro Social Mais Completo PJ" },
       { id: "5247", label: "Score PJ MEI" },
     ],
   },
@@ -32,6 +31,7 @@ export const CNPJ_INSUMO_GROUPS: InsumoGroup[] = [
       { id: "24", label: "Participação Empresa" },
       { id: "49", label: "Quadro administrativo" },
       { id: "23", label: "Controle Societário" },
+      { id: "5186", label: "Quadro Social Mais Completo PJ" },
     ],
   },
   {
