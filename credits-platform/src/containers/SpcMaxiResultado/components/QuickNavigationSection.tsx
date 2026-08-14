@@ -53,7 +53,7 @@ export function QuickNavigationSection() {
   ];
 
   return (
-    <div className="fixed bottom-2 right-2 z-50 flex flex-col gap-2">
+    <div className="print:hidden fixed bottom-2 right-2 z-50 flex flex-col gap-2">
       {items.map(({ id, icon, label }) => (
         <div key={id} className="group flex items-center justify-end gap-2">
           <span

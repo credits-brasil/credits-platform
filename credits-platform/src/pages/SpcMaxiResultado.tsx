@@ -166,18 +166,19 @@ export default function SpcMaxiResultadoPage() {
     };
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (isKeyboardReloadRef.current) {
-        event.preventDefault();
-        event.returnValue = "";
+      if (!isKeyboardReloadRef.current) {
         return;
       }
 
+      event.preventDefault();
+      event.returnValue = "";
       sessionStorage.setItem("spc-maxi-redirect-after-reload", "true");
     };
 
     const pendingRedirect = sessionStorage.getItem(
       "spc-maxi-redirect-after-reload",
     );
+
     if (pendingRedirect === "true") {
       sessionStorage.removeItem("spc-maxi-redirect-after-reload");
       navigate("/verticais/credito-risco/spc-maxi");
@@ -793,7 +794,7 @@ export default function SpcMaxiResultadoPage() {
     ? spcData?.["limite-credito-sugerido"]?.resumo?.["valor-total"]
     : (spcData?.["limite-credito-pj"]?.["detalhe-limite-credito-pj"]?.[
         "valor-limite-credito"
-      ] ?? spcData?.["limite-credito-pj"]?.resumo?.["valor-total"]);
+      ]);
 
   const gastoEstimadoPjValue = isPessoaFisica
     ? null
