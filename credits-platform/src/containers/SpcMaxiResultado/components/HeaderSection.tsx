@@ -72,7 +72,7 @@ export function HeaderSection({
           <button
             type="button"
             onClick={onPrint}
-            className="flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors"
+            className="flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors cursor-pointer"
           >
             <Printer size={14} />
           </button>
@@ -80,7 +80,7 @@ export function HeaderSection({
           <button
             type="button"
             onClick={onReload}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:border-gray-300 hover:text-gray-900"
+            className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:border-gray-300 hover:text-gray-900 cursor-pointer"
           >
             <RefreshCw size={12} />
             Recarregar
@@ -88,7 +88,7 @@ export function HeaderSection({
 
           <button
             type="button"
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-colors"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-colors cursor-pointer"
             style={{ backgroundColor: "#243871" }}
             onClick={onNewQuery}
           >
@@ -107,11 +107,7 @@ export function HeaderSection({
             className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl"
             style={{ backgroundColor: "#EAECF0" }}
           >
-            <User
-              size={18}
-              style={{ color: "#243871" }}
-              strokeWidth={1.5}
-            />
+            <User size={18} style={{ color: "#243871" }} strokeWidth={1.5} />
           </div>
 
           <div className="flex flex-col gap-0.5 min-w-0 basis-[25%] flex-shrink-0">
@@ -120,7 +116,9 @@ export function HeaderSection({
 
               <CopyButton
                 value={documentCopyValue}
-                title={documentTypeLabel === "CPF" ? "Copiar CPF" : "Copiar CNPJ"}
+                title={
+                  documentTypeLabel === "CPF" ? "Copiar CPF" : "Copiar CNPJ"
+                }
               />
             </div>
 

@@ -84,8 +84,8 @@ export default function SpcMaxiResultadoPage() {
       }
 
       const response = await fetch(
-        "http://localhost:3333/api/325-spc-maxi",
-        // "https://credits-core.onrender.com/api/325-spc-maxi",
+        // "http://localhost:3333/api/325-spc-maxi",
+        "https://credits-core.onrender.com/api/325-spc-maxi",
         {
           method: "POST",
           headers: {
@@ -167,6 +167,17 @@ export default function SpcMaxiResultadoPage() {
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [consultasExpanded, setConsultasExpanded] = useState(false);
   const [showRedirectModal, setShowRedirectModal] = useState(false);
+  const [consultingExtraInsumo, setConsultingExtraInsumo] = useState<{
+    id: string;
+    label: string;
+  } | null>(null);
+  const [extraInsumoError, setExtraInsumoError] = useState<string | null>(
+    null,
+  );
+  const [unavailableExtraInsumos, setUnavailableExtraInsumos] = useState<
+    string[]
+  >([]);
+  const extraInsumoErrorMessage = "Não foi possível consultar esse insumo.";
 
   useEffect(() => {
     setExpandedRowKey(null);
@@ -769,85 +780,229 @@ export default function SpcMaxiResultadoPage() {
     ? null
     : spcData?.["quantidade-funcionario"]?.resumo?.["quantidade-total"];
 
-  const resumoFinanceiroItens = [
-    ...(rendaPresumidaValue
-      ? [
-          {
-            label: isPessoaFisica ? "Renda Presumida" : "Faturamento Presumido",
-            value: formatCurrency(rendaPresumidaValue),
-          },
-        ]
-      : []),
-    ...(limiteSugeridoValue
-      ? [
-          {
-            label: isPessoaFisica ? "Limite Sugerido" : "Limite de Crédito PJ",
-            value: formatCurrency(limiteSugeridoValue),
-          },
-        ]
-      : []),
-    ...(gastoEstimadoPjValue
-      ? [
-          {
-            label: "Gasto Estimado PJ",
-            value: formatCurrency(gastoEstimadoPjValue),
-          },
-        ]
-      : []),
-    ...(!isPessoaFisica && quantidadeFuncionariosValue !== undefined
-      ? [
-          {
-            label: "Quantidade de Funcionários",
-            value: Number(quantidadeFuncionariosValue ?? 0).toLocaleString(
-              "pt-BR",
+  const hasUsableExtraInsumoResponse = (
+    label: string,
+    nextSpcData: Record<string, any>,
+  ) => {
+    switch (label) {
+      case "Renda Presumida":
+        return Boolean(
+          nextSpcData?.["renda-presumida-spc"]?.resumo?.["valor-total"] ||
+            nextSpcData?.["renda-presumida-spc"]?.[
+              "detalhe-renda-presumida-spc"
+            ]?.some(
+              (item: any) =>
+                item?.["valor-renda"] !== undefined || item?.valor !== undefined,
             ),
+        );
+      case "Limite Sugerido":
+        return Boolean(
+          nextSpcData?.["limite-credito-sugerido"]?.resumo?.["valor-total"] ||
+            nextSpcData?.["limite-credito-sugerido"]?.[
+              "detalhe-limite-credito-sugerido"
+            ]?.some(
+              (item: any) =>
+                item?.["valor-limite-credito"] !== undefined ||
+                item?.valor !== undefined,
+            ),
+        );
+      case "Comprometimento":
+        return Boolean(
+          nextSpcData?.["comprometimento-renda-mensal-pf"]?.[
+            "detalhe-comprometimento-renda-mensal-pf"
+          ]?.faixa ||
+            nextSpcData?.["comprometimento-renda-mensal-pf"]?.resumo?.[
+              "valor-total"
+            ],
+        );
+      case "Alerta de Identidade à Fraude":
+        return Boolean(
+          nextSpcData?.["alerta-identidade-fraude"]?.[
+            "detalhe-alerta-identidade-fraude"
+          ]?.some(
+            (item: any) =>
+              item?.["alerta-fraude"] !== undefined ||
+              item?.["tipo-alerta"] !== undefined ||
+              item?.descricao !== undefined,
+          ),
+        );
+      default:
+        return true;
+    }
+  };
+
+  const handleConsultarInsumoExtra = async (item: {
+    label: string;
+    insumoId?: string;
+  }) => {
+    if (!requestData) return;
+
+    const insumoId = item.insumoId ?? {
+      "Renda Presumida": "5122",
+      "Limite Sugerido": "5142",
+      Comprometimento: "5194",
+      "Alerta de Identidade à Fraude": "5262",
+    }[item.label];
+
+    if (!insumoId) return;
+
+    const nextInsumos = Array.from(
+      new Set([...requestData.insumos, insumoId]),
+    );
+
+    setConsultingExtraInsumo({ id: insumoId, label: item.label });
+    setExtraInsumoError(null);
+    setUnavailableExtraInsumos((prev) =>
+      prev.includes(item.label) ? prev : prev.filter((label) => label !== item.label),
+    );
+
+    try {
+      const response = await fetch(
+        "https://credits-core.onrender.com/api/325-spc-maxi",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        ]
-      : []),
-    ...(spcData?.["comprometimento-renda-mensal-pf"]
+          body: JSON.stringify({
+            document: requestData.document,
+            typeDocument: requestData.typeDocument,
+            telefone: requestData.telefone,
+            insumos: nextInsumos,
+          }),
+        },
+      );
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(extraInsumoErrorMessage);
+      }
+
+      const nextSpcData = payload?.spc ?? payload;
+      const hasUsableData =
+        nextSpcData &&
+        typeof nextSpcData === "object" &&
+        hasUsableExtraInsumoResponse(item.label, nextSpcData);
+
+      if (!hasUsableData) {
+        setUnavailableExtraInsumos((prev) =>
+          prev.includes(item.label) ? prev : [...prev, item.label],
+        );
+        throw new Error(extraInsumoErrorMessage);
+      }
+
+      setUnavailableExtraInsumos((prev) =>
+        prev.filter((label) => label !== item.label),
+      );
+
+      const nextRequest = {
+        ...requestData,
+        insumos: nextInsumos,
+      };
+
+      queryClient.setQueryData(["spc-maxi-request"], nextRequest);
+      queryClient.setQueryData(
+        [
+          "spc-maxi",
+          nextRequest.document,
+          nextRequest.typeDocument,
+          nextInsumos,
+        ],
+        nextSpcData,
+      );
+      queryClient.invalidateQueries({ queryKey: ["spc-maxi"] });
+    } catch (error) {
+      setUnavailableExtraInsumos((prev) =>
+        prev.includes(item.label) ? prev : [...prev, item.label],
+      );
+      setExtraInsumoError(
+        error instanceof Error
+          ? error.message
+          : extraInsumoErrorMessage,
+      );
+    } finally {
+      setConsultingExtraInsumo(null);
+    }
+  };
+
+  const resumoFinanceiroItens = [
+    {
+      label: isPessoaFisica ? "Renda Presumida" : "Faturamento Presumido",
+      insumoId: isPessoaFisica ? "5122" : "5178",
+      value: rendaPresumidaValue
+        ? formatCurrency(rendaPresumidaValue)
+        : "",
+    },
+    {
+      label: isPessoaFisica ? "Limite Sugerido" : "Limite de Crédito PJ",
+      insumoId: isPessoaFisica ? "5142" : "5179",
+      value: limiteSugeridoValue ? formatCurrency(limiteSugeridoValue) : "",
+    },
+    ...(isPessoaFisica
       ? [
           {
             label: "Comprometimento",
+            insumoId: "5194",
             value:
               spcData?.["comprometimento-renda-mensal-pf"]?.[
                 "detalhe-comprometimento-renda-mensal-pf"
-              ]?.faixa,
+              ]?.faixa ?? "",
           },
-        ]
-      : []),
-    ...(spcData?.["alerta-identidade-fraude"]
-      ? [
           {
             label: "Alerta de Identidade à Fraude",
-            value: (
-              <span
-                className="inline-flex w-fit rounded-full px-2 py-0.5 text-xs font-semibold"
-                style={
-                  spcData?.["alerta-identidade-fraude"]?.[
-                    "detalhe-alerta-identidade-fraude"
-                  ]?.[0]?.["alerta-fraude"] === "true"
-                    ? {
+            insumoId: "5262",
+            value:
+              spcData?.["alerta-identidade-fraude"]?.[
+                "detalhe-alerta-identidade-fraude"
+              ]?.[0]?.["alerta-fraude"] === "true"
+                ? (
+                    <span
+                      className="inline-flex w-fit rounded-full px-2 py-0.5 text-xs font-semibold"
+                      style={{
                         backgroundColor: "#FEE2E2",
                         color: "#DC2626",
-                      }
-                    : {
-                        backgroundColor: "#DCFCE7",
-                        color: "#15803D",
-                      }
-                }
-              >
-                {spcData?.["alerta-identidade-fraude"]?.[
-                  "detalhe-alerta-identidade-fraude"
-                ]?.[0]?.["alerta-fraude"] === "true"
-                  ? "Alerta ativo"
-                  : "Sem alertas"}
-              </span>
-            ),
+                      }}
+                    >
+                      Alerta ativo
+                    </span>
+                  )
+                : spcData?.["alerta-identidade-fraude"]?.[
+                      "detalhe-alerta-identidade-fraude"
+                    ]?.[0]?.["alerta-fraude"] === "false"
+                  ? (
+                      <span
+                        className="inline-flex w-fit rounded-full px-2 py-0.5 text-xs font-semibold"
+                        style={{
+                          backgroundColor: "#DCFCE7",
+                          color: "#15803D",
+                        }}
+                      >
+                        Sem alertas
+                      </span>
+                    )
+                  : "",
           },
         ]
-      : []),
+      : [
+          {
+            label: "Gasto Estimado PJ",
+            insumoId: "5185",
+            value: gastoEstimadoPjValue
+              ? formatCurrency(gastoEstimadoPjValue)
+              : "",
+          },
+          {
+            label: "Quantidade de Funcionários",
+            insumoId: "5267",
+            value:
+              quantidadeFuncionariosValue !== undefined &&
+              quantidadeFuncionariosValue !== null
+                ? Number(quantidadeFuncionariosValue ?? 0).toLocaleString("pt-BR")
+                : "",
+          },
+        ]),
   ];
-  const hasResumoFinanceiro = resumoFinanceiroItens.length > 0;
 
   const pontualidadePagamentoPercent = (() => {
     const segmentos =
@@ -1065,14 +1220,29 @@ export default function SpcMaxiResultadoPage() {
               message={mainScoreInterpretativeMessage}
             />
 
-            {hasResumoFinanceiro && (
-              <div className="w-px self-stretch bg-gray-100" />
-            )}
+            <div className="w-px self-stretch bg-gray-100" />
 
-            {hasResumoFinanceiro && (
-              <ResumoFinanceiroSection items={resumoFinanceiroItens} />
-            )}
+            <ResumoFinanceiroSection
+              items={resumoFinanceiroItens}
+              onConsultar={handleConsultarInsumoExtra}
+              isConsulting={Boolean(consultingExtraInsumo)}
+              loadingItemLabel={consultingExtraInsumo?.label ?? null}
+              unavailableLabels={unavailableExtraInsumos}
+            />
           </div>
+
+          {consultingExtraInsumo && (
+            <div className="mt-4 flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700">
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+              Consultando {consultingExtraInsumo.label}...
+            </div>
+          )}
+
+          {extraInsumoError && (
+            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+              {extraInsumoErrorMessage}
+            </div>
+          )}
 
           {shouldShowDedicatedPeriodScores && (
             <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
