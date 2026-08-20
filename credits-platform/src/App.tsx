@@ -8,6 +8,8 @@ import HomePage from "@/pages/Home";
 import LoginPage from "@/pages/Login";
 import SpcMaxiPage from "@/pages/SpcMaxi";
 import SpcMaxiResultadoPage from "@/pages/SpcMaxiResultado";
+import SpcPositivoIntermediarioPJPage from "@/pages/SpcPositivoIntermediarioPJ";
+import SpcPositivoIntermediarioPJResultadoPage from "@/pages/SpcPositivoIntermediarioPJResultado";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -72,6 +74,8 @@ function Router({
         <Route path="/home" component={HomePage} />
         <Route path="/verticais/credito-risco/spc-maxi" component={SpcMaxiPage} />
         <Route path="/verticais/credito-risco/spc-maxi/resultado" component={SpcMaxiResultadoPage} />
+        <Route path="/verticais/credito-risco/spc-positivo-intermediario-pj" component={SpcPositivoIntermediarioPJPage} />
+        <Route path="/verticais/credito-risco/spc-positivo-intermediario-pj/resultado" component={SpcPositivoIntermediarioPJResultadoPage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

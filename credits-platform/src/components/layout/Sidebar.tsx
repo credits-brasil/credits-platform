@@ -91,6 +91,10 @@ const menuGroups: MenuGroup[] = [
         icon: BookOpen,
         subItems: [
           { label: "SPC MAXI", path: "/verticais/credito-risco/spc-maxi" },
+          {
+            label: "SPC POSITIVO INTERMEDIÁRIO PJ",
+            path: "/verticais/credito-risco/spc-positivo-intermediario-pj",
+          },
           // { label: "SPC Relatório Completo", path: "/catalogo/relatorio-1" },
         ],
       },

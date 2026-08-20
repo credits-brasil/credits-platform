@@ -13,9 +13,12 @@ interface LayoutProps {
 export default function Layout({ children, onLogout }: LayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [location] = useLocation();
-  const isSearchPage = location === "/verticais/credito-risco/spc-maxi";
+  const isSearchPage =
+    location === "/verticais/credito-risco/spc-maxi" ||
+    location === "/verticais/credito-risco/spc-positivo-intermediario-pj";
   const isResultPage =
-    location === "/verticais/credito-risco/spc-maxi/resultado";
+    location === "/verticais/credito-risco/spc-maxi/resultado" ||
+    location === "/verticais/credito-risco/spc-positivo-intermediario-pj/resultado";
 
   useEffect(() => {
     if (isResultPage) {

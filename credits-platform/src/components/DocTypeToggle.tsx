@@ -12,7 +12,7 @@ export function DocTypeToggleComponent({
   onChange,
 }: DocTypeToggleComponentProps) {
   return (
-    <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-100 p-0.5 flex-shrink-0">
+    <div className="flex items-center h-[37.5px] gap-0.5 rounded-lg border border-gray-200 bg-gray-100 p-0.5 flex-shrink-0">
       {(["CPF", "CNPJ"] as DocType[]).map((type) => (
         <button
           key={type}
