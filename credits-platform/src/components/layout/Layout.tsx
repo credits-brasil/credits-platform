@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+
+import { StickyIdentificationProvider } from "@/hooks/useStickyIdentification";
+
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 
@@ -10,7 +13,7 @@ interface LayoutProps {
   onLogout: () => void;
 }
 
-export default function Layout({ children, onLogout }: LayoutProps) {
+function LayoutContent({ children, onLogout }: LayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [location] = useLocation();
   const isSearchPage = location === "/verticais/credito-risco/spc-maxi";
@@ -51,7 +54,15 @@ export default function Layout({ children, onLogout }: LayoutProps) {
       />
       <Header sidebarCollapsed={collapsed} onLogout={onLogout} />
       <main
-        className={isSearchPage ? "overflow-hidden px-6 py-6 lg:px-10" : "px-6 py-6 lg:px-10"}
+        className={`${
+          isSearchPage
+            ? "overflow-hidden px-6 py-6 lg:px-10"
+            : "px-6 py-6 lg:px-10"
+        } ${
+          collapsed
+            ? "[--layout-sidebar-width:64px]"
+            : "[--layout-sidebar-width:240px]"
+        }`}
         style={
           isSearchPage
             ? {
@@ -69,10 +80,24 @@ export default function Layout({ children, onLogout }: LayoutProps) {
               }
         }
       >
-        <div className={isSearchPage ? "mx-auto h-full w-full overflow-hidden" : "mx-auto w-full"}>
+        <div
+          className={
+            isSearchPage
+              ? "mx-auto h-full w-full overflow-hidden"
+              : "mx-auto w-full"
+          }
+        >
           {children}
         </div>
       </main>
     </div>
+  );
+}
+
+export default function Layout(props: LayoutProps) {
+  return (
+    <StickyIdentificationProvider>
+      <LayoutContent {...props} />
+    </StickyIdentificationProvider>
   );
 }
