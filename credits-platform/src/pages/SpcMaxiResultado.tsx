@@ -121,9 +121,16 @@ export default function SpcMaxiResultadoPage() {
 
   const [, navigate] = useLocation();
 
-  const requestData = queryClient.getQueryData<SpcMaxiRequest>([
-    "spc-maxi-request",
-  ]);
+  // Subscribes to the cache entry so it isn't garbage-collected (default gcTime)
+  // while this page is mounted without any other active observer, which was
+  // causing an unwanted redirect back to the query screen after a few minutes.
+  const { data: requestData } = useQuery<SpcMaxiRequest | undefined>({
+    queryKey: ["spc-maxi-request"],
+    queryFn: () =>
+      queryClient.getQueryData<SpcMaxiRequest>(["spc-maxi-request"]),
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
   const [extraConsultationExpired, setExtraConsultationExpired] = useState(() =>
     isExtraConsultationExpired(requestData?.consultedAt),
   );
@@ -365,10 +372,10 @@ export default function SpcMaxiResultadoPage() {
       }))
     : [];
 
-  const situacao =
-    spcData?.consumidor?.situacao ??
-    spcData?.consumidor?.["situacao-cadastral"] ??
-    "Regular";
+  const situacao = spcData?.consumidor?.cpf
+    ? spcData?.consumidor?.["situacao-cpf"]?.description
+    : spcData?.consumidor?.["situacao-cnpj"]?.description;
+
   const isRegular =
     String(situacao).toLowerCase().includes("regular") ||
     String(situacao).toLowerCase().includes("ativo");
