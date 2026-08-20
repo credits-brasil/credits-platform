@@ -360,7 +360,7 @@ export default function Sidebar({
           height: `${headerHeight}px`,
           borderColor: SIDEBAR_BORDER,
           padding: collapsed ? "0 12px" : "0 12px 0 20px",
-          transition: "height 0.3s ease-in-out, padding 0.3s ease-in-out",
+          transition: "padding 0.3s ease",
           flexShrink: 0,
           justifyContent: collapsed ? "center" : "space-between",
         }}

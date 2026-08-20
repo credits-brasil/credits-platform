@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Bell, ChevronDown, LogOut, User } from "lucide-react";
-import CompanySelector from "./CompanySelector";
+
 import { useStickyIdentification } from "@/hooks/useStickyIdentification";
+
+import CompanySelector from "./CompanySelector";
 
 const HEADER_HEIGHT = 68;
 
@@ -29,7 +31,7 @@ export default function Header({ sidebarCollapsed, onLogout }: HeaderProps) {
   return (
     <header
       aria-hidden={isIdentificationFixed}
-      className={`fixed top-0 right-0 z-30 flex items-center justify-between bg-white border-b border-gray-200 shadow-sm px-6 transition-[opacity,transform,visibility] duration-300 ease-in-out ${
+      className={`fixed top-0 right-0 z-30 flex items-center justify-between bg-white border-b border-gray-200 shadow-sm px-6 transition-[transform,visibility] duration-300 ease-in-out ${
         isIdentificationFixed
           ? "invisible -translate-y-full opacity-0 pointer-events-none"
           : "visible translate-y-0 opacity-100"

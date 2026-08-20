@@ -109,24 +109,24 @@ export function HeaderSection({
       </div>
 
       <div ref={registerIdentificationAnchor} aria-hidden="true" />
-      <div className={isIdentificationFixed ? "h-[78px] mb-4" : undefined}>
+      <div className={isIdentificationFixed ? "h-19.5 mb-4" : undefined}>
         <div
           id="section-identificacao"
-          className={`bg-white border border-gray-200 p-5 ${
+          className={`bg-white border border-gray-200 ${
             isIdentificationFixed
-              ? "fixed top-0 right-0 left-[var(--layout-sidebar-width)] z-50 rounded-none shadow-md"
-              : "rounded-xl mb-4"
+              ? "fixed top-0 right-0 left-(--layout-sidebar-width) z-50 rounded-none px-5 py-3 shadow-md"
+              : "rounded-xl p-5 mb-4"
           }`}
         >
           <div className="flex items-center gap-3">
             <div
-              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
               style={{ backgroundColor: "#EAECF0" }}
             >
               <User size={18} style={{ color: "#243871" }} strokeWidth={1.5} />
             </div>
 
-            <div className="flex flex-col gap-0.5 min-w-0 basis-[25%] flex-shrink-0">
+            <div className="flex flex-col gap-0.5 min-w-0 basis-[25%] shrink-0">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-400">{documentLabel}</span>
 

@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+
+import { StickyIdentificationProvider } from "@/hooks/useStickyIdentification";
+
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import {
-  StickyIdentificationProvider,
-  useStickyIdentification,
-} from "@/hooks/useStickyIdentification";
 
 const HEADER_HEIGHT = 68;
 
@@ -17,7 +16,6 @@ interface LayoutProps {
 function LayoutContent({ children, onLogout }: LayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [location] = useLocation();
-  const { isIdentificationFixed } = useStickyIdentification();
   const isSearchPage = location === "/verticais/credito-risco/spc-maxi";
   const isResultPage =
     location === "/verticais/credito-risco/spc-maxi/resultado";
@@ -52,7 +50,7 @@ function LayoutContent({ children, onLogout }: LayoutProps) {
       <Sidebar
         collapsed={collapsed}
         onToggle={() => setCollapsed((c) => !c)}
-        headerHeight={isIdentificationFixed ? 0 : HEADER_HEIGHT}
+        headerHeight={HEADER_HEIGHT}
       />
       <Header sidebarCollapsed={collapsed} onLogout={onLogout} />
       <main
