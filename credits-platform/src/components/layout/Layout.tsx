@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
+import {
+  StickyIdentificationProvider,
+  useStickyIdentification,
+} from "@/hooks/useStickyIdentification";
 
 const HEADER_HEIGHT = 68;
 
@@ -10,9 +14,10 @@ interface LayoutProps {
   onLogout: () => void;
 }
 
-export default function Layout({ children, onLogout }: LayoutProps) {
+function LayoutContent({ children, onLogout }: LayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [location] = useLocation();
+  const { isIdentificationFixed } = useStickyIdentification();
   const isSearchPage = location === "/verticais/credito-risco/spc-maxi";
   const isResultPage =
     location === "/verticais/credito-risco/spc-maxi/resultado";
@@ -47,11 +52,19 @@ export default function Layout({ children, onLogout }: LayoutProps) {
       <Sidebar
         collapsed={collapsed}
         onToggle={() => setCollapsed((c) => !c)}
-        headerHeight={HEADER_HEIGHT}
+        headerHeight={isIdentificationFixed ? 0 : HEADER_HEIGHT}
       />
       <Header sidebarCollapsed={collapsed} onLogout={onLogout} />
       <main
-        className={isSearchPage ? "overflow-hidden px-6 py-6 lg:px-10" : "px-6 py-6 lg:px-10"}
+        className={`${
+          isSearchPage
+            ? "overflow-hidden px-6 py-6 lg:px-10"
+            : "px-6 py-6 lg:px-10"
+        } ${
+          collapsed
+            ? "[--layout-sidebar-width:64px]"
+            : "[--layout-sidebar-width:240px]"
+        }`}
         style={
           isSearchPage
             ? {
@@ -69,10 +82,24 @@ export default function Layout({ children, onLogout }: LayoutProps) {
               }
         }
       >
-        <div className={isSearchPage ? "mx-auto h-full w-full overflow-hidden" : "mx-auto w-full"}>
+        <div
+          className={
+            isSearchPage
+              ? "mx-auto h-full w-full overflow-hidden"
+              : "mx-auto w-full"
+          }
+        >
           {children}
         </div>
       </main>
     </div>
+  );
+}
+
+export default function Layout(props: LayoutProps) {
+  return (
+    <StickyIdentificationProvider>
+      <LayoutContent {...props} />
+    </StickyIdentificationProvider>
   );
 }
