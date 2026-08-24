@@ -1,25 +1,15 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, ChangeEvent } from "react";
 import { useLocation } from "wouter";
 import { Search, AlertCircle } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  DocTypeToggleComponent,
-  FilterCheckboxComponent,
-  InputComponent,
-} from "@/components";
+import { FilterCheckboxComponent, InputComponent } from "@/components";
 import { InsumoGroupCard } from "@/containers/SpcMaxi/components/InsumoGroupCard";
-import {
-  CNPJ_INSUMO_GROUPS,
-  CPF_INSUMO_GROUPS,
-} from "@/constants/insumo-groups";
+import { CNPJ_INSUMO_GROUPS } from "@/constants/insumo-groups";
 import type { DocType } from "@/types/docType";
 import {
   detectDocTypeByInput,
   formatCnpj,
-  formatCpf,
-  formatPhone,
   validateCNPJ,
-  validateCPF,
 } from "@/utils";
 
 const DEFAULT_SELECTED = new Set<string>([]);
@@ -28,7 +18,7 @@ export default function SpcMaxiPage() {
   const queryClient = useQueryClient();
 
   const [loading, setLoading] = useState(false);
-  const [docType, setDocType] = useState<DocType>("CPF");
+  const [docType, setDocType] = useState<DocType>("CNPJ");
   const [documento, setDocumento] = useState("");
   const [telefone, setTelefone] = useState("");
   const [touched, setTouched] = useState(false);
@@ -37,10 +27,7 @@ export default function SpcMaxiPage() {
     new Set(DEFAULT_SELECTED),
   );
 
-  const insumoGroups = useMemo(
-    () => (docType === "CPF" ? CPF_INSUMO_GROUPS : CNPJ_INSUMO_GROUPS),
-    [docType],
-  );
+  const insumoGroups = useMemo(() => CNPJ_INSUMO_GROUPS, [docType]);
 
   const allSelectableIds = useMemo(
     () => insumoGroups.flatMap((group) => group.items.map((item) => item.id)),
@@ -51,49 +38,27 @@ export default function SpcMaxiPage() {
     allSelectableIds.length > 0 &&
     allSelectableIds.every((id) => selected.has(id));
 
-  const rawClean =
-    docType === "CPF"
-      ? documento.replace(/\D/g, "")
-      : documento.replace(/[^a-zA-Z0-9]/g, "");
+  const rawClean = documento.replace(/[^a-zA-Z0-9]/g, "");
   const telefoneClean = telefone.replace(/\D/g, "");
   const shouldRequireTelefone = docType === "CPF" && selected.has("5268");
-  const isComplete =
-    docType === "CPF" ? rawClean.length === 11 : rawClean.length === 14;
+  const isComplete = rawClean.length === 14;
   const isValid = useMemo(() => {
     if (!isComplete) return null;
-    return docType === "CPF" ? validateCPF(documento) : validateCNPJ(documento);
+    return validateCNPJ(documento);
   }, [documento, docType, isComplete]);
   const isTelefoneComplete =
     !shouldRequireTelefone || telefoneClean.length === 11;
-  const showTelefoneError =
-    shouldRequireTelefone && touchedTelefone && !isTelefoneComplete;
-  const showTelefoneSuccess = shouldRequireTelefone && isTelefoneComplete;
 
   const showError = touched && isComplete && isValid === false;
   const showSuccess = isComplete && isValid === true;
   const canSubmit = showSuccess && isTelefoneComplete;
 
-  const handleDocTypeChange = (type: DocType) => {
-    setDocType(type);
-    setDocumento((prev) =>
-      type === "CPF" ? formatCpf(prev, "input") : formatCnpj(prev, "input"),
-    );
-
-    if (type === "CNPJ") {
-      setTelefone("");
-      setTouchedTelefone(false);
-    }
-  };
-
-  const handleDocumento = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDocumento = (e: ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
     const detectedType = detectDocTypeByInput(raw);
 
     setDocType(detectedType);
-    setDocumento(
-      detectedType === "CPF"
-        ? formatCpf(raw, "input")
-        : formatCnpj(raw, "input"),
+    setDocumento(formatCnpj(raw, "input"),
     );
 
     if (detectedType === "CNPJ") {
@@ -102,11 +67,6 @@ export default function SpcMaxiPage() {
     }
 
     if (!touched) setTouched(true);
-  };
-
-  const handleTelefone = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTelefone(formatPhone(e.target.value));
-    if (!touchedTelefone) setTouchedTelefone(true);
   };
 
   const toggleInsumo = (id: string) => {
@@ -143,10 +103,9 @@ export default function SpcMaxiPage() {
         typeDocument: docType,
         telefone: shouldRequireTelefone ? telefoneClean : undefined,
         insumos: Array.from(selected),
-        consultedAt: new Date().toISOString(),
       });
 
-      navigate("/verticais/credito-risco/spc-maxi/resultado");
+      navigate("/verticais/credito-risco/spc-positivo-intermediario-pj/resultado");
     } finally {
       setLoading(false);
     }
@@ -160,8 +119,9 @@ export default function SpcMaxiPage() {
             <p className="mb-2 inline-flex rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-100">
               Risco e crédito
             </p>
+
             <h1 className="text-2xl font-semibold tracking-tight text-white">
-              325 - SPC MAXI
+              629 - SPC POSITIVO INTERMEDIÁRIO PJ
             </h1>
           </div>
 
@@ -175,61 +135,32 @@ export default function SpcMaxiPage() {
         onSubmit={handleConsultar}
         className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-100 sm:p-5"
       >
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-5">
+          <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-semibold text-slate-700">Documento</p>
-
             <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-              {docType === "CPF" ? "Pessoa física" : "Pessoa jurídica"}
+              Pessoa jurídica
             </span>
           </div>
 
-          <div className="flex flex-col gap-2 xl:flex-row xl:items-end xl:gap-1">
-            <div className="flex shrink-0 items-center">
-              <DocTypeToggleComponent
-                value={docType}
-                disabled={loading}
-                onChange={handleDocTypeChange}
-              />
-            </div>
-
-            <div className="flex-1 xl:max-w-[220px]">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-end">
+            <div className="min-w-0 flex-1">
               <InputComponent
                 value={documento}
                 onChange={handleDocumento}
                 onBlur={() => setTouched(true)}
-                placeholder={
-                  docType === "CPF" ? "000.000.000-00" : "AB.CDE.FGH/0001-00"
-                }
+                placeholder={"AB.CDE.FGH/0001-00"}
                 autoComplete="on"
                 disabled={loading}
                 showError={showError}
                 showSuccess={showSuccess}
-                className="w-full"
               />
             </div>
-
-            {shouldRequireTelefone && (
-              <div className="min-w-0 xl:w-[220px]">
-                <InputComponent
-                  value={telefone}
-                  onChange={handleTelefone}
-                  onBlur={() => setTouchedTelefone(true)}
-                  placeholder="(00) 00000-0000"
-                  autoComplete="tel"
-                  disabled={loading}
-                  required
-                  showError={showTelefoneError}
-                  showSuccess={showTelefoneSuccess}
-                  className="w-full"
-                />
-              </div>
-            )}
 
             <button
               type="submit"
               disabled={!canSubmit}
-              className="inline-flex h-[37.5px] items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 whitespace-nowrap shadow-sm xl:self-end"
+              className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-all duration-200 whitespace-nowrap shadow-sm"
               style={{
                 backgroundColor: canSubmit ? "#243871" : "#9ca3af",
                 cursor: canSubmit ? "pointer" : "not-allowed",
@@ -256,9 +187,7 @@ export default function SpcMaxiPage() {
           {showError && (
             <p className="flex items-center gap-1 text-xs text-red-500">
               <AlertCircle size={11} />
-              {docType === "CPF"
-                ? "CPF inválido. Verifique os dígitos informados."
-                : "CNPJ inválido. Verifique os dígitos informados."}
+              CNPJ inválido. Verifique os dígitos informados.
             </p>
           )}
         </div>

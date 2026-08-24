@@ -36,7 +36,7 @@ export function InputComponent({
         autoComplete={autoComplete}
         disabled={disabled}
         required={required}
-        className={`w-56 rounded-lg border px-3.5 py-2 pr-9 text-sm text-gray-800 placeholder-gray-400 outline-none transition ${className ?? ""}`}
+        className={`w-full max-w-[100%] rounded-lg border px-3.5 py-2 pr-9 text-sm text-gray-800 placeholder-gray-400 outline-none transition ${className ?? ""}`}
         style={{
           borderColor: showError ? "#ef4444" : showSuccess ? "#22c55e" : "#d1d5db",
           boxShadow: showError

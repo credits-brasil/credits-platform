@@ -89,15 +89,6 @@ export function HeaderSection({
 
           <button
             type="button"
-            onClick={onReload}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:border-gray-300 hover:text-gray-900 cursor-pointer"
-          >
-            <RefreshCw size={12} />
-            Recarregar
-          </button>
-
-          <button
-            type="button"
             className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-colors cursor-pointer"
             style={{ backgroundColor: "#243871" }}
             onClick={onNewQuery}

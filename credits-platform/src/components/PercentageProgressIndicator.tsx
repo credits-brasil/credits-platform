@@ -50,7 +50,7 @@ export function PercentageProgressIndicatorComponent({
         .filter(Boolean)
         .join(" ")}
     >
-      <div className="flex justify-between w-full h-full flex-col">
+      <div className="flex justify-between w-full h-full flex-col px-3 py-2.5 gap-3">
         <div className="flex w-full items-center justify-between">
           <span className="text-[12px] font-medium text-gray-600">{title}</span>
 

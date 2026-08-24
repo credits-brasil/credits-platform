@@ -119,7 +119,11 @@ export function GraphScoreComponent({
           {headerContent}
         </div>
 
-        {message && <p className="text-xs text-gray-500 text-justify">{message}</p>}
+        {message && (
+          <p className="whitespace-pre-line text-xs text-gray-500 text-justify">
+            {message}
+          </p>
+        )}
 
         {secondaryBadge && (
           <span
