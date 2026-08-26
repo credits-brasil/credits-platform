@@ -1332,7 +1332,7 @@ export default function SpcMaxiResultadoPage() {
         onConfirm={handleConfirmExtraInsumo}
       />
 
-      <div className="w-full">
+      <div className="w-full" data-print-document>
         <HeaderSection
           protocol="2026060900042"
           dateTime={formatConsultaDateTime(requestData.consultedAt)}
@@ -1361,7 +1361,6 @@ export default function SpcMaxiResultadoPage() {
               ? `${spcData?.consumidor?.idade} anos · ${spcData?.consumidor?.sexo} · ${spcData?.consumidor?.endereco?.cidade}/${spcData?.consumidor?.endereco?.estado}`
               : `${getCompanyAge(spcData?.consumidor?.["data-fundacao"])} anos · ${spcData?.consumidor?.endereco?.cidade}/${spcData?.consumidor?.endereco?.estado}`
           }
-          onPrint={() => window.print()}
           onReload={handleOpenReloadModal}
           onNewQuery={() => navigate("/verticais/credito-risco/spc-maxi")}
         />

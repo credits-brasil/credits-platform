@@ -178,9 +178,7 @@ export default function SpcMaxiResultadoPage() {
     id: string;
     label: string;
   } | null>(null);
-  const [extraInsumoError, setExtraInsumoError] = useState<string | null>(
-    null,
-  );
+  const [extraInsumoError, setExtraInsumoError] = useState<string | null>(null);
   const [unavailableExtraInsumos, setUnavailableExtraInsumos] = useState<
     string[]
   >([]);
@@ -795,32 +793,32 @@ export default function SpcMaxiResultadoPage() {
       case "Renda Presumida":
         return Boolean(
           nextSpcData?.["renda-presumida-spc"]?.resumo?.["valor-total"] ||
-            nextSpcData?.["renda-presumida-spc"]?.[
-              "detalhe-renda-presumida-spc"
-            ]?.some(
-              (item: any) =>
-                item?.["valor-renda"] !== undefined || item?.valor !== undefined,
-            ),
+          nextSpcData?.["renda-presumida-spc"]?.[
+            "detalhe-renda-presumida-spc"
+          ]?.some(
+            (item: any) =>
+              item?.["valor-renda"] !== undefined || item?.valor !== undefined,
+          ),
         );
       case "Limite Sugerido":
         return Boolean(
           nextSpcData?.["limite-credito-sugerido"]?.resumo?.["valor-total"] ||
-            nextSpcData?.["limite-credito-sugerido"]?.[
-              "detalhe-limite-credito-sugerido"
-            ]?.some(
-              (item: any) =>
-                item?.["valor-limite-credito"] !== undefined ||
-                item?.valor !== undefined,
-            ),
+          nextSpcData?.["limite-credito-sugerido"]?.[
+            "detalhe-limite-credito-sugerido"
+          ]?.some(
+            (item: any) =>
+              item?.["valor-limite-credito"] !== undefined ||
+              item?.valor !== undefined,
+          ),
         );
       case "Comprometimento":
         return Boolean(
           nextSpcData?.["comprometimento-renda-mensal-pf"]?.[
             "detalhe-comprometimento-renda-mensal-pf"
           ]?.faixa ||
-            nextSpcData?.["comprometimento-renda-mensal-pf"]?.resumo?.[
-              "valor-total"
-            ],
+          nextSpcData?.["comprometimento-renda-mensal-pf"]?.resumo?.[
+            "valor-total"
+          ],
         );
       case "Alerta de Identidade à Fraude":
         return Boolean(
@@ -844,23 +842,25 @@ export default function SpcMaxiResultadoPage() {
   }) => {
     if (!requestData) return;
 
-    const insumoId = item.insumoId ?? {
-      "Renda Presumida": "5122",
-      "Limite Sugerido": "5142",
-      Comprometimento: "5194",
-      "Alerta de Identidade à Fraude": "5262",
-    }[item.label];
+    const insumoId =
+      item.insumoId ??
+      {
+        "Renda Presumida": "5122",
+        "Limite Sugerido": "5142",
+        Comprometimento: "5194",
+        "Alerta de Identidade à Fraude": "5262",
+      }[item.label];
 
     if (!insumoId) return;
 
-    const nextInsumos = Array.from(
-      new Set([...requestData.insumos, insumoId]),
-    );
+    const nextInsumos = Array.from(new Set([...requestData.insumos, insumoId]));
 
     setConsultingExtraInsumo({ id: insumoId, label: item.label });
     setExtraInsumoError(null);
     setUnavailableExtraInsumos((prev) =>
-      prev.includes(item.label) ? prev : prev.filter((label) => label !== item.label),
+      prev.includes(item.label)
+        ? prev
+        : prev.filter((label) => label !== item.label),
     );
 
     try {
@@ -924,9 +924,7 @@ export default function SpcMaxiResultadoPage() {
         prev.includes(item.label) ? prev : [...prev, item.label],
       );
       setExtraInsumoError(
-        error instanceof Error
-          ? error.message
-          : extraInsumoErrorMessage,
+        error instanceof Error ? error.message : extraInsumoErrorMessage,
       );
     } finally {
       setConsultingExtraInsumo(null);
@@ -937,9 +935,7 @@ export default function SpcMaxiResultadoPage() {
     {
       label: isPessoaFisica ? "Renda Presumida" : "Faturamento Presumido",
       insumoId: isPessoaFisica ? "5122" : "5178",
-      value: rendaPresumidaValue
-        ? formatCurrency(rendaPresumidaValue)
-        : "",
+      value: rendaPresumidaValue ? formatCurrency(rendaPresumidaValue) : "",
     },
     {
       label: isPessoaFisica ? "Limite Sugerido" : "Limite de Crédito PJ",
@@ -962,33 +958,31 @@ export default function SpcMaxiResultadoPage() {
             value:
               spcData?.["alerta-identidade-fraude"]?.[
                 "detalhe-alerta-identidade-fraude"
-              ]?.[0]?.["alerta-fraude"] === "true"
-                ? (
-                    <span
-                      className="inline-flex w-fit rounded-full px-2 py-0.5 text-xs font-semibold"
-                      style={{
-                        backgroundColor: "#FEE2E2",
-                        color: "#DC2626",
-                      }}
-                    >
-                      Alerta ativo
-                    </span>
-                  )
-                : spcData?.["alerta-identidade-fraude"]?.[
-                      "detalhe-alerta-identidade-fraude"
-                    ]?.[0]?.["alerta-fraude"] === "false"
-                  ? (
-                      <span
-                        className="inline-flex w-fit rounded-full px-2 py-0.5 text-xs font-semibold"
-                        style={{
-                          backgroundColor: "#DCFCE7",
-                          color: "#15803D",
-                        }}
-                      >
-                        Sem alertas
-                      </span>
-                    )
-                  : "",
+              ]?.[0]?.["alerta-fraude"] === "true" ? (
+                <span
+                  className="inline-flex w-fit rounded-full px-2 py-0.5 text-xs font-semibold"
+                  style={{
+                    backgroundColor: "#FEE2E2",
+                    color: "#DC2626",
+                  }}
+                >
+                  Alerta ativo
+                </span>
+              ) : spcData?.["alerta-identidade-fraude"]?.[
+                  "detalhe-alerta-identidade-fraude"
+                ]?.[0]?.["alerta-fraude"] === "false" ? (
+                <span
+                  className="inline-flex w-fit rounded-full px-2 py-0.5 text-xs font-semibold"
+                  style={{
+                    backgroundColor: "#DCFCE7",
+                    color: "#15803D",
+                  }}
+                >
+                  Sem alertas
+                </span>
+              ) : (
+                ""
+              ),
           },
         ]
       : [
@@ -1005,7 +999,9 @@ export default function SpcMaxiResultadoPage() {
             value:
               quantidadeFuncionariosValue !== undefined &&
               quantidadeFuncionariosValue !== null
-                ? Number(quantidadeFuncionariosValue ?? 0).toLocaleString("pt-BR")
+                ? Number(quantidadeFuncionariosValue ?? 0).toLocaleString(
+                    "pt-BR",
+                  )
                 : "",
           },
         ]),
@@ -1166,7 +1162,7 @@ export default function SpcMaxiResultadoPage() {
         onConfirm={handleConfirmReload}
       />
 
-      <div className="w-full">
+      <div className="w-full" data-print-document>
         <HeaderSection
           protocol="2026060900042"
           dateTime="09/06/2026 às 14:32"
@@ -1195,7 +1191,6 @@ export default function SpcMaxiResultadoPage() {
               ? `${spcData?.consumidor?.idade} anos · ${spcData?.consumidor?.sexo} · ${spcData?.consumidor?.endereco?.cidade}/${spcData?.consumidor?.endereco?.estado}`
               : `${getCompanyAge(spcData?.consumidor?.["data-fundacao"])} anos · ${spcData?.consumidor?.endereco?.cidade}/${spcData?.consumidor?.endereco?.estado}`
           }
-          onPrint={() => window.print()}
           onReload={handleOpenReloadModal}
           onNewQuery={() => navigate("/verticais/credito-risco/spc-maxi")}
         />
