@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
+import { PrintCover } from "@/components/PrintCover";
 import {
   GraphScoreComponent,
   PercentageProgressIndicatorComponent,
@@ -1163,6 +1164,8 @@ export default function SpcMaxiResultadoPage() {
       />
 
       <div className="w-full" data-print-document>
+        <PrintCover />
+
         <HeaderSection
           protocol="2026060900042"
           dateTime="09/06/2026 às 14:32"

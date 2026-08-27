@@ -206,7 +206,7 @@ export function ResumoFinanceiroSection({
       />
 
       <div className="flex flex-col gap-2">
-        <div className="grid grid-cols-4 gap-2">
+        <div data-print-summary-grid className="grid grid-cols-4 gap-2">
           {items.map((item) => {
             const { label, value } = item;
             const shouldRenderActionButton =
@@ -219,10 +219,14 @@ export function ResumoFinanceiroSection({
             return (
               <div
                 key={label}
+                data-print-summary-card
                 className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
                 style={{ backgroundColor: "#F8F9FB" }}
               >
-                <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                <span
+                  data-print-summary-label
+                  className="text-[10px] text-gray-400 font-medium uppercase tracking-wide"
+                >
                   {label}
                 </span>
 
@@ -242,7 +246,10 @@ export function ResumoFinanceiroSection({
                     Não há dados disponíveis
                   </span>
                 ) : typeof value === "string" || typeof value === "number" ? (
-                  <span className="text-base font-bold text-gray-800">
+                  <span
+                    data-print-summary-value
+                    className="text-base font-bold text-gray-800"
+                  >
                     <AnimatedResumoValue value={value} />
                   </span>
                 ) : (

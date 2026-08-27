@@ -27,6 +27,7 @@ export function CopyButton({
   return (
     <button
       type="button"
+      data-print-hidden
       onClick={() => {
         void handleCopy();
       }}

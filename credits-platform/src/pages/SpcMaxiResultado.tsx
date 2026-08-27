@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
+import { PrintCover } from "@/components/PrintCover";
 import { Search } from "lucide-react";
 import {
   GraphScoreComponent,
@@ -1333,6 +1334,8 @@ export default function SpcMaxiResultadoPage() {
       />
 
       <div className="w-full" data-print-document>
+        <PrintCover />
+
         <HeaderSection
           protocol="2026060900042"
           dateTime={formatConsultaDateTime(requestData.consultedAt)}
