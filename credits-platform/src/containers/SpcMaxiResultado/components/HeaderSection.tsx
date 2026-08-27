@@ -1,5 +1,4 @@
-import { RefreshCw, Search, User } from "lucide-react";
-import { PrintButton } from "@/components/PrintButton";
+import { Printer, RefreshCw, Search, User } from "lucide-react";
 import { CopyButton } from "@/components/ui/copy-button";
 
 type HeaderSectionProps = {
@@ -14,6 +13,7 @@ type HeaderSectionProps = {
   situacao: string;
   isRegular: boolean;
   metadataText: string;
+  onPrint: () => void;
   onReload: () => void;
   onNewQuery: () => void;
 };
@@ -30,6 +30,7 @@ export function HeaderSection({
   situacao,
   isRegular,
   metadataText,
+  onPrint,
   onReload,
   onNewQuery,
 }: HeaderSectionProps) {
@@ -67,8 +68,14 @@ export function HeaderSection({
           </span>
         </div>
 
-        <div className="flex items-center gap-2" data-print-hidden>
-          <PrintButton />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onPrint}
+            className="flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors cursor-pointer"
+          >
+            <Printer size={14} />
+          </button>
 
           <button
             type="button"

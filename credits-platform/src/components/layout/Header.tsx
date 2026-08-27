@@ -26,7 +26,6 @@ export default function Header({ sidebarCollapsed, onLogout }: HeaderProps) {
 
   return (
     <header
-      data-print-hidden
       className="fixed top-0 right-0 z-30 flex items-center justify-between bg-white border-b border-gray-200 shadow-sm px-6"
       style={{
         left: sidebarCollapsed ? "64px" : "240px",
@@ -61,9 +60,7 @@ export default function Header({ sidebarCollapsed, onLogout }: HeaderProps) {
             </div>
 
             <div className="flex flex-col leading-tight text-left">
-              <span className="text-sm font-semibold text-gray-800">
-                Usuário
-              </span>
+              <span className="text-sm font-semibold text-gray-800">Usuário</span>
               <span className="text-xs text-gray-500">usuario@credits.com</span>
             </div>
             <ChevronDown

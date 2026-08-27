@@ -34,20 +34,7 @@ export function InformacoesCadastraisSection({
         Informações Cadastrais
       </h2>
 
-      <Accordion
-        type="multiple"
-        defaultValue=
-        {
-          [
-            "dados-pessoais",
-            "contato-endereco",
-            "dados-adicionais-contato-spc-brasil",
-            "atividades-economicas-secundarias-spc-brasil",
-            "administrador-spc-brasil"
-          ]
-        }
-        className="w-full"
-      >
+      <Accordion type="multiple" className="w-full">
         <AccordionItem value="dados-pessoais" className="border-gray-100">
           <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
             Dados Cadastral
@@ -79,67 +66,67 @@ export function InformacoesCadastraisSection({
                 },
                 ...(spcData?.consumidor?.cpf
                   ? [
-                    { label: "Sexo", value: spcData?.consumidor?.sexo },
-                    {
-                      label: "Nacionalidade",
-                      value: !Boolean(
-                        spcData?.consumidor?.["pessoa-estrangeira"],
-                      )
-                        ? "Estrangeira"
-                        : "Brasileira",
-                    },
-                    {
-                      label: "Nome da mãe",
-                      value: spcData?.consumidor?.["nome-mae"] ?? "-",
-                    },
-                    {
-                      label: "Nome do pai",
-                      value: spcData?.consumidor?.["nome-pai"] ?? "-",
-                    },
-                    {
-                      label: "RG",
-                      value: spcData?.consumidor?.["numero-rg"]
-                        ? `${spcData?.consumidor?.["numero-rg"]} SSP/SP`
-                        : "-",
-                    },
-                  ]
+                      { label: "Sexo", value: spcData?.consumidor?.sexo },
+                      {
+                        label: "Nacionalidade",
+                        value: !Boolean(
+                          spcData?.consumidor?.["pessoa-estrangeira"],
+                        )
+                          ? "Estrangeira"
+                          : "Brasileira",
+                      },
+                      {
+                        label: "Nome da mãe",
+                        value: spcData?.consumidor?.["nome-mae"] ?? "-",
+                      },
+                      {
+                        label: "Nome do pai",
+                        value: spcData?.consumidor?.["nome-pai"] ?? "-",
+                      },
+                      {
+                        label: "RG",
+                        value: spcData?.consumidor?.["numero-rg"]
+                          ? `${spcData?.consumidor?.["numero-rg"]} SSP/SP`
+                          : "-",
+                      },
+                    ]
                   : [
-                    {
-                      label: "Nome Comercial",
-                      value: spcData?.consumidor?.["nome-comercial"] ?? "-",
-                    },
-                    {
-                      label: "CNAE",
-                      value:
-                        spcData?.consumidor?.["atividade-economica-principal"]
-                          ?.code ??
-                        spcData?.["atividade-empresa"]?.[
-                          "detalhe-atividade-empresa"
-                        ]?.["ramo-atividade"]?.code,
-                    },
-                    {
-                      label: "Descrição do CNAE",
-                      value:
-                        spcData?.consumidor?.["atividade-economica-principal"]
-                          ?.description ??
-                        spcData?.["atividade-empresa"]?.[
-                          "detalhe-atividade-empresa"
-                        ]?.["ramo-atividade"]?.description,
-                    },
-                    {
-                      label: "Natureza Jurídica",
-                      value: (() => {
-                        const naturezaJuridica =
-                          spcData?.consumidor?.["natureza-juridica"];
-                        const descricao = naturezaJuridica?.description;
-                        const code = naturezaJuridica?.code;
+                      {
+                        label: "Nome Comercial",
+                        value: spcData?.consumidor?.["nome-comercial"] ?? "-",
+                      },
+                      {
+                        label: "CNAE",
+                        value:
+                          spcData?.consumidor?.["atividade-economica-principal"]
+                            ?.code ??
+                          spcData?.["atividade-empresa"]?.[
+                            "detalhe-atividade-empresa"
+                          ]?.["ramo-atividade"]?.code,
+                      },
+                      {
+                        label: "Descrição do CNAE",
+                        value:
+                          spcData?.consumidor?.["atividade-economica-principal"]
+                            ?.description ??
+                          spcData?.["atividade-empresa"]?.[
+                            "detalhe-atividade-empresa"
+                          ]?.["ramo-atividade"]?.description,
+                      },
+                      {
+                        label: "Natureza Jurídica",
+                        value: (() => {
+                          const naturezaJuridica =
+                            spcData?.consumidor?.["natureza-juridica"];
+                          const descricao = naturezaJuridica?.description;
+                          const code = naturezaJuridica?.code;
 
-                        if (descricao && code)
-                          return `${descricao} (${code})`;
-                        return descricao ?? code ?? "-";
-                      })(),
-                    },
-                  ]),
+                          if (descricao && code)
+                            return `${descricao} (${code})`;
+                          return descricao ?? code ?? "-";
+                        })(),
+                      },
+                    ]),
               ].map((f) => {
                 const COPYABLE_FIELDS = new Set([
                   "Nome completo",
@@ -193,13 +180,13 @@ export function InformacoesCadastraisSection({
                 },
                 ...(spcData?.consumidor?.cpf
                   ? [
-                    {
-                      label: "Telefone secundário",
-                      value: formatPhone(
-                        spcData?.consumidor?.["telefone-residencial"],
-                      ),
-                    },
-                  ]
+                      {
+                        label: "Telefone secundário",
+                        value: formatPhone(
+                          spcData?.consumidor?.["telefone-residencial"],
+                        ),
+                      },
+                    ]
                   : []),
                 { label: "E-mail", value: spcData?.consumidor?.email },
                 {
@@ -324,7 +311,7 @@ export function InformacoesCadastraisSection({
                 <div className="mt-5 border-t border-gray-100 pt-4">
                   <table className="w-full text-xs table-fixed">
                     <colgroup>
-                      <col style={{ width: "100px" }} />
+                      <col style={{ width: "100px" }}/>
                       <col style={{ width: "100%" }} />
                     </colgroup>
 

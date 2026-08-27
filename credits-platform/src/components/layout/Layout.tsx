@@ -18,8 +18,7 @@ export default function Layout({ children, onLogout }: LayoutProps) {
     location === "/verticais/credito-risco/spc-positivo-intermediario-pj";
   const isResultPage =
     location === "/verticais/credito-risco/spc-maxi/resultado" ||
-    location ===
-      "/verticais/credito-risco/spc-positivo-intermediario-pj/resultado";
+    location === "/verticais/credito-risco/spc-positivo-intermediario-pj/resultado";
 
   useEffect(() => {
     if (isResultPage) {
@@ -47,7 +46,7 @@ export default function Layout({ children, onLogout }: LayoutProps) {
   }, [isSearchPage]);
 
   return (
-    <div className="h-screen bg-background" data-print-layout-root>
+    <div className="h-screen bg-background">
       <Sidebar
         collapsed={collapsed}
         onToggle={() => setCollapsed((c) => !c)}
@@ -55,12 +54,7 @@ export default function Layout({ children, onLogout }: LayoutProps) {
       />
       <Header sidebarCollapsed={collapsed} onLogout={onLogout} />
       <main
-        data-print-content
-        className={
-          isSearchPage
-            ? "overflow-hidden px-6 py-6 lg:px-10"
-            : "px-6 py-6 lg:px-10"
-        }
+        className={isSearchPage ? "overflow-hidden px-6 py-6 lg:px-10" : "px-6 py-6 lg:px-10"}
         style={
           isSearchPage
             ? {
@@ -78,13 +72,7 @@ export default function Layout({ children, onLogout }: LayoutProps) {
               }
         }
       >
-        <div
-          className={
-            isSearchPage
-              ? "mx-auto h-full w-full overflow-hidden"
-              : "mx-auto w-full"
-          }
-        >
+        <div className={isSearchPage ? "mx-auto h-full w-full overflow-hidden" : "mx-auto w-full"}>
           {children}
         </div>
       </main>
