@@ -44,101 +44,21 @@ interface MenuGroup {
 }
 
 const menuGroups: MenuGroup[] = [
-  // {
-  //   id: "main",
-  //   items: [
-  //     { id: "home", label: "Home", icon: Home, path: "/" },
-  //   ],
-  // },
-  // {
-  //   id: "favoritos",
-  //   label: "Favoritos",
-  //   items: [
-  //     {
-  //       id: "pessoa-fisica",
-  //       label: "Pessoa Física",
-  //       icon: User,
-  //       subItems: [
-  //         { label: "SPC Relatório Completo", path: "/favoritos/pf/relatorio-completo" },
-  //         { label: "SPC MAXI", path: "/favoritos/pf/spc-maxi" },
-  //       ],
-  //     },
-  //     {
-  //       id: "pessoa-juridica",
-  //       label: "Pessoa Jurídica",
-  //       icon: Building2,
-  //       subItems: [
-  //         { label: "SPC MAX", path: "/favoritos/pj/spc-max" },
-  //         { label: "SPC MAXI", path: "/favoritos/pj/spc-maxi" },
-  //       ],
-  //     },
-  //   ],
-  // },
   {
     id: "catalogo-grupo",
     label: "Verticais",
     labelIcon: "apps",
     items: [
-      // {
-      //   id: "catalogo-item",
-      //   label: "Catálogo",
-      //   icon: BookOpen,
-      //   path: "/catalogo",
-      // },
       {
         id: "credito-risco",
         label: "Crédito e Risco",
         icon: BookOpen,
         subItems: [
           { label: "SPC MAXI", path: "/verticais/credito-risco/spc-maxi" },
-          {
-            label: "SPC POSITIVO INTERMEDIÁRIO PJ",
-            path: "/verticais/credito-risco/spc-positivo-intermediario-pj",
-          },
-          // { label: "SPC Relatório Completo", path: "/catalogo/relatorio-1" },
         ],
       },
-      // {
-      //   id: "cobranca",
-      //   label: "Cobrança",
-      //   icon: CreditCard,
-      //   subItems: [
-      //     { label: "Relatório A", path: "/credito/relatorio-a" },
-      //   ],
-      // },
     ],
   },
-  // {
-  //   id: "relatorios-analise",
-  //   label: "Relatórios e Análise",
-  //   items: [
-  //     {
-  //       id: "relatorios",
-  //       label: "Relatórios",
-  //       icon: BarChart2,
-  //       subItems: [
-  //         { label: "Extrato Sintético", path: "/relatorios/extrato-sintetico" },
-  //         { label: "Extrato Analítico", path: "/relatorios/extrato-analitico" },
-  //       ],
-  //     },
-  //     {
-  //       id: "auditoria",
-  //       label: "Auditoria",
-  //       icon: ShieldCheck,
-  //       path: "/auditoria",
-  //     },
-  //     {
-  //       id: "configuracoes",
-  //       label: "Configurações",
-  //       icon: Settings,
-  //       subItems: [
-  //         { label: "Empresas", path: "/configuracoes/empresas" },
-  //         { label: "Operadores", path: "/configuracoes/operadores" },
-  //         { label: "Permissões", path: "/configuracoes/permissoes" },
-  //       ],
-  //     },
-  //   ],
-  // },
 ];
 
 interface SidebarProps {
@@ -147,15 +67,79 @@ interface SidebarProps {
   headerHeight?: number;
 }
 
-export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: SidebarProps) {
+export default function Sidebar({
+  collapsed,
+  onToggle,
+  headerHeight = 68,
+}: SidebarProps) {
   const [location] = useLocation();
-  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
-
-  const allItems = menuGroups.flatMap((g) => g.items);
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>(
+    {},
+  );
+  const [isAdminCompanyOperator, setIsAdminCompanyOperator] = useState(false);
 
   useEffect(() => {
-    const parentWithActiveChild = allItems.find(
-      (item) => item.subItems?.some((sub) => sub.path === location)
+    const readAdminAccess = () => {
+      try {
+        const selectedCompany = localStorage.getItem(
+          "credits-platform-selected-company",
+        );
+        const storedUser = localStorage.getItem("credits-platform-auth-user");
+
+        if (!selectedCompany || !storedUser) {
+          setIsAdminCompanyOperator(false);
+          return;
+        }
+
+        const selected = JSON.parse(selectedCompany) as { id?: string };
+        const user = JSON.parse(storedUser) as {
+          companies?: Array<{ id?: string; role?: "ADMIN" | "OPERATOR" }>;
+        };
+        const userCompany = user.companies?.find(
+          (company) => company.id === selected.id,
+        );
+        setIsAdminCompanyOperator(userCompany?.role === "ADMIN");
+      } catch {
+        setIsAdminCompanyOperator(false);
+      }
+    };
+
+    readAdminAccess();
+    window.addEventListener("storage", readAdminAccess);
+    window.addEventListener("credits-platform-company-change", readAdminAccess);
+    return () => {
+      window.removeEventListener("storage", readAdminAccess);
+      window.removeEventListener(
+        "credits-platform-company-change",
+        readAdminAccess,
+      );
+    };
+  }, []);
+
+  const effectiveMenuGroups = isAdminCompanyOperator
+    ? [
+        ...menuGroups,
+        {
+          id: "configuracoes",
+          label: "Configurações",
+          labelIcon: "apps",
+          items: [
+            {
+              id: "operadores",
+              label: "Operadores",
+              icon: User,
+              path: "/configuracoes/operadores",
+            },
+          ],
+        },
+      ]
+    : menuGroups;
+
+  const allItems = effectiveMenuGroups.flatMap((g) => g.items);
+
+  useEffect(() => {
+    const parentWithActiveChild = allItems.find((item) =>
+      item.subItems?.some((sub) => sub.path === location),
     );
     if (parentWithActiveChild) {
       setExpandedItems({ [parentWithActiveChild.id]: true });
@@ -200,18 +184,25 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
             }}
             onMouseEnter={(e) => {
               if (!active) {
-                (e.currentTarget as HTMLAnchorElement).style.backgroundColor = SIDEBAR_HOVER;
+                (e.currentTarget as HTMLAnchorElement).style.backgroundColor =
+                  SIDEBAR_HOVER;
                 (e.currentTarget as HTMLAnchorElement).style.color = "white";
               }
             }}
             onMouseLeave={(e) => {
               if (!active) {
-                (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "transparent";
-                (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.85)";
+                (e.currentTarget as HTMLAnchorElement).style.backgroundColor =
+                  "transparent";
+                (e.currentTarget as HTMLAnchorElement).style.color =
+                  "rgba(255,255,255,0.85)";
               }
             }}
           >
-            <Icon size={17} className="flex-shrink-0" style={{ minWidth: "17px" }} />
+            <Icon
+              size={17}
+              className="flex-shrink-0"
+              style={{ minWidth: "17px" }}
+            />
             {!collapsed && (
               <span className="ml-3 text-sm whitespace-nowrap flex-1 overflow-hidden text-ellipsis">
                 {item.label}
@@ -220,7 +211,7 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
           </a>
         ) : (
           <button
-            onClick={() => hasSubItems ? toggleExpand(item.id) : undefined}
+            onClick={() => (hasSubItems ? toggleExpand(item.id) : undefined)}
             title={collapsed ? item.label : undefined}
             className="w-full flex items-center text-left relative rounded-md"
             style={{
@@ -228,23 +219,30 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
               padding: collapsed ? "0 0 0 14px" : "0 10px",
               color: "rgba(255,255,255,0.85)",
               backgroundColor: active ? ACTIVE_ORANGE : "transparent",
-              fontWeight: (active || childActive) ? 600 : 400,
+              fontWeight: active || childActive ? 600 : 400,
               transition: "background 0.15s, color 0.15s",
             }}
             onMouseEnter={(e) => {
               if (!active) {
-                (e.currentTarget as HTMLButtonElement).style.backgroundColor = SIDEBAR_HOVER;
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+                  SIDEBAR_HOVER;
                 (e.currentTarget as HTMLButtonElement).style.color = "white";
               }
             }}
             onMouseLeave={(e) => {
               if (!active) {
-                (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
-                (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.85)";
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+                  "transparent";
+                (e.currentTarget as HTMLButtonElement).style.color =
+                  "rgba(255,255,255,0.85)";
               }
             }}
           >
-            <Icon size={17} className="flex-shrink-0" style={{ minWidth: "17px" }} />
+            <Icon
+              size={17}
+              className="flex-shrink-0"
+              style={{ minWidth: "17px" }}
+            />
             {!collapsed && (
               <>
                 <span className="ml-3 text-sm whitespace-nowrap flex-1 overflow-hidden text-ellipsis">
@@ -252,7 +250,11 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
                 </span>
                 {hasSubItems && (
                   <span className="ml-auto flex-shrink-0">
-                    {isExpanded ? <ChevronDown size={14} /> : <ChevronRightSm size={14} />}
+                    {isExpanded ? (
+                      <ChevronDown size={14} />
+                    ) : (
+                      <ChevronRightSm size={14} />
+                    )}
                   </span>
                 )}
               </>
@@ -261,7 +263,14 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
         )}
 
         {hasSubItems && !collapsed && isExpanded && (
-          <div className="px-1 pb-1" style={{ backgroundColor: SIDEBAR_BG, borderRadius: "0 0 6px 6px", marginTop: "1px" }}>
+          <div
+            className="px-1 pb-1"
+            style={{
+              backgroundColor: SIDEBAR_BG,
+              borderRadius: "0 0 6px 6px",
+              marginTop: "1px",
+            }}
+          >
             {item.subItems!.map((sub) => {
               const subActive = location === sub.path;
               return (
@@ -281,19 +290,31 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
                   }}
                   onMouseEnter={(e) => {
                     if (!subActive) {
-                      (e.currentTarget as HTMLAnchorElement).style.backgroundColor = SIDEBAR_SUB_HOVER;
-                      (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.95)";
+                      (
+                        e.currentTarget as HTMLAnchorElement
+                      ).style.backgroundColor = SIDEBAR_SUB_HOVER;
+                      (e.currentTarget as HTMLAnchorElement).style.color =
+                        "rgba(255,255,255,0.95)";
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!subActive) {
-                      (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "transparent";
-                      (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.65)";
+                      (
+                        e.currentTarget as HTMLAnchorElement
+                      ).style.backgroundColor = "transparent";
+                      (e.currentTarget as HTMLAnchorElement).style.color =
+                        "rgba(255,255,255,0.65)";
                     }
                   }}
                 >
-                  <FileText size={13} className="flex-shrink-0 mr-2" style={{ opacity: subActive ? 1 : 0.7 }} />
-                  <span className="whitespace-nowrap overflow-hidden text-ellipsis">{sub.label}</span>
+                  <FileText
+                    size={13}
+                    className="flex-shrink-0 mr-2"
+                    style={{ opacity: subActive ? 1 : 0.7 }}
+                  />
+                  <span className="whitespace-nowrap overflow-hidden text-ellipsis">
+                    {sub.label}
+                  </span>
                 </a>
               );
             })}
@@ -330,12 +351,24 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
           <button
             onClick={onToggle}
             title="Expandir menu"
-            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center" }}
+            style={{
+              background: "none",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+            }}
           >
             <img
               src="/credits-icon.png"
               alt="Credits"
-              style={{ height: "36px", width: "36px", objectFit: "cover", borderRadius: "8px" }}
+              style={{
+                height: "36px",
+                width: "36px",
+                objectFit: "cover",
+                borderRadius: "8px",
+              }}
             />
           </button>
         ) : (
@@ -343,20 +376,33 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
             <img
               src="/credits-logo.png"
               alt="Credits"
-              style={{ height: "22px", width: "auto", filter: "brightness(0) invert(1)", objectFit: "contain" }}
+              style={{
+                height: "22px",
+                width: "auto",
+                filter: "brightness(0) invert(1)",
+                objectFit: "contain",
+              }}
             />
             <button
               onClick={onToggle}
               title="Recolher menu"
               className="flex items-center justify-center rounded-md flex-shrink-0"
-              style={{ width: "28px", height: "28px", color: "rgba(255,255,255,0.6)", transition: "background 0.15s, color 0.15s" }}
+              style={{
+                width: "28px",
+                height: "28px",
+                color: "rgba(255,255,255,0.6)",
+                transition: "background 0.15s, color 0.15s",
+              }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.backgroundColor = SIDEBAR_HOVER;
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+                  SIDEBAR_HOVER;
                 (e.currentTarget as HTMLButtonElement).style.color = "white";
               }}
               onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
-                (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.6)";
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+                  "transparent";
+                (e.currentTarget as HTMLButtonElement).style.color =
+                  "rgba(255,255,255,0.6)";
               }}
             >
               <ChevronLeft size={16} />
@@ -367,12 +413,16 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2">
-        {menuGroups.map((group, groupIndex) => (
+        {effectiveMenuGroups.map((group, groupIndex) => (
           <div key={group.id}>
             {groupIndex > 0 && (
               <div
                 className="mx-2"
-                style={{ height: "1px", backgroundColor: SIDEBAR_BORDER, margin: "6px 8px" }}
+                style={{
+                  height: "1px",
+                  backgroundColor: SIDEBAR_BORDER,
+                  margin: "6px 8px",
+                }}
               />
             )}
             {group.label && !collapsed && (
@@ -383,12 +433,20 @@ export default function Sidebar({ collapsed, onToggle, headerHeight = 68 }: Side
                 {group.labelIcon === "apps" ? (
                   <span
                     className="material-symbols-outlined"
-                    style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", flexShrink: 0, lineHeight: 1 }}
+                    style={{
+                      fontSize: "13px",
+                      color: "rgba(255,255,255,0.35)",
+                      flexShrink: 0,
+                      lineHeight: 1,
+                    }}
                   >
                     apps
                   </span>
                 ) : (
-                  <Star size={10} style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }} />
+                  <Star
+                    size={10}
+                    style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }}
+                  />
                 )}
                 <span
                   style={{

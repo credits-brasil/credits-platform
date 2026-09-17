@@ -1334,7 +1334,11 @@ export default function SpcMaxiResultadoPage() {
 
       <div className="w-full">
         <HeaderSection
-          protocol="2026060900042"
+          protocol={
+            spcData?.protocolo?.numero && spcData?.protocolo?.digito
+              ? `${spcData.protocolo.numero}${spcData.protocolo.digito}`
+              : "-"
+          }
           dateTime={formatConsultaDateTime(requestData.consultedAt)}
           operator="Leonardo Lima"
           documentLabel={

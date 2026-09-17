@@ -8,13 +8,37 @@ import HomePage from "@/pages/Home";
 import LoginPage from "@/pages/Login";
 import SpcMaxiPage from "@/pages/SpcMaxi";
 import SpcMaxiResultadoPage from "@/pages/SpcMaxiResultado";
-import SpcPositivoIntermediarioPJPage from "@/pages/SpcPositivoIntermediarioPJ";
-import SpcPositivoIntermediarioPJResultadoPage from "@/pages/SpcPositivoIntermediarioPJResultado";
 import NotFound from "@/pages/not-found";
+import OperatorsPage from "@/pages/Operators";
 
 const queryClient = new QueryClient();
 const AUTH_STORAGE_KEY = "credits-platform-authenticated";
+const AUTH_TOKEN_KEY = "credits-platform-auth-token";
+const AUTH_USER_KEY = "credits-platform-auth-user";
 const HOME_ROUTE = "/verticais/credito-risco/spc-maxi";
+const API_URL = import.meta.env.VITE_API_URL
+
+interface OperatorCompanySummary {
+  id: string;
+  name: string;
+  cnpj: string;
+  role?: "ADMIN" | "OPERATOR";
+  companyStatus?: "ACTIVE" | "INACTIVE";
+}
+
+interface UserSession {
+  accessToken: string;
+  user: {
+    id: string;
+    name: string;
+    cpf: string;
+    email?: string;
+    phone?: string;
+    createdAt: string;
+    updatedAt: string;
+    companies?: OperatorCompanySummary[];
+  };
+}
 
 function HomeRedirect() {
   const [, setLocation] = useLocation();
@@ -52,7 +76,7 @@ function Router({
   onLogout,
 }: {
   isAuthenticated: boolean;
-  onLogin: (username: string, password: string) => boolean;
+  onLogin: (username: string, password: string) => Promise<boolean>;
   onLogout: () => void;
 }) {
   if (!isAuthenticated) {
@@ -74,8 +98,7 @@ function Router({
         <Route path="/home" component={HomePage} />
         <Route path="/verticais/credito-risco/spc-maxi" component={SpcMaxiPage} />
         <Route path="/verticais/credito-risco/spc-maxi/resultado" component={SpcMaxiResultadoPage} />
-        <Route path="/verticais/credito-risco/spc-positivo-intermediario-pj" component={SpcPositivoIntermediarioPJPage} />
-        <Route path="/verticais/credito-risco/spc-positivo-intermediario-pj/resultado" component={SpcPositivoIntermediarioPJResultadoPage} />
+        <Route path="/configuracoes/operadores" component={OperatorsPage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
@@ -88,21 +111,40 @@ function App() {
     return localStorage.getItem(AUTH_STORAGE_KEY) === "true";
   });
 
-  const handleLogin = (username: string, password: string) => {
-    const hasValidCredentials =
-      username.trim().toLowerCase() === "admin" && password === "123456";
+  const handleLogin = async (username: string, password: string) => {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/user/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: username.trim(), password }),
+      });
 
-    if (!hasValidCredentials) {
+      const data = await response.json();
+
+      if (!response.ok) {
+        return false;
+      }
+
+      const session = data.session as UserSession;
+
+      if (!session?.accessToken || !session?.user) {
+        return false;
+      }
+
+      localStorage.setItem(AUTH_STORAGE_KEY, "true");
+      localStorage.setItem(AUTH_TOKEN_KEY, session.accessToken);
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(session.user));
+      setIsAuthenticated(true);
+      return true;
+    } catch {
       return false;
     }
-
-    localStorage.setItem(AUTH_STORAGE_KEY, "true");
-    setIsAuthenticated(true);
-    return true;
   };
 
   const handleLogout = () => {
     localStorage.removeItem(AUTH_STORAGE_KEY);
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(AUTH_USER_KEY);
     setIsAuthenticated(false);
   };
 

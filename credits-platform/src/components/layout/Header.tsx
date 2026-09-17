@@ -9,8 +9,19 @@ interface HeaderProps {
   onLogout: () => void;
 }
 
+interface AuthenticatedOperator {
+  id: string;
+  name: string;
+  cpf: string;
+  email?: string;
+  createdAt: string;
+  updatedAt: string;
+  companies?: Array<{ id: string; name: string; cnpj: string }>;
+}
+
 export default function Header({ sidebarCollapsed, onLogout }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [operator, setOperator] = useState<AuthenticatedOperator | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -19,6 +30,19 @@ export default function Header({ sidebarCollapsed, onLogout }: HeaderProps) {
         setMenuOpen(false);
       }
     };
+
+    const storedUser = localStorage.getItem("credits-platform-auth-user");
+
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser) as AuthenticatedOperator;
+        setOperator(parsedUser);
+      } catch {
+        setOperator(null);
+      }
+    } else {
+      setOperator(null);
+    }
 
     document.addEventListener("mousedown", handleOutsideClick);
     return () => document.removeEventListener("mousedown", handleOutsideClick);
@@ -60,8 +84,12 @@ export default function Header({ sidebarCollapsed, onLogout }: HeaderProps) {
             </div>
 
             <div className="flex flex-col leading-tight text-left">
-              <span className="text-sm font-semibold text-gray-800">Usuário</span>
-              <span className="text-xs text-gray-500">usuario@credits.com</span>
+              <span className="text-sm font-semibold text-gray-800">
+                {operator?.name || "Usuário"}
+              </span>
+              <span className="text-xs text-gray-500">
+                {operator?.email || "usuario@credits.com"}
+              </span>
             </div>
             <ChevronDown
               size={14}
