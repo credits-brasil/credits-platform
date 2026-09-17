@@ -13,6 +13,7 @@ import {
   CPF_INSUMO_GROUPS,
 } from "@/constants/insumo-groups";
 import type { DocType } from "@/types/docType";
+import { NOVO_SPC_MIX_MAIS_EXCLUDED_INSUMOS } from "@/constants/novo-spc-mix-mais";
 import {
   detectDocTypeByInput,
   formatCnpj,
@@ -24,7 +25,7 @@ import {
 
 const DEFAULT_SELECTED = new Set<string>([]);
 
-export default function SpcMaxiPage() {
+export default function SpcMixMaisPage() {
   const queryClient = useQueryClient();
 
   const [loading, setLoading] = useState(false);
@@ -38,7 +39,17 @@ export default function SpcMaxiPage() {
   );
 
   const insumoGroups = useMemo(
-    () => (docType === "CPF" ? CPF_INSUMO_GROUPS : CNPJ_INSUMO_GROUPS),
+    () =>
+      (docType === "CPF" ? CPF_INSUMO_GROUPS : CNPJ_INSUMO_GROUPS)
+        .map((group) => ({
+          ...group,
+          items: group.items.filter(
+            (item) =>
+              docType !== "CNPJ" ||
+              !NOVO_SPC_MIX_MAIS_EXCLUDED_INSUMOS.includes(item.id),
+          ),
+        }))
+        .filter((group) => group.items.length > 0),
     [docType],
   );
 
@@ -138,15 +149,19 @@ export default function SpcMaxiPage() {
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      queryClient.setQueryData(["spc-maxi-request"], {
+      queryClient.setQueryData(["323-novo-spc-mix-mais-request"], {
         document: rawClean,
         typeDocument: docType,
         telefone: shouldRequireTelefone ? telefoneClean : undefined,
-        insumos: Array.from(selected),
+        insumos: Array.from(selected).filter(
+          (id) =>
+            docType !== "CNPJ" ||
+            !NOVO_SPC_MIX_MAIS_EXCLUDED_INSUMOS.includes(id),
+        ),
         consultedAt: new Date().toISOString(),
       });
 
-      navigate("/verticais/credito-risco/spc-maxi/resultado");
+      navigate("/credito-risco/323-novo-spc-mix-mais/resultado");
     } finally {
       setLoading(false);
     }
@@ -161,7 +176,7 @@ export default function SpcMaxiPage() {
               Risco e crédito
             </p>
             <h1 className="text-2xl font-semibold tracking-tight text-white">
-              325 - SPC MAXI
+              323 - NOVO SPC MIX MAIS
             </h1>
           </div>
 

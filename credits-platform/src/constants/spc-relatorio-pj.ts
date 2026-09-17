@@ -1,0 +1,2 @@
+export const SPC_RELATORIO_PJ_EXCLUDED_INSUMOS = ["24", "5256"];
+export const SPC_RELATORIO_PJ_DEFAULT_INSUMOS = ["49", "23"];

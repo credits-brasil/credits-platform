@@ -49,7 +49,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     }
 
     setError(null);
-    setLocation("/verticais/credito-risco/spc-maxi");
+    setLocation("/credito-risco/325-spc-maxi");
   };
 
   const handleRecoveryRequest = async (event: FormEvent<HTMLFormElement>) => {
