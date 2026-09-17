@@ -5,9 +5,17 @@ import { useQueryClient } from "@tanstack/react-query";
 import { FilterCheckboxComponent, InputComponent } from "@/components";
 import { InsumoGroupCard } from "@/containers/SpcMaxi/components/InsumoGroupCard";
 import { CNPJ_INSUMO_GROUPS } from "@/constants/insumo-groups";
+import {
+  SPC_RELATORIO_PJ_DEFAULT_INSUMOS,
+  SPC_RELATORIO_PJ_EXCLUDED_INSUMOS,
+} from "@/constants/spc-relatorio-pj";
 import { formatCnpj, validateCNPJ } from "@/utils";
 
 const DEFAULT_SELECTED = new Set<string>([]);
+const NON_SELECTABLE_INSUMOS = [
+  ...SPC_RELATORIO_PJ_EXCLUDED_INSUMOS,
+  ...SPC_RELATORIO_PJ_DEFAULT_INSUMOS,
+];
 
 export default function SpcRelatorioPage() {
   const queryClient = useQueryClient();
@@ -19,7 +27,16 @@ export default function SpcRelatorioPage() {
     new Set(DEFAULT_SELECTED),
   );
 
-  const insumoGroups = CNPJ_INSUMO_GROUPS;
+  const insumoGroups = useMemo(
+    () =>
+      CNPJ_INSUMO_GROUPS.map((group) => ({
+        ...group,
+        items: group.items.filter(
+          (item) => !NON_SELECTABLE_INSUMOS.includes(item.id),
+        ),
+      })).filter((group) => group.items.length > 0),
+    [],
+  );
 
   const allSelectableIds = useMemo(
     () => insumoGroups.flatMap((group) => group.items.map((item) => item.id)),
@@ -78,7 +95,9 @@ export default function SpcRelatorioPage() {
       queryClient.setQueryData(["337-spc-relatorio-pj-request"], {
         document: rawClean,
         typeDocument: "CNPJ",
-        insumos: Array.from(selected),
+        insumos: Array.from(selected).filter(
+          (id) => !NON_SELECTABLE_INSUMOS.includes(id),
+        ),
         consultedAt: new Date().toISOString(),
       });
 

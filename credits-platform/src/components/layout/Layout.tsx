@@ -67,8 +67,8 @@ export default function Layout({ children, onLogout }: LayoutProps) {
         data-print-content
         className={
           isSearchPage
-            ? "overflow-hidden px-6 py-6 lg:px-10"
-            : "px-6 py-6 lg:px-10"
+            ? "overflow-hidden px-25 py-6 lg:px-10"
+            : "px-25 py-6 lg:px-10"
         }
         style={
           isSearchPage
@@ -90,8 +90,8 @@ export default function Layout({ children, onLogout }: LayoutProps) {
         <div
           className={
             isSearchPage
-              ? "mx-auto h-full w-full overflow-hidden"
-              : "mx-auto w-full"
+              ? "mx-auto h-full w-full px-7.5 overflow-hidden"
+              : "mx-auto w-full px-7.5"
           }
         >
           {children}

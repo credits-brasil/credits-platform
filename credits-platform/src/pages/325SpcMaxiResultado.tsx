@@ -123,6 +123,8 @@ interface SpcMaxiResultadoPageProps {
     name: string;
     endpoint: string;
     excludedInsumos?: string[];
+    excludedInsumosByDocType?: Partial<Record<"CPF" | "CNPJ", string[]>>;
+    defaultInsumos?: string[];
   };
 }
 
@@ -132,7 +134,7 @@ export default function SpcMaxiResultadoPage({
   const productKey = product?.slug ?? "325-spc-maxi";
   const productName = product?.name ?? "325 SPC MAXI";
   const endpoint = product?.endpoint ?? "/api/325-spc-maxi";
-  const excludedInsumos = product?.excludedInsumos ?? [];
+  const defaultInsumos = product?.defaultInsumos ?? [];
   const searchPath = `/credito-risco/${productKey}`;
   const queryClient = useQueryClient();
 
@@ -148,6 +150,15 @@ export default function SpcMaxiResultadoPage({
     staleTime: Infinity,
     gcTime: Infinity,
   });
+  const excludedInsumos = [
+    ...(product?.excludedInsumos ?? []),
+    ...(requestData
+      ? product?.excludedInsumosByDocType?.[requestData.typeDocument] ?? []
+      : []),
+  ];
+  const canConsultInsumo = (id: string) =>
+    !excludedInsumos.includes(id) && !defaultInsumos.includes(id);
+
   const [extraConsultationExpired, setExtraConsultationExpired] = useState(() =>
     isExtraConsultationExpired(requestData?.consultedAt),
   );
@@ -212,7 +223,7 @@ export default function SpcMaxiResultadoPage({
             telefone: product ? undefined : requestData.telefone,
             insumos: product
               ? requestData.insumos
-                  .filter((id) => !excludedInsumos.includes(id))
+                  .filter(canConsultInsumo)
                   .map(Number)
               : requestData.insumos,
           }),
@@ -308,7 +319,13 @@ export default function SpcMaxiResultadoPage({
     label: string;
     insumoId: string;
   }) => {
-    if (extraConsultationExpired || hasExtraInsumoInProgress) return;
+    if (
+      extraConsultationExpired ||
+      hasExtraInsumoInProgress ||
+      !canConsultInsumo(item.insumoId)
+    ) {
+      return;
+    }
     setPendingExtraInsumo(item);
   };
 
@@ -1052,11 +1069,11 @@ export default function SpcMaxiResultadoPage({
         "Alerta de Identidade à Fraude": "5262",
       }[item.label];
 
-    if (!insumoId || excludedInsumos.includes(insumoId)) return;
+    if (!insumoId || !canConsultInsumo(insumoId)) return;
 
     const nextInsumos = Array.from(
       new Set([...requestData.insumos, insumoId]),
-    ).filter((id) => !excludedInsumos.includes(id));
+    ).filter(canConsultInsumo);
 
     setConsultingExtraInsumo({ id: insumoId, label: item.label });
     setExtraInsumoErrorLabel(null);
@@ -1206,7 +1223,7 @@ export default function SpcMaxiResultadoPage({
                 : "",
           },
         ]),
-  ];
+  ].filter((item) => !excludedInsumos.includes(item.insumoId));
 
   const pontualidadePagamentoPercent = (() => {
     const segmentos =
@@ -1380,9 +1397,9 @@ export default function SpcMaxiResultadoPage({
 
         <HeaderSection
           productName={productName}
-          protocol="2026060900042"
+          protocol={spcData?.protocolo?.numero ?? ""}
           dateTime={formatConsultaDateTime(requestData.consultedAt)}
-          operator="Leonardo Lima"
+          operator={spcData.operador?.nome ?? ""}
           documentLabel={
             spcData?.consumidor?.cpf
               ? `CPF: ${formatCPF(spcData?.consumidor?.cpf)}`
@@ -1490,7 +1507,8 @@ export default function SpcMaxiResultadoPage({
                     {scoreItem.label}
                   </p>
 
-                  {scoreItem.source === "pj-mei" && scorePjMeiIndisponivel ? (
+                  {defaultInsumos.includes(scoreItem.insumoId) ||
+                  (scoreItem.source === "pj-mei" && scorePjMeiIndisponivel) ? (
                     <span className="inline-flex shrink-0 rounded-full border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-red-700">
                       Não há dados disponíveis
                     </span>
@@ -1578,7 +1596,8 @@ export default function SpcMaxiResultadoPage({
                     className="flex w-full flex-col justify-between rounded-lg bg-[#F8F9FB] shadow-none"
                   />
                 </>
-              ) : unavailableExtraInsumos.includes(
+              ) : defaultInsumos.includes("5227") ||
+                unavailableExtraInsumos.includes(
                   "Pontualidade de Pagamento",
                 ) ? (
                 <span className="inline-flex min-h-[65px] items-center rounded-lg bg-[#F8F9FB] px-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-red-700">
@@ -1640,7 +1659,8 @@ export default function SpcMaxiResultadoPage({
                     }
                   />
                 </>
-              ) : unavailableExtraInsumos.includes(
+              ) : defaultInsumos.includes("5224") ||
+                unavailableExtraInsumos.includes(
                   "Comportamento de Gastos",
                 ) ? (
                 <span className="inline-flex min-h-[65px] items-center rounded-lg bg-[#F8F9FB] px-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-red-700">
@@ -1704,45 +1724,51 @@ export default function SpcMaxiResultadoPage({
             )}
         </div>
 
-        <div
-          id="section-score"
-          className="bg-white rounded-xl border border-gray-200 p-5 mb-4 mt-2"
-        >
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">SCR</h2>
+        {!excludedInsumos.includes("5256") && (
+          <div
+            id="section-score"
+            className="bg-white rounded-xl border border-gray-200 p-5 mb-4 mt-2"
+          >
+            <h2 className="text-sm font-semibold text-gray-700 mb-4">SCR</h2>
 
-          <div className="h-full min-w-0 w-full">
-            <ScrSummarySection
-              hasScrData={Boolean(hasScrData)}
-              scrOperacao={scrOperacao}
-              onConsultar={() =>
-                handleConsultarInsumoExtra({
-                  label: "Operações no SCR",
-                  insumoId: "5256",
-                })
-              }
-              isConsulting={consultingExtraInsumo?.label === "Operações no SCR"}
-              consultationDisabled={
-                extraConsultationExpired || hasExtraInsumoInProgress
-              }
-              isUnavailable={unavailableExtraInsumos.includes(
-                "Operações no SCR",
-              )}
-            />
+            <div className="h-full min-w-0 w-full">
+              <ScrSummarySection
+                hasScrData={Boolean(hasScrData)}
+                scrOperacao={scrOperacao}
+                onConsultar={
+                  canConsultInsumo("5256")
+                    ? () =>
+                        handleConsultarInsumoExtra({
+                          label: "Operações no SCR",
+                          insumoId: "5256",
+                        })
+                    : undefined
+                }
+                isConsulting={consultingExtraInsumo?.label === "Operações no SCR"}
+                consultationDisabled={
+                  extraConsultationExpired || hasExtraInsumoInProgress
+                }
+                isUnavailable={
+                  (!hasScrData && defaultInsumos.includes("5256")) ||
+                  unavailableExtraInsumos.includes("Operações no SCR")
+                }
+              />
+            </div>
+
+            {consultingExtraInsumo?.label === "Operações no SCR" && (
+              <div className="mt-4 flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700">
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+                Consultando {consultingExtraInsumo.label}...
+              </div>
+            )}
+
+            {extraInsumoErrorLabel === "Operações no SCR" && (
+              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                {extraInsumoErrorMessage}
+              </div>
+            )}
           </div>
-
-          {consultingExtraInsumo?.label === "Operações no SCR" && (
-            <div className="mt-4 flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700">
-              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-              Consultando {consultingExtraInsumo.label}...
-            </div>
-          )}
-
-          {extraInsumoErrorLabel === "Operações no SCR" && (
-            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
-              {extraInsumoErrorMessage}
-            </div>
-          )}
-        </div>
+        )}
 
         <div
           id="section-score"
@@ -1809,7 +1835,10 @@ export default function SpcMaxiResultadoPage({
 
         <InformacoesCadastraisSection spcData={spcData} body={body} />
 
-        <GovernancaSection spcData={spcData} />
+        <GovernancaSection
+          spcData={spcData}
+          showParticipacaoEmpresa={!excludedInsumos.includes("24")}
+        />
 
         <InformacoesPositivasSection spcData={spcData} />
 

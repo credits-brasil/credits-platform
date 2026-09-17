@@ -8,6 +8,7 @@ import { CNPJ_INSUMO_GROUPS } from "@/constants/insumo-groups";
 import { formatCnpj, validateCNPJ } from "@/utils";
 
 const DEFAULT_SELECTED = new Set<string>([]);
+const EXCLUDED_INSUMOS = ["78", "5185"];
 
 export default function SpcAvancadaPage() {
   const queryClient = useQueryClient();
@@ -19,7 +20,14 @@ export default function SpcAvancadaPage() {
     new Set(DEFAULT_SELECTED),
   );
 
-  const insumoGroups = CNPJ_INSUMO_GROUPS;
+  const insumoGroups = useMemo(
+    () =>
+      CNPJ_INSUMO_GROUPS.map((group) => ({
+        ...group,
+        items: group.items.filter((item) => !EXCLUDED_INSUMOS.includes(item.id)),
+      })),
+    [],
+  );
 
   const allSelectableIds = useMemo(
     () => insumoGroups.flatMap((group) => group.items.map((item) => item.id)),
@@ -78,7 +86,9 @@ export default function SpcAvancadaPage() {
       queryClient.setQueryData(["668-spc-avancada-pj-request"], {
         document: rawClean,
         typeDocument: "CNPJ",
-        insumos: Array.from(selected),
+        insumos: Array.from(selected).filter(
+          (id) => !EXCLUDED_INSUMOS.includes(id),
+        ),
         consultedAt: new Date().toISOString(),
       });
 

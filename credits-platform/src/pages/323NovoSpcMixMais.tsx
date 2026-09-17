@@ -13,6 +13,7 @@ import {
   CPF_INSUMO_GROUPS,
 } from "@/constants/insumo-groups";
 import type { DocType } from "@/types/docType";
+import { NOVO_SPC_MIX_MAIS_EXCLUDED_INSUMOS } from "@/constants/novo-spc-mix-mais";
 import {
   detectDocTypeByInput,
   formatCnpj,
@@ -38,7 +39,17 @@ export default function SpcMixMaisPage() {
   );
 
   const insumoGroups = useMemo(
-    () => (docType === "CPF" ? CPF_INSUMO_GROUPS : CNPJ_INSUMO_GROUPS),
+    () =>
+      (docType === "CPF" ? CPF_INSUMO_GROUPS : CNPJ_INSUMO_GROUPS)
+        .map((group) => ({
+          ...group,
+          items: group.items.filter(
+            (item) =>
+              docType !== "CNPJ" ||
+              !NOVO_SPC_MIX_MAIS_EXCLUDED_INSUMOS.includes(item.id),
+          ),
+        }))
+        .filter((group) => group.items.length > 0),
     [docType],
   );
 
@@ -142,7 +153,11 @@ export default function SpcMixMaisPage() {
         document: rawClean,
         typeDocument: docType,
         telefone: shouldRequireTelefone ? telefoneClean : undefined,
-        insumos: Array.from(selected),
+        insumos: Array.from(selected).filter(
+          (id) =>
+            docType !== "CNPJ" ||
+            !NOVO_SPC_MIX_MAIS_EXCLUDED_INSUMOS.includes(id),
+        ),
         consultedAt: new Date().toISOString(),
       });
 

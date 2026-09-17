@@ -6,7 +6,8 @@ export default function SpcAvancadaResultadoPage() {
       product={{
         slug: "668-spc-avancada-pj",
         name: "668 SPC AVANÇADA PJ",
-        endpoint: "/api/668-spc-avancada",
+        endpoint: "/api/668-spc-avancada-pj",
+        excludedInsumos: ["5185"],
       }}
     />
   );

@@ -37,8 +37,6 @@ export function HeaderSection({
   onReload,
   onNewQuery,
 }: HeaderSectionProps) {
-  console.log("situacao", situacao);
-  console.log("metadataText", metadataText);
   return (
     <div className="sticky top-[100px] z-20 bg-background pb-2 relative before:content-[''] before:absolute before:-top-8 before:left-0 before:right-0 before:h-8 before:bg-background">
       <div className="mb-6">
@@ -49,28 +47,37 @@ export function HeaderSection({
 
       <div className="flex items-center justify-between mb-3 px-1">
         <div className="flex items-center gap-4 text-xs text-gray-400">
-          <span className="flex items-center">
-            <span className="text-gray-500 font-medium mr-1">Protocolo:</span>
+          {protocol && (
+            <>
+              <span className="flex items-center">
+                <span className="text-gray-500 font-medium mr-1">
+                  Protocolo:
+                </span>
 
-            <div className="flex items-center gap-2">
-              {protocol}
-              <CopyButton value={protocol} title="Copiar Protocolo" />
-            </div>
-          </span>
-
-          <span className="text-gray-200">|</span>
+                <div className="flex items-center gap-2">
+                  {protocol}
+                  <CopyButton value={protocol} title="Copiar Protocolo" />
+                </div>
+              </span>
+              <span className="text-gray-200">|</span>
+            </>
+          )}
 
           <span>
             <span className="text-gray-500 font-medium">Data/Hora:</span>{" "}
             {dateTime}
           </span>
 
-          <span className="text-gray-200">|</span>
+          {operator && (
+            <>
+              <span className="text-gray-200">|</span>
 
-          <span>
-            <span className="text-gray-500 font-medium">Operador:</span>{" "}
-            {operator}
-          </span>
+              <span>
+                <span className="text-gray-500 font-medium">Operador:</span>{" "}
+                {operator}
+              </span>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-2" data-print-hidden>
@@ -135,8 +142,16 @@ export function HeaderSection({
               <span
                 className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
                 style={{
-                  backgroundColor: isRegular ? "#DCFCE7" : isPendenteRegularizacao ? "#FEF3C7" : "#FEE2E2",
-                  color: isRegular ? "#15803D" : isPendenteRegularizacao ? "#D97706" : "#DC2626",
+                  backgroundColor: isRegular
+                    ? "#DCFCE7"
+                    : isPendenteRegularizacao
+                      ? "#FEF3C7"
+                      : "#FEE2E2",
+                  color: isRegular
+                    ? "#15803D"
+                    : isPendenteRegularizacao
+                      ? "#D97706"
+                      : "#DC2626",
                 }}
               >
                 {situacao}

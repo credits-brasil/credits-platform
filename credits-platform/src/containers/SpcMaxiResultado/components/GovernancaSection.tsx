@@ -8,9 +8,13 @@ import { formatPhone } from "@/utils/formatPhone";
 
 interface GovernancaSectionProps {
   spcData: any;
+  showParticipacaoEmpresa?: boolean;
 }
 
-export function GovernancaSection({ spcData }: GovernancaSectionProps) {
+export function GovernancaSection({
+  spcData,
+  showParticipacaoEmpresa = true,
+}: GovernancaSectionProps) {
   const [governancaTab, setGovernancaTab] = useState<
     "controle-societario" | "quadro-administrativo" | "participacao-empresa"
   >("controle-societario");
@@ -29,8 +33,9 @@ export function GovernancaSection({ spcData }: GovernancaSectionProps) {
 
   const controleSocietario = quadroSocial?.["controle-societario"] ?? [];
   const quadroAdministrativo = quadroSocial?.["quadro-administrativo"] ?? [];
-  const participacaoEmpresa =
-    spcData?.["participacao-empresa"]?.["detalhe-participacao-empresa"] ?? [];
+  const participacaoEmpresa = showParticipacaoEmpresa
+    ? spcData?.["participacao-empresa"]?.["detalhe-participacao-empresa"] ?? []
+    : [];
 
   if (
     !controleSocietario.length &&
@@ -85,7 +90,9 @@ export function GovernancaSection({ spcData }: GovernancaSectionProps) {
         <h2 className="text-sm font-semibold text-gray-700">Governança</h2>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+      <div
+        className={`mt-4 grid grid-cols-1 gap-3 ${showParticipacaoEmpresa ? "md:grid-cols-3" : "md:grid-cols-2"}`}
+      >
         {[
           {
             key: "controle-societario" as const,
@@ -105,7 +112,9 @@ export function GovernancaSection({ spcData }: GovernancaSectionProps) {
             count: participacaoEmpresa.length,
             helper: "Participações societárias",
           },
-        ].map((tab) => {
+        ].filter(
+          (tab) => showParticipacaoEmpresa || tab.key !== "participacao-empresa",
+        ).map((tab) => {
           const isActive = governancaTab === tab.key;
 
           return (

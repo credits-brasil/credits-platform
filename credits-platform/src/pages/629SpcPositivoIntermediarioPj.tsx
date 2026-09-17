@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { FilterCheckboxComponent, InputComponent } from "@/components";
 import { InsumoGroupCard } from "@/containers/SpcMaxi/components/InsumoGroupCard";
 import { CNPJ_INSUMO_GROUPS } from "@/constants/insumo-groups";
+import { SPC_POSITIVO_INTERMEDIARIO_PJ_DEFAULT_INSUMOS } from "@/constants/spc-positivo-intermediario-pj";
 import { formatCnpj, validateCNPJ } from "@/utils";
 
 const DEFAULT_SELECTED = new Set<string>([]);
@@ -19,7 +20,16 @@ export default function SpcPositivoIntermediarioPjPage() {
     new Set(DEFAULT_SELECTED),
   );
 
-  const insumoGroups = CNPJ_INSUMO_GROUPS;
+  const insumoGroups = useMemo(
+    () =>
+      CNPJ_INSUMO_GROUPS.map((group) => ({
+        ...group,
+        items: group.items.filter(
+          (item) => !SPC_POSITIVO_INTERMEDIARIO_PJ_DEFAULT_INSUMOS.includes(item.id),
+        ),
+      })),
+    [],
+  );
 
   const allSelectableIds = useMemo(
     () => insumoGroups.flatMap((group) => group.items.map((item) => item.id)),
@@ -78,7 +88,9 @@ export default function SpcPositivoIntermediarioPjPage() {
       queryClient.setQueryData(["629-spc-positivo-intermediario-pj-request"], {
         document: rawClean,
         typeDocument: "CNPJ",
-        insumos: Array.from(selected),
+        insumos: Array.from(selected).filter(
+          (id) => !SPC_POSITIVO_INTERMEDIARIO_PJ_DEFAULT_INSUMOS.includes(id),
+        ),
         consultedAt: new Date().toISOString(),
       });
 
