@@ -52,6 +52,14 @@ function parseBRValue(s: string): number {
   );
 }
 
+function normalizeContactValues(values: unknown, fallback: string): string[] {
+  if (!Array.isArray(values) || values.length === 0) return [fallback];
+
+  return values.map((value) =>
+    typeof value === "string" && value.trim().length > 0 ? value : "-",
+  );
+}
+
 interface SpcMaxiRequest {
   document: string;
   typeDocument: "CPF" | "CNPJ";
@@ -396,18 +404,49 @@ export default function SpcMaxiResultadoPage({
       };
     }) ?? [];
 
-  const body = Array.isArray(
-    spcData?.["dados-adicionais-contato"]?.["detalhe-dados-adicionais-contato"],
-  )
-    ? spcData["dados-adicionais-contato"][
-        "detalhe-dados-adicionais-contato"
-      ].map((row: any) => ({
-        endereco: row?.endereco ?? row?.["endereco-completo"] ?? "-",
-        email: row?.email ?? "-",
-        telefone: row?.telefone ?? "-",
-        celular: row?.celular ?? row?.["telefone-celular"] ?? "-",
-      }))
+  const dadosAdicionaisContato =
+    spcData?.["dados-adicionais-contato"] ??
+    spcData?.["dados-adicionais-de-contato"];
+  const detalhesContato =
+    dadosAdicionaisContato?.["detalhe-dados-adicionais-de-contato"] ??
+    dadosAdicionaisContato?.["detalhe-dados-adicionais-contato"];
+
+  const body = Array.isArray(detalhesContato)
+    ? detalhesContato
+        .filter((row) => row && typeof row === "object" && !Array.isArray(row))
+        .flatMap((row) => {
+          const enderecos = normalizeContactValues(
+            [row.enderecosPF, row.enderecosPJ].find(
+              (values) => Array.isArray(values) && values.length > 0,
+            ),
+            row.endereco ?? row["endereco-completo"] ?? "-",
+          );
+          const emails = normalizeContactValues(row.emails, row.email ?? "-");
+          const telefones = normalizeContactValues(
+            row.telefones,
+            row.telefone ?? "-",
+          );
+          const celulares = normalizeContactValues(
+            row.celulares,
+            row.celular ?? row["telefone-celular"] ?? "-",
+          );
+          const rowCount = Math.max(
+            enderecos.length,
+            emails.length,
+            telefones.length,
+            celulares.length,
+          );
+
+          return Array.from({ length: rowCount }, (_, index) => ({
+            endereco: enderecos[index] ?? "-",
+            email: emails[index] ?? "-",
+            telefone: telefones[index] ?? "-",
+            celular: celulares[index] ?? "-",
+          }));
+        })
     : [];
+
+     console.log("body", body)
 
   const situacao = String(
     (spcData?.consumidor?.cpf
