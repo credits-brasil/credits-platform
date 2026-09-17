@@ -76,26 +76,18 @@ const menuGroups: MenuGroup[] = [
   // },
   {
     id: "catalogo-grupo",
-    label: "Verticais",
-    labelIcon: "apps",
     items: [
-      // {
-      //   id: "catalogo-item",
-      //   label: "Catálogo",
-      //   icon: BookOpen,
-      //   path: "/catalogo",
-      // },
       {
         id: "credito-risco",
         label: "Crédito e Risco",
         icon: BookOpen,
         subItems: [
-          { label: "SPC MAXI", path: "/verticais/credito-risco/spc-maxi" },
-          {
-            label: "SPC POSITIVO INTERMEDIÁRIO PJ",
-            path: "/verticais/credito-risco/spc-positivo-intermediario-pj",
-          },
-          // { label: "SPC Relatório Completo", path: "/catalogo/relatorio-1" },
+          { label: "325 - SPC MAXI", path: "/credito-risco/325-spc-maxi" },
+          { label: "629 - SPC POSITIVO INTERMEDIÁRIO PJ", path: "/credito-risco/629-spc-positivo-intermediario-pj" },
+          { label: "695 - SPC MAIS", path: "/credito-risco/695-spc-mais" },
+          { label: "668 - SPC AVANÇADA PJ", path: "/credito-risco/668-spc-avancada-pj" },
+          { label: "323 - NOVO SPC MIX MAIS", path: "/credito-risco/323-novo-spc-mix-mais" },
+          { label: "337 - SPC RELATÓRIO PJ", path: "/credito-risco/337-spc-relatorio-pj" },
         ],
       },
       // {
@@ -351,7 +343,7 @@ export default function Sidebar({
       data-print-hidden
       className="fixed top-0 left-0 z-40 flex flex-col"
       style={{
-        width: collapsed ? "64px" : "240px",
+        width: collapsed ? "64px" : "350px",
         height: "100vh",
         backgroundColor: SIDEBAR_BG,
         transition: "width 0.3s ease",

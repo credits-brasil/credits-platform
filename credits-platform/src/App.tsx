@@ -6,15 +6,23 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/layout/Layout";
 import HomePage from "@/pages/Home";
 import LoginPage from "@/pages/Login";
-import SpcMaxiPage from "@/pages/SpcMaxi";
-import SpcMaxiResultadoPage from "@/pages/SpcMaxiResultado";
-import SpcPositivoIntermediarioPJPage from "@/pages/SpcPositivoIntermediarioPJ";
-import SpcPositivoIntermediarioPJResultadoPage from "@/pages/SpcPositivoIntermediarioPJResultado";
+import SpcMaxiPage from "@/pages/325SpcMaxi";
+import SpcMaxiResultadoPage from "@/pages/325SpcMaxiResultado";
+import SpcMixMaisPage from "@/pages/323NovoSpcMixMais";
+import SpcMixMaisResultadoPage from "@/pages/323NovoSpcMixMaisResultado";
+import SpcRelatorioPage from "@/pages/337SpcRelatorioPj";
+import SpcRelatorioResultadoPage from "@/pages/337SpcRelatorioPjResultado";
+import SpcAvancadaPage from "@/pages/668SpcAvancadaPj";
+import SpcAvancadaResultadoPage from "@/pages/668SpcAvancadaPjResultado";
+import SpcMaisPage from "@/pages/695SpcMais";
+import SpcMaisResultadoPage from "@/pages/695SpcMaisResultado";
+import SpcPositivoIntermediarioPjPage from "@/pages/629SpcPositivoIntermediarioPj";
+import SpcPositivoIntermediarioPjResultadoPage from "@/pages/629SpcPositivoIntermediarioPjResultado";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
 const AUTH_STORAGE_KEY = "credits-platform-authenticated";
-const HOME_ROUTE = "/verticais/credito-risco/spc-maxi";
+const HOME_ROUTE = "/credito-risco/325-spc-maxi";
 
 function HomeRedirect() {
   const [, setLocation] = useLocation();
@@ -72,10 +80,20 @@ function Router({
         <Route path="/login" component={ProtectedLoginRedirect} />
         <Route path="/" component={HomeRedirect} />
         <Route path="/home" component={HomePage} />
-        <Route path="/verticais/credito-risco/spc-maxi" component={SpcMaxiPage} />
-        <Route path="/verticais/credito-risco/spc-maxi/resultado" component={SpcMaxiResultadoPage} />
-        <Route path="/verticais/credito-risco/spc-positivo-intermediario-pj" component={SpcPositivoIntermediarioPJPage} />
-        <Route path="/verticais/credito-risco/spc-positivo-intermediario-pj/resultado" component={SpcPositivoIntermediarioPJResultadoPage} />
+        <Route path="/credito-risco/325-spc-maxi" component={SpcMaxiPage} />
+        <Route path="/credito-risco/325-spc-maxi/resultado">
+          <SpcMaxiResultadoPage />
+        </Route>
+        <Route path="/credito-risco/629-spc-positivo-intermediario-pj" component={SpcPositivoIntermediarioPjPage} />
+        <Route path="/credito-risco/629-spc-positivo-intermediario-pj/resultado" component={SpcPositivoIntermediarioPjResultadoPage} />
+        <Route path="/credito-risco/695-spc-mais" component={SpcMaisPage} />
+        <Route path="/credito-risco/695-spc-mais/resultado" component={SpcMaisResultadoPage} />
+        <Route path="/credito-risco/668-spc-avancada-pj" component={SpcAvancadaPage} />
+        <Route path="/credito-risco/668-spc-avancada-pj/resultado" component={SpcAvancadaResultadoPage} />
+        <Route path="/credito-risco/323-novo-spc-mix-mais" component={SpcMixMaisPage} />
+        <Route path="/credito-risco/323-novo-spc-mix-mais/resultado" component={SpcMixMaisResultadoPage} />
+        <Route path="/credito-risco/337-spc-relatorio-pj" component={SpcRelatorioPage} />
+        <Route path="/credito-risco/337-spc-relatorio-pj/resultado" component={SpcRelatorioResultadoPage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

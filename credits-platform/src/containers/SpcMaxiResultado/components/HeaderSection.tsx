@@ -3,6 +3,7 @@ import { PrintButton } from "@/components/PrintButton";
 import { CopyButton } from "@/components/ui/copy-button";
 
 type HeaderSectionProps = {
+  productName?: string;
   protocol: string;
   dateTime: string;
   operator: string;
@@ -13,12 +14,14 @@ type HeaderSectionProps = {
   documentTypeLabel: "CPF" | "CNPJ";
   situacao: string;
   isRegular: boolean;
+  isPendenteRegularizacao: boolean;
   metadataText: string;
   onReload: () => void;
   onNewQuery: () => void;
 };
 
 export function HeaderSection({
+  productName = "SPC MAXI",
   protocol,
   dateTime,
   operator,
@@ -29,15 +32,18 @@ export function HeaderSection({
   documentTypeLabel,
   situacao,
   isRegular,
+  isPendenteRegularizacao,
   metadataText,
   onReload,
   onNewQuery,
 }: HeaderSectionProps) {
+  console.log("situacao", situacao);
+  console.log("metadataText", metadataText);
   return (
     <div className="sticky top-[100px] z-20 bg-background pb-2 relative before:content-[''] before:absolute before:-top-8 before:left-0 before:right-0 before:h-8 before:bg-background">
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-gray-800">
-          Relatório SPC MAXI
+          Relatório {productName}
         </h1>
       </div>
 
@@ -125,19 +131,23 @@ export function HeaderSection({
           <div className="w-px self-stretch bg-gray-100" />
 
           <div className="flex flex-col gap-1.5 flex-1">
-            <span
-              className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
-              style={{
-                backgroundColor: isRegular ? "#DCFCE7" : "#FEE2E2",
-                color: isRegular ? "#15803D" : "#DC2626",
-              }}
-            >
-              {situacao}
-            </span>
+            {situacao && (
+              <span
+                className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
+                style={{
+                  backgroundColor: isRegular ? "#DCFCE7" : isPendenteRegularizacao ? "#FEF3C7" : "#FEE2E2",
+                  color: isRegular ? "#15803D" : isPendenteRegularizacao ? "#D97706" : "#DC2626",
+                }}
+              >
+                {situacao}
+              </span>
+            )}
 
-            <span className="text-xs text-gray-400 whitespace-nowrap">
-              {metadataText}
-            </span>
+            {metadataText && (
+              <span className="text-xs text-gray-400 whitespace-nowrap">
+                {metadataText}
+              </span>
+            )}
           </div>
         </div>
       </div>

@@ -4,6 +4,14 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 
 const HEADER_HEIGHT = 68;
+const SEARCH_PATHS = [
+  "325-spc-maxi",
+  "629-spc-positivo-intermediario-pj",
+  "695-spc-mais",
+  "668-spc-avancada-pj",
+  "323-novo-spc-mix-mais",
+  "337-spc-relatorio-pj"
+].map((product) => `/credito-risco/${product}`);
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -13,19 +21,20 @@ interface LayoutProps {
 export default function Layout({ children, onLogout }: LayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [location] = useLocation();
-  const isSearchPage =
-    location === "/verticais/credito-risco/spc-maxi" ||
-    location === "/verticais/credito-risco/spc-positivo-intermediario-pj";
-  const isResultPage =
-    location === "/verticais/credito-risco/spc-maxi/resultado" ||
-    location ===
-      "/verticais/credito-risco/spc-positivo-intermediario-pj/resultado";
+  const isSearchPage = SEARCH_PATHS.includes(location);
+  const isResultPage = SEARCH_PATHS.some(
+    (path) => location === `${path}/resultado`,
+  );
+
+  console.log("isResultPage", isResultPage);
 
   useEffect(() => {
     if (isResultPage) {
       setCollapsed(true);
     }
   }, [isResultPage]);
+
+  console.log(collapsed)
 
   useEffect(() => {
     if (!isSearchPage) {
@@ -52,7 +61,7 @@ export default function Layout({ children, onLogout }: LayoutProps) {
         collapsed={collapsed}
         onToggle={() => setCollapsed((c) => !c)}
         headerHeight={HEADER_HEIGHT}
-      />
+      />  
       <Header sidebarCollapsed={collapsed} onLogout={onLogout} />
       <main
         data-print-content
@@ -64,7 +73,7 @@ export default function Layout({ children, onLogout }: LayoutProps) {
         style={
           isSearchPage
             ? {
-                marginLeft: collapsed ? "64px" : "240px",
+                marginLeft: collapsed ? "64px" : "350px",
                 marginTop: `${HEADER_HEIGHT}px`,
                 transition: "margin-left 0.3s ease",
                 height: `calc(100vh - ${HEADER_HEIGHT}px)`,
@@ -72,7 +81,7 @@ export default function Layout({ children, onLogout }: LayoutProps) {
                 overflow: "hidden",
               }
             : {
-                marginLeft: collapsed ? "64px" : "240px",
+                marginLeft: collapsed ? "64px" : "350px",
                 marginTop: `${HEADER_HEIGHT}px`,
                 transition: "margin-left 0.3s ease",
               }
