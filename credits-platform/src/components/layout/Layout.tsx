@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+
+import { StickyIdentificationProvider } from "@/hooks/useStickyIdentification";
+
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 
@@ -10,7 +13,7 @@ const SEARCH_PATHS = [
   "695-spc-mais",
   "668-spc-avancada-pj",
   "323-novo-spc-mix-mais",
-  "337-spc-relatorio-pj"
+  "337-spc-relatorio-pj",
 ].map((product) => `/credito-risco/${product}`);
 
 interface LayoutProps {
@@ -18,7 +21,7 @@ interface LayoutProps {
   onLogout: () => void;
 }
 
-export default function Layout({ children, onLogout }: LayoutProps) {
+function LayoutContent({ children, onLogout }: LayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [location] = useLocation();
   const isSearchPage = SEARCH_PATHS.includes(location);
@@ -34,7 +37,7 @@ export default function Layout({ children, onLogout }: LayoutProps) {
     }
   }, [isResultPage]);
 
-  console.log(collapsed)
+  console.log(collapsed);
 
   useEffect(() => {
     if (!isSearchPage) {
@@ -61,15 +64,19 @@ export default function Layout({ children, onLogout }: LayoutProps) {
         collapsed={collapsed}
         onToggle={() => setCollapsed((c) => !c)}
         headerHeight={HEADER_HEIGHT}
-      />  
+      />
       <Header sidebarCollapsed={collapsed} onLogout={onLogout} />
       <main
         data-print-content
-        className={
+        className={`${
           isSearchPage
             ? "overflow-hidden px-25 py-6 lg:px-10"
             : "px-25 py-6 lg:px-10"
-        }
+        } ${
+          collapsed
+            ? "[--layout-sidebar-width:64px]"
+            : "[--layout-sidebar-width:350px]"
+        }`}
         style={
           isSearchPage
             ? {
@@ -99,5 +106,13 @@ export default function Layout({ children, onLogout }: LayoutProps) {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function Layout(props: LayoutProps) {
+  return (
+    <StickyIdentificationProvider>
+      <LayoutContent {...props} />
+    </StickyIdentificationProvider>
   );
 }

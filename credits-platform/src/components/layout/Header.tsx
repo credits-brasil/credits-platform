@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Bell, ChevronDown, LogOut, User } from "lucide-react";
+
+import { useStickyIdentification } from "@/hooks/useStickyIdentification";
+
 import CompanySelector from "./CompanySelector";
 
 const HEADER_HEIGHT = 68;
@@ -20,6 +23,7 @@ interface AuthenticatedOperator {
 }
 
 export default function Header({ sidebarCollapsed, onLogout }: HeaderProps) {
+  const { isIdentificationFixed } = useStickyIdentification();
   const [menuOpen, setMenuOpen] = useState(false);
   const [operator, setOperator] = useState<AuthenticatedOperator | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -51,11 +55,16 @@ export default function Header({ sidebarCollapsed, onLogout }: HeaderProps) {
   return (
     <header
       data-print-hidden
-      className="fixed top-0 right-0 z-30 flex items-center justify-between bg-white border-b border-gray-200 shadow-sm px-6"
+      aria-hidden={isIdentificationFixed}
+      className={`fixed top-0 right-0 z-30 flex items-center justify-between bg-white border-b border-gray-200 shadow-sm px-6 transition-[transform,visibility] duration-300 ease-in-out ${
+        isIdentificationFixed
+          ? "invisible -translate-y-full opacity-0 pointer-events-none"
+          : "visible translate-y-0 opacity-100"
+      }`}
       style={{
-        left: sidebarCollapsed ? "64px" : "340px",
+        left: sidebarCollapsed ? "64px" : "350px",
         height: `${HEADER_HEIGHT}px`,
-        transition: "left 0.3s ease",
+        transitionProperty: "left, opacity, transform, visibility",
       }}
     >
       <div className="flex items-center gap-4">
