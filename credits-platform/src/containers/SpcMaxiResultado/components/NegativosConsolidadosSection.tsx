@@ -87,6 +87,7 @@ export function NegativosConsolidadosSection({
   return (
     <div
       id="section-negativos"
+      data-print-compact-section
       className="bg-white rounded-xl border border-gray-200 p-5 mb-4"
     >
       <div className="flex items-center mb-4">
@@ -101,6 +102,7 @@ export function NegativosConsolidadosSection({
           return (
             <button
               key={g.key}
+              data-print-negative-card
               type="button"
               onClick={() => {
                 setActiveGroup(g.key);
@@ -118,12 +120,14 @@ export function NegativosConsolidadosSection({
               <hr className="border-gray-200 mb-2" />
               <div className="flex items-baseline justify-between mb-2">
                 <span
+                  data-print-negative-count
                   className="text-xl font-bold"
                   style={{ color: isActive ? "#ED884A" : "#1F2937" }}
                 >
                   {g.count}
                 </span>
                 <span
+                  data-print-negative-amount
                   className="text-lg font-semibold"
                   style={{ color: isActive ? "#ED884A" : "#374151" }}
                 >
@@ -135,7 +139,10 @@ export function NegativosConsolidadosSection({
                   <p className="text-[9px] text-gray-400 uppercase tracking-wide">
                     Antiga
                   </p>
-                  <p className="text-xs font-medium text-gray-600">
+                  <p
+                    data-print-negative-date
+                    className="text-xs font-medium text-gray-600"
+                  >
                     {g.antiga}
                   </p>
                 </div>
@@ -143,7 +150,10 @@ export function NegativosConsolidadosSection({
                   <p className="text-[9px] text-gray-400 uppercase tracking-wide">
                     Recente
                   </p>
-                  <p className="text-xs font-medium text-gray-600">
+                  <p
+                    data-print-negative-date
+                    className="text-xs font-medium text-gray-600"
+                  >
                     {g.recente}
                   </p>
                 </div>
@@ -180,7 +190,7 @@ export function NegativosConsolidadosSection({
         </span>
       </div>
 
-      <table className="w-full text-xs table-fixed">
+      <table data-print-compact-table className="w-full text-xs table-fixed">
         {activeGroup === "CCF" ? (
           <colgroup>
             <col style={{ width: "120px" }} />

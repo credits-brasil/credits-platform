@@ -237,19 +237,29 @@ export function ScrSummarySection({
 
       <div className="flex h-full w-full flex-col gap-2 self-stretch">
         {hasScrData && !isUnavailable ? (
-          <div className="grid h-full grid-cols-4 gap-2">
+          <div
+            data-print-summary-grid
+            className="grid h-full grid-cols-4 gap-2"
+          >
             {items.map(({ label, value }) => (
               <div
                 key={label}
+                data-print-summary-card
                 className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
                 style={{ backgroundColor: "#F8F9FB" }}
               >
-                <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                <span
+                  data-print-summary-label
+                  className="text-[10px] font-medium uppercase tracking-wide text-gray-400"
+                >
                   {label}
                 </span>
 
                 {typeof value === "string" || typeof value === "number" ? (
-                  <span className="text-base font-bold text-gray-800">
+                  <span
+                    data-print-summary-value
+                    className="text-base font-bold text-gray-800"
+                  >
                     <AnimatedResumoValue value={value} />
                   </span>
                 ) : (

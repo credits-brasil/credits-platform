@@ -76,6 +76,7 @@ export default function Sidebar({
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>(
     {},
   );
+  
   const [isAdminCompanyOperator, setIsAdminCompanyOperator] = useState(false);
 
   useEffect(() => {
@@ -326,6 +327,7 @@ export default function Sidebar({
 
   return (
     <aside
+      data-print-hidden
       className="fixed top-0 left-0 z-40 flex flex-col"
       style={{
         width: collapsed ? "64px" : "240px",

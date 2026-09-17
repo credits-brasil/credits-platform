@@ -50,6 +50,7 @@ export default function Header({ sidebarCollapsed, onLogout }: HeaderProps) {
 
   return (
     <header
+      data-print-hidden
       className="fixed top-0 right-0 z-30 flex items-center justify-between bg-white border-b border-gray-200 shadow-sm px-6"
       style={{
         left: sidebarCollapsed ? "64px" : "240px",
