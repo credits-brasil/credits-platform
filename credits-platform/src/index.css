@@ -249,9 +249,12 @@
     display: none !important;
   }
 
-  [data-print-content] {
+  [data-print-content],
+  [data-print-container] {
     width: 100% !important;
     max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
     overflow: visible !important;
@@ -259,15 +262,18 @@
   }
 
   [data-print-document] {
+    display: block;
     width: 100% !important;
     max-width: 100% !important;
+    overflow-wrap: anywhere;
   }
 
   .print-cover {
     display: flex !important;
     width: 100%;
-    height: 100vh;
-    min-height: 100vh;
+    /* Leave room for print unit rounding without overflowing the cover page. */
+    height: calc(100vh - 1mm);
+    min-height: 0;
     align-items: center;
     justify-content: center;
     overflow: hidden;
@@ -282,8 +288,85 @@
   }
 
   [data-print-document] [id^="section-"] {
+    min-width: 0;
+    max-width: 100%;
+    padding: 12px !important;
+    margin-top: 0 !important;
+    margin-bottom: 8px !important;
     break-inside: avoid-page;
     page-break-inside: avoid;
+  }
+
+  /* Keep the report dense without reducing the size of its text. */
+  [data-print-document] :is(.mb-3, .mb-4, .mb-5, .mb-6) {
+    margin-bottom: 8px !important;
+  }
+
+  [data-print-document] :is(.mt-4, .mt-5, .mt-6, .mt-10) {
+    margin-top: 8px !important;
+  }
+
+  [data-print-document] :is(.p-4, .p-5) {
+    padding: 12px !important;
+  }
+
+  [data-print-document] .grid {
+    column-gap: 12px;
+    row-gap: 8px;
+  }
+
+  [data-print-document] :is(.grid, .flex) > * {
+    min-width: 0;
+  }
+
+  /* Paper widths must not activate the single-column mobile layout. */
+  [data-print-document] .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  [data-print-document] .md\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  [data-print-document] .md\:flex-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  [data-print-score] {
+    gap: 8px !important;
+  }
+
+  [data-print-score-chart],
+  [data-print-score-chart] > svg {
+    width: 96px !important;
+    height: 96px !important;
+  }
+
+  [data-print-document] :is(.truncate, .whitespace-nowrap) {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip;
+  }
+
+  /* A section taller than a sheet can flow between its intact inner blocks. */
+  [data-print-document] [data-print-block],
+  [data-print-document] .grid > * {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+
+  [data-print-document] :is(h1, h2, h3) {
+    break-after: avoid-page;
+    page-break-after: avoid;
+  }
+
+  [data-print-document] [data-state="open"][role="region"] {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    animation: none !important;
   }
 
   [data-print-negative-card] {
@@ -356,6 +439,8 @@
 
   [data-print-document] .sticky {
     position: static !important;
+    break-inside: avoid-page;
+    page-break-inside: avoid;
   }
 
   [data-print-document] .sticky::before {
@@ -370,6 +455,11 @@
 
   [data-print-document] table {
     width: 100%;
+    max-width: 100%;
+  }
+
+  [data-print-document] :is(th, td) {
+    overflow-wrap: anywhere;
   }
 
   [data-print-document] thead {
