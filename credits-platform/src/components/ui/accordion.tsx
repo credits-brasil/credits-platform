@@ -11,6 +11,7 @@ const AccordionItem = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>
 >(({ className, ...props }, ref) => (
   <AccordionPrimitive.Item
+    data-print-block
     ref={ref}
     className={cn("border-b", className)}
     {...props}

@@ -88,6 +88,7 @@ export default function Layout({ children, onLogout }: LayoutProps) {
         }
       >
         <div
+          data-print-container
           className={
             isSearchPage
               ? "mx-auto h-full w-full px-7.5 overflow-hidden"
