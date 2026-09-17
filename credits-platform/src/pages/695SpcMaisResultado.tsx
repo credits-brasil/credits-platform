@@ -1,4 +1,5 @@
 import SpcMaxiResultadoPage from "@/pages/325SpcMaxiResultado";
+import { SPC_MAIS_DEFAULT_INSUMOS } from "@/constants/spc-mais";
 
 export default function SpcMaisResultadoPage() {
   return (
@@ -7,7 +8,7 @@ export default function SpcMaisResultadoPage() {
         slug: "695-spc-mais",
         name: "695 SPC MAIS",
         endpoint: "/api/695-spc-mais",
-        excludedInsumos: ["78"],
+        defaultInsumos: SPC_MAIS_DEFAULT_INSUMOS,
       }}
     />
   );
