@@ -5,7 +5,7 @@ export default function SpcMaisResultadoPage() {
     <SpcMaxiResultadoPage
       product={{
         slug: "695-spc-mais",
-        name: "365 SPC MAIS",
+        name: "695 SPC MAIS",
         endpoint: "/api/695-spc-mais",
         excludedInsumos: ["78"],
       }}
