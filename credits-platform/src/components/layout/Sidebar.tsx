@@ -141,10 +141,10 @@ export default function Sidebar({
           labelIcon: "apps",
           items: [
             {
-              id: "operadores",
-              label: "Operadores",
+              id: "usuarios",
+              label: "Usuários",
               icon: User,
-              path: "/configuracoes/operadores",
+              path: "/configuracoes/usuarios",
             },
           ],
         },

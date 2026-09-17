@@ -19,7 +19,7 @@ const chatGPTImage = "/attached-assets/credits-brand-primary.png";
 const API_URL = import.meta.env.VITE_API_URL;
 
 interface LoginPageProps {
-  onLogin: (username: string, password: string) => Promise<boolean> | boolean;
+  onLogin: (username: string, password: string) => Promise<string | null> | string | null;
 }
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
@@ -29,27 +29,102 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [keepConnected, setKeepConnected] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [recoveryStep, setRecoveryStep] = useState<"login" | "email" | "otp" | "password">("login");
+  const [recoveryStep, setRecoveryStep] = useState<"login" | "email" | "otp" | "password" | "firstAccess">("login");
   const [recoveryEmail, setRecoveryEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [resetToken, setResetToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
+  const [firstAccessCurrentPassword, setFirstAccessCurrentPassword] = useState("");
+  const [firstAccessNewPassword, setFirstAccessNewPassword] = useState("");
+  const [firstAccessConfirmation, setFirstAccessConfirmation] = useState("");
+  const [showFirstAccessPassword, setShowFirstAccessPassword] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const didLogin = await onLogin(username, password);
+    const errorMessage = await onLogin(username, password);
 
-    if (!didLogin) {
-      setError("Credenciais inválidas. Tente novamente.");
+    if (errorMessage) {
+      if (errorMessage.toLowerCase().includes("primeiro acesso")) {
+        setRecoveryEmail(username.trim());
+        setFirstAccessCurrentPassword(password);
+        setFirstAccessNewPassword("");
+        setFirstAccessConfirmation("");
+        setRecoveryStep("firstAccess");
+        setError(null);
+        return;
+      }
 
+      setError(errorMessage);
       return;
     }
 
     setError(null);
     setLocation("/credito-risco/325-spc-maxi");
+  };
+
+  const handleFirstAccessSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
+
+    const email = recoveryEmail.trim() || username.trim();
+
+    if (!email) {
+      setError("Informe seu e-mail para continuar.");
+      return;
+    }
+
+    if (!firstAccessCurrentPassword) {
+      setError("Informe a senha temporária recebida no cadastro.");
+      return;
+    }
+
+    if (firstAccessNewPassword.length < 8) {
+      setError("A nova senha deve ter pelo menos 8 caracteres.");
+      return;
+    }
+
+    if (firstAccessNewPassword !== firstAccessConfirmation) {
+      setError("As senhas não conferem.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/auth/user/first-access/change-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          currentPassword: firstAccessCurrentPassword,
+          newPassword: firstAccessNewPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message ?? "Não foi possível alterar sua senha.");
+        return;
+      }
+
+      const loginSucceeded = await onLogin(email, firstAccessNewPassword);
+      if (loginSucceeded) {
+        setError(loginSucceeded);
+        return;
+      }
+
+      setUsername(email);
+      setPassword("");
+      setFirstAccessCurrentPassword("");
+      setFirstAccessNewPassword("");
+      setFirstAccessConfirmation("");
+      setRecoveryStep("login");
+      setLocation("/credito-risco/325-spc-maxi");
+    } catch {
+      setError("Não foi possível alterar sua senha. Tente novamente.");
+    }
   };
 
   const handleRecoveryRequest = async (event: FormEvent<HTMLFormElement>) => {
@@ -325,7 +400,9 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                     ? "Recupere sua senha"
                     : recoveryStep === "otp"
                       ? "Valide seu código"
-                      : "Crie uma nova senha"}
+                      : recoveryStep === "firstAccess"
+                        ? "Primeiro acesso"
+                        : "Crie uma nova senha"}
               </h2>
 
               <p className="text-slate-500">
@@ -335,7 +412,9 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                     ? "Informe seu e-mail para receber um código de acesso."
                     : recoveryStep === "otp"
                       ? `Digite o código de 6 dígitos enviado para ${recoveryEmail}.`
-                      : "Defina uma senha nova para acessar sua conta."}
+                      : recoveryStep === "firstAccess"
+                        ? "Você precisa definir uma nova senha antes de continuar."
+                        : "Defina uma senha nova para acessar sua conta."}
               </p>
             </motion.div>
 
@@ -345,7 +424,97 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               transition={{ delay: 0.4, duration: 0.5 }}
               className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 p-6 md:p-8 border border-slate-100"
             >
-              {recoveryStep === "login" ? (
+              {recoveryStep === "firstAccess" ? (
+                <form className="space-y-5" onSubmit={handleFirstAccessSubmit}>
+                  <div className="space-y-1.5">
+                    <label htmlFor="first-access-email" className="text-sm font-semibold text-[#0A1F5C] block">
+                      E-mail
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                      <input
+                        id="first-access-email"
+                        type="email"
+                        value={recoveryEmail || username}
+                        onChange={(event) => setRecoveryEmail(event.target.value)}
+                        className="block w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-sm placeholder:text-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#F5821F]"
+                        placeholder="seuemail@empresa.com.br"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label htmlFor="first-access-current-password" className="text-sm font-semibold text-[#0A1F5C] block">
+                      Senha temporária
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                      <input
+                        id="first-access-current-password"
+                        type={showFirstAccessPassword ? "text" : "password"}
+                        value={firstAccessCurrentPassword}
+                        onChange={(event) => setFirstAccessCurrentPassword(event.target.value)}
+                        className="block w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-10 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#F5821F]"
+                        placeholder="Digite a senha temporária"
+                        autoComplete="current-password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowFirstAccessPassword((prev) => !prev)}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        {showFirstAccessPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label htmlFor="first-access-new-password" className="text-sm font-semibold text-[#0A1F5C] block">
+                      Nova senha
+                    </label>
+                    <div className="relative">
+                      <KeyRound className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                      <input
+                        id="first-access-new-password"
+                        type="password"
+                        value={firstAccessNewPassword}
+                        onChange={(event) => setFirstAccessNewPassword(event.target.value)}
+                        className="block w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#F5821F]"
+                        placeholder="Mínimo de 8 caracteres"
+                        autoComplete="new-password"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label htmlFor="first-access-confirmation" className="text-sm font-semibold text-[#0A1F5C] block">
+                      Confirmar nova senha
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                      <input
+                        id="first-access-confirmation"
+                        type="password"
+                        value={firstAccessConfirmation}
+                        onChange={(event) => setFirstAccessConfirmation(event.target.value)}
+                        className="block w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#F5821F]"
+                        placeholder="Digite a senha novamente"
+                        autoComplete="new-password"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {error && <p className="text-sm text-red-500">{error}</p>}
+
+                  <button type="submit" className="w-full rounded-lg bg-[#F5821F] px-4 py-3 font-bold text-white shadow-lg shadow-[#F5821F]/20 transition-all hover:-translate-y-0.5 hover:bg-[#F5821F]/90 cursor-pointer">
+                    Salvar nova senha
+                  </button>
+                </form>
+              ) : recoveryStep === "login" ? (
               <form className="space-y-5" onSubmit={handleSubmit}>
                 <div className="space-y-1.5">
                   <label
