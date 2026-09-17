@@ -50,6 +50,14 @@ interface UserSession {
   };
 }
 
+const loginErrorMessage = (errorMessage: string | null | undefined) => {
+  if (!errorMessage) {
+    return "Não foi possível autenticar.";
+  }
+
+  return errorMessage;
+};
+
 function HomeRedirect() {
   const [, setLocation] = useLocation();
 
@@ -86,7 +94,7 @@ function Router({
   onLogout,
 }: {
   isAuthenticated: boolean;
-  onLogin: (username: string, password: string) => Promise<boolean>;
+  onLogin: (username: string, password: string) => Promise<string | null>;
   onLogout: () => void;
 }) {
   if (!isAuthenticated) {
@@ -143,22 +151,22 @@ function App() {
       const data = await response.json();
 
       if (!response.ok) {
-        return false;
+        return loginErrorMessage(data?.message ?? null);
       }
 
       const session = data.session as UserSession;
 
       if (!session?.accessToken || !session?.user) {
-        return false;
+        return "Não foi possível autenticar.";
       }
 
       localStorage.setItem(AUTH_STORAGE_KEY, "true");
       localStorage.setItem(AUTH_TOKEN_KEY, session.accessToken);
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(session.user));
       setIsAuthenticated(true);
-      return true;
+      return null;
     } catch {
-      return false;
+      return "Não foi possível autenticar.";
     }
   };
 
