@@ -44,36 +44,6 @@ interface MenuGroup {
 }
 
 const menuGroups: MenuGroup[] = [
-  // {
-  //   id: "main",
-  //   items: [
-  //     { id: "home", label: "Home", icon: Home, path: "/" },
-  //   ],
-  // },
-  // {
-  //   id: "favoritos",
-  //   label: "Favoritos",
-  //   items: [
-  //     {
-  //       id: "pessoa-fisica",
-  //       label: "Pessoa Física",
-  //       icon: User,
-  //       subItems: [
-  //         { label: "SPC Relatório Completo", path: "/favoritos/pf/relatorio-completo" },
-  //         { label: "SPC MAXI", path: "/favoritos/pf/spc-maxi" },
-  //       ],
-  //     },
-  //     {
-  //       id: "pessoa-juridica",
-  //       label: "Pessoa Jurídica",
-  //       icon: Building2,
-  //       subItems: [
-  //         { label: "SPC MAX", path: "/favoritos/pj/spc-max" },
-  //         { label: "SPC MAXI", path: "/favoritos/pj/spc-maxi" },
-  //       ],
-  //     },
-  //   ],
-  // },
   {
     id: "catalogo-grupo",
     items: [
@@ -90,47 +60,8 @@ const menuGroups: MenuGroup[] = [
           { label: "337 - SPC RELATÓRIO PJ", path: "/credito-risco/337-spc-relatorio-pj" },
         ],
       },
-      // {
-      //   id: "cobranca",
-      //   label: "Cobrança",
-      //   icon: CreditCard,
-      //   subItems: [
-      //     { label: "Relatório A", path: "/credito/relatorio-a" },
-      //   ],
-      // },
     ],
   },
-  // {
-  //   id: "relatorios-analise",
-  //   label: "Relatórios e Análise",
-  //   items: [
-  //     {
-  //       id: "relatorios",
-  //       label: "Relatórios",
-  //       icon: BarChart2,
-  //       subItems: [
-  //         { label: "Extrato Sintético", path: "/relatorios/extrato-sintetico" },
-  //         { label: "Extrato Analítico", path: "/relatorios/extrato-analitico" },
-  //       ],
-  //     },
-  //     {
-  //       id: "auditoria",
-  //       label: "Auditoria",
-  //       icon: ShieldCheck,
-  //       path: "/auditoria",
-  //     },
-  //     {
-  //       id: "configuracoes",
-  //       label: "Configurações",
-  //       icon: Settings,
-  //       subItems: [
-  //         { label: "Empresas", path: "/configuracoes/empresas" },
-  //         { label: "Operadores", path: "/configuracoes/operadores" },
-  //         { label: "Permissões", path: "/configuracoes/permissoes" },
-  //       ],
-  //     },
-  //   ],
-  // },
 ];
 
 interface SidebarProps {
@@ -148,8 +79,67 @@ export default function Sidebar({
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>(
     {},
   );
+  
+  const [isAdminCompanyOperator, setIsAdminCompanyOperator] = useState(false);
 
-  const allItems = menuGroups.flatMap((g) => g.items);
+  useEffect(() => {
+    const readAdminAccess = () => {
+      try {
+        const selectedCompany = localStorage.getItem(
+          "credits-platform-selected-company",
+        );
+        const storedUser = localStorage.getItem("credits-platform-auth-user");
+
+        if (!selectedCompany || !storedUser) {
+          setIsAdminCompanyOperator(false);
+          return;
+        }
+
+        const selected = JSON.parse(selectedCompany) as { id?: string };
+        const user = JSON.parse(storedUser) as {
+          companies?: Array<{ id?: string; role?: "ADMIN" | "OPERATOR" }>;
+        };
+        const userCompany = user.companies?.find(
+          (company) => company.id === selected.id,
+        );
+        setIsAdminCompanyOperator(userCompany?.role === "ADMIN");
+      } catch {
+        setIsAdminCompanyOperator(false);
+      }
+    };
+
+    readAdminAccess();
+    window.addEventListener("storage", readAdminAccess);
+    window.addEventListener("credits-platform-company-change", readAdminAccess);
+    return () => {
+      window.removeEventListener("storage", readAdminAccess);
+      window.removeEventListener(
+        "credits-platform-company-change",
+        readAdminAccess,
+      );
+    };
+  }, []);
+
+  const effectiveMenuGroups = isAdminCompanyOperator
+    ? [
+        ...menuGroups,
+        {
+          id: "configuracoes",
+          label: "Configurações",
+          labelIcon: "apps",
+          items: [
+            {
+              id: "operadores",
+              label: "Operadores",
+              icon: User,
+              path: "/configuracoes/operadores",
+            },
+          ],
+        },
+      ]
+    : menuGroups;
+
+  const allItems = effectiveMenuGroups.flatMap((g) => g.items);
 
   useEffect(() => {
     const parentWithActiveChild = allItems.find((item) =>
@@ -428,7 +418,7 @@ export default function Sidebar({
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2">
-        {menuGroups.map((group, groupIndex) => (
+        {effectiveMenuGroups.map((group, groupIndex) => (
           <div key={group.id}>
             {groupIndex > 0 && (
               <div
