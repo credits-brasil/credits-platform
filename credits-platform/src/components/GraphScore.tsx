@@ -67,8 +67,9 @@ export function GraphScoreComponent({
   }, [normalizedScore, progressLength]);
 
   return (
-    <div className={className}>
+    <div className={className} data-print-score>
       <div
+        data-print-score-chart
         className="relative flex items-center justify-center flex-shrink-0"
         style={{ width: 140, height: 140 }}
       >
@@ -108,7 +109,7 @@ export function GraphScoreComponent({
       </div>
 
       <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 print:flex-wrap">
           <span
             className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
             style={badgeStyle}
@@ -119,7 +120,11 @@ export function GraphScoreComponent({
           {headerContent}
         </div>
 
-        {message && <p className="text-xs text-gray-500 text-justify">{message}</p>}
+        {message && (
+          <p className="whitespace-pre-line text-xs text-gray-500 text-justify">
+            {message}
+          </p>
+        )}
 
         {secondaryBadge && (
           <span

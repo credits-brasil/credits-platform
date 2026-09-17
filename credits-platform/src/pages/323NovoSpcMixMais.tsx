@@ -13,6 +13,7 @@ import {
   CPF_INSUMO_GROUPS,
 } from "@/constants/insumo-groups";
 import type { DocType } from "@/types/docType";
+import { NOVO_SPC_MIX_MAIS_EXCLUDED_INSUMOS } from "@/constants/novo-spc-mix-mais";
 import {
   detectDocTypeByInput,
   formatCnpj,
@@ -24,7 +25,7 @@ import {
 
 const DEFAULT_SELECTED = new Set<string>([]);
 
-export default function SpcMaxiPage() {
+export default function SpcMixMaisPage() {
   const queryClient = useQueryClient();
 
   const [loading, setLoading] = useState(false);
@@ -38,7 +39,17 @@ export default function SpcMaxiPage() {
   );
 
   const insumoGroups = useMemo(
-    () => (docType === "CPF" ? CPF_INSUMO_GROUPS : CNPJ_INSUMO_GROUPS),
+    () =>
+      (docType === "CPF" ? CPF_INSUMO_GROUPS : CNPJ_INSUMO_GROUPS)
+        .map((group) => ({
+          ...group,
+          items: group.items.filter(
+            (item) =>
+              docType !== "CNPJ" ||
+              !NOVO_SPC_MIX_MAIS_EXCLUDED_INSUMOS.includes(item.id),
+          ),
+        }))
+        .filter((group) => group.items.length > 0),
     [docType],
   );
 
@@ -138,14 +149,19 @@ export default function SpcMaxiPage() {
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      queryClient.setQueryData(["spc-maxi-request"], {
+      queryClient.setQueryData(["323-novo-spc-mix-mais-request"], {
         document: rawClean,
         typeDocument: docType,
         telefone: shouldRequireTelefone ? telefoneClean : undefined,
-        insumos: Array.from(selected),
+        insumos: Array.from(selected).filter(
+          (id) =>
+            docType !== "CNPJ" ||
+            !NOVO_SPC_MIX_MAIS_EXCLUDED_INSUMOS.includes(id),
+        ),
+        consultedAt: new Date().toISOString(),
       });
 
-      navigate("/verticais/credito-risco/spc-maxi/resultado");
+      navigate("/credito-risco/323-novo-spc-mix-mais/resultado");
     } finally {
       setLoading(false);
     }
@@ -160,7 +176,7 @@ export default function SpcMaxiPage() {
               Risco e crédito
             </p>
             <h1 className="text-2xl font-semibold tracking-tight text-white">
-              325 - SPC MAXI
+              323 - NOVO SPC MIX MAIS
             </h1>
           </div>
 
@@ -174,15 +190,16 @@ export default function SpcMaxiPage() {
         onSubmit={handleConsultar}
         className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-100 sm:p-5"
       >
-        <div className="flex flex-col gap-5">
-          <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-slate-700">Documento</p>
+
             <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
               {docType === "CPF" ? "Pessoa física" : "Pessoa jurídica"}
             </span>
           </div>
 
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-end">
+          <div className="flex flex-col gap-2 xl:flex-row xl:items-end xl:gap-1">
             <div className="flex shrink-0 items-center">
               <DocTypeToggleComponent
                 value={docType}
@@ -191,7 +208,7 @@ export default function SpcMaxiPage() {
               />
             </div>
 
-            <div className="min-w-0 flex-1">
+            <div className="flex-1 xl:max-w-[220px]">
               <InputComponent
                 value={documento}
                 onChange={handleDocumento}
@@ -203,11 +220,12 @@ export default function SpcMaxiPage() {
                 disabled={loading}
                 showError={showError}
                 showSuccess={showSuccess}
+                className="w-full"
               />
             </div>
 
             {shouldRequireTelefone && (
-              <div className="min-w-0 xl:w-[260px]">
+              <div className="min-w-0 xl:w-[220px]">
                 <InputComponent
                   value={telefone}
                   onChange={handleTelefone}
@@ -218,6 +236,7 @@ export default function SpcMaxiPage() {
                   required
                   showError={showTelefoneError}
                   showSuccess={showTelefoneSuccess}
+                  className="w-full"
                 />
               </div>
             )}
@@ -225,7 +244,7 @@ export default function SpcMaxiPage() {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-all duration-200 whitespace-nowrap shadow-sm"
+              className="inline-flex h-[37.5px] items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 whitespace-nowrap shadow-sm xl:self-end"
               style={{
                 backgroundColor: canSubmit ? "#243871" : "#9ca3af",
                 cursor: canSubmit ? "pointer" : "not-allowed",

@@ -12,9 +12,20 @@ interface HeaderProps {
   onLogout: () => void;
 }
 
+interface AuthenticatedOperator {
+  id: string;
+  name: string;
+  cpf: string;
+  email?: string;
+  createdAt: string;
+  updatedAt: string;
+  companies?: Array<{ id: string; name: string; cnpj: string }>;
+}
+
 export default function Header({ sidebarCollapsed, onLogout }: HeaderProps) {
   const { isIdentificationFixed } = useStickyIdentification();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [operator, setOperator] = useState<AuthenticatedOperator | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -24,12 +35,26 @@ export default function Header({ sidebarCollapsed, onLogout }: HeaderProps) {
       }
     };
 
+    const storedUser = localStorage.getItem("credits-platform-auth-user");
+
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser) as AuthenticatedOperator;
+        setOperator(parsedUser);
+      } catch {
+        setOperator(null);
+      }
+    } else {
+      setOperator(null);
+    }
+
     document.addEventListener("mousedown", handleOutsideClick);
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
   return (
     <header
+      data-print-hidden
       aria-hidden={isIdentificationFixed}
       className={`fixed top-0 right-0 z-30 flex items-center justify-between bg-white border-b border-gray-200 shadow-sm px-6 transition-[transform,visibility] duration-300 ease-in-out ${
         isIdentificationFixed
@@ -37,7 +62,7 @@ export default function Header({ sidebarCollapsed, onLogout }: HeaderProps) {
           : "visible translate-y-0 opacity-100"
       }`}
       style={{
-        left: sidebarCollapsed ? "64px" : "240px",
+        left: sidebarCollapsed ? "64px" : "350px",
         height: `${HEADER_HEIGHT}px`,
         transitionProperty: "left, opacity, transform, visibility",
       }}
@@ -70,9 +95,11 @@ export default function Header({ sidebarCollapsed, onLogout }: HeaderProps) {
 
             <div className="flex flex-col leading-tight text-left">
               <span className="text-sm font-semibold text-gray-800">
-                Usuário
+                {operator?.name || "Usuário"}
               </span>
-              <span className="text-xs text-gray-500">usuario@credits.com</span>
+              <span className="text-xs text-gray-500">
+                {operator?.email || "usuario@credits.com"}
+              </span>
             </div>
             <ChevronDown
               size={14}

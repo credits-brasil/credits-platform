@@ -44,97 +44,36 @@ interface MenuGroup {
 }
 
 const menuGroups: MenuGroup[] = [
-  // {
-  //   id: "main",
-  //   items: [
-  //     { id: "home", label: "Home", icon: Home, path: "/" },
-  //   ],
-  // },
-  // {
-  //   id: "favoritos",
-  //   label: "Favoritos",
-  //   items: [
-  //     {
-  //       id: "pessoa-fisica",
-  //       label: "Pessoa Física",
-  //       icon: User,
-  //       subItems: [
-  //         { label: "SPC Relatório Completo", path: "/favoritos/pf/relatorio-completo" },
-  //         { label: "SPC MAXI", path: "/favoritos/pf/spc-maxi" },
-  //       ],
-  //     },
-  //     {
-  //       id: "pessoa-juridica",
-  //       label: "Pessoa Jurídica",
-  //       icon: Building2,
-  //       subItems: [
-  //         { label: "SPC MAX", path: "/favoritos/pj/spc-max" },
-  //         { label: "SPC MAXI", path: "/favoritos/pj/spc-maxi" },
-  //       ],
-  //     },
-  //   ],
-  // },
   {
     id: "catalogo-grupo",
-    label: "Verticais",
-    labelIcon: "apps",
     items: [
-      // {
-      //   id: "catalogo-item",
-      //   label: "Catálogo",
-      //   icon: BookOpen,
-      //   path: "/catalogo",
-      // },
       {
         id: "credito-risco",
         label: "Crédito e Risco",
         icon: BookOpen,
         subItems: [
-          { label: "SPC MAXI", path: "/verticais/credito-risco/spc-maxi" },
-          // { label: "SPC Relatório Completo", path: "/catalogo/relatorio-1" },
+          { label: "325 - SPC MAXI", path: "/credito-risco/325-spc-maxi" },
+          {
+            label: "629 - SPC POSITIVO INTERMEDIÁRIO PJ",
+            path: "/credito-risco/629-spc-positivo-intermediario-pj",
+          },
+          { label: "695 - SPC MAIS", path: "/credito-risco/695-spc-mais" },
+          {
+            label: "668 - SPC AVANÇADA PJ",
+            path: "/credito-risco/668-spc-avancada-pj",
+          },
+          {
+            label: "323 - NOVO SPC MIX MAIS",
+            path: "/credito-risco/323-novo-spc-mix-mais",
+          },
+          {
+            label: "337 - SPC RELATÓRIO PJ",
+            path: "/credito-risco/337-spc-relatorio-pj",
+          },
         ],
       },
-      // {
-      //   id: "cobranca",
-      //   label: "Cobrança",
-      //   icon: CreditCard,
-      //   subItems: [
-      //     { label: "Relatório A", path: "/credito/relatorio-a" },
-      //   ],
-      // },
     ],
   },
-  // {
-  //   id: "relatorios-analise",
-  //   label: "Relatórios e Análise",
-  //   items: [
-  //     {
-  //       id: "relatorios",
-  //       label: "Relatórios",
-  //       icon: BarChart2,
-  //       subItems: [
-  //         { label: "Extrato Sintético", path: "/relatorios/extrato-sintetico" },
-  //         { label: "Extrato Analítico", path: "/relatorios/extrato-analitico" },
-  //       ],
-  //     },
-  //     {
-  //       id: "auditoria",
-  //       label: "Auditoria",
-  //       icon: ShieldCheck,
-  //       path: "/auditoria",
-  //     },
-  //     {
-  //       id: "configuracoes",
-  //       label: "Configurações",
-  //       icon: Settings,
-  //       subItems: [
-  //         { label: "Empresas", path: "/configuracoes/empresas" },
-  //         { label: "Operadores", path: "/configuracoes/operadores" },
-  //         { label: "Permissões", path: "/configuracoes/permissoes" },
-  //       ],
-  //     },
-  //   ],
-  // },
 ];
 
 interface SidebarProps {
@@ -153,7 +92,66 @@ export default function Sidebar({
     {},
   );
 
-  const allItems = menuGroups.flatMap((g) => g.items);
+  const [isAdminCompanyOperator, setIsAdminCompanyOperator] = useState(false);
+
+  useEffect(() => {
+    const readAdminAccess = () => {
+      try {
+        const selectedCompany = localStorage.getItem(
+          "credits-platform-selected-company",
+        );
+        const storedUser = localStorage.getItem("credits-platform-auth-user");
+
+        if (!selectedCompany || !storedUser) {
+          setIsAdminCompanyOperator(false);
+          return;
+        }
+
+        const selected = JSON.parse(selectedCompany) as { id?: string };
+        const user = JSON.parse(storedUser) as {
+          companies?: Array<{ id?: string; role?: "ADMIN" | "OPERATOR" }>;
+        };
+        const userCompany = user.companies?.find(
+          (company) => company.id === selected.id,
+        );
+        setIsAdminCompanyOperator(userCompany?.role === "ADMIN");
+      } catch {
+        setIsAdminCompanyOperator(false);
+      }
+    };
+
+    readAdminAccess();
+    window.addEventListener("storage", readAdminAccess);
+    window.addEventListener("credits-platform-company-change", readAdminAccess);
+    return () => {
+      window.removeEventListener("storage", readAdminAccess);
+      window.removeEventListener(
+        "credits-platform-company-change",
+        readAdminAccess,
+      );
+    };
+  }, []);
+
+  const effectiveMenuGroups = isAdminCompanyOperator
+    ? [
+        ...menuGroups,
+        {
+          id: "configuracoes",
+          label: "Configurações",
+          labelIcon: "apps",
+          items: [
+            {
+              id: "operadores",
+              label: "Operadores",
+              icon: User,
+              path: "/configuracoes/operadores",
+            },
+          ],
+        },
+      ]
+    : menuGroups;
+
+  const allItems = effectiveMenuGroups.flatMap((g) => g.items);
 
   useEffect(() => {
     const parentWithActiveChild = allItems.find((item) =>
@@ -344,9 +342,10 @@ export default function Sidebar({
 
   return (
     <aside
+      data-print-hidden
       className="fixed top-0 left-0 z-40 flex flex-col"
       style={{
-        width: collapsed ? "64px" : "240px",
+        width: collapsed ? "64px" : "350px",
         height: "100vh",
         backgroundColor: SIDEBAR_BG,
         transition: "width 0.3s ease",
@@ -431,7 +430,7 @@ export default function Sidebar({
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2">
-        {menuGroups.map((group, groupIndex) => (
+        {effectiveMenuGroups.map((group, groupIndex) => (
           <div key={group.id}>
             {groupIndex > 0 && (
               <div

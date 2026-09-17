@@ -6,13 +6,49 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/layout/Layout";
 import HomePage from "@/pages/Home";
 import LoginPage from "@/pages/Login";
-import SpcMaxiPage from "@/pages/SpcMaxi";
-import SpcMaxiResultadoPage from "@/pages/SpcMaxiResultado";
+import SpcMaxiPage from "@/pages/325SpcMaxi";
+import SpcMaxiResultadoPage from "@/pages/325SpcMaxiResultado";
+import SpcMixMaisPage from "@/pages/323NovoSpcMixMais";
+import SpcMixMaisResultadoPage from "@/pages/323NovoSpcMixMaisResultado";
+import SpcRelatorioPage from "@/pages/337SpcRelatorioPj";
+import SpcRelatorioResultadoPage from "@/pages/337SpcRelatorioPjResultado";
+import SpcAvancadaPage from "@/pages/668SpcAvancadaPj";
+import SpcAvancadaResultadoPage from "@/pages/668SpcAvancadaPjResultado";
+import SpcMaisPage from "@/pages/695SpcMais";
+import SpcMaisResultadoPage from "@/pages/695SpcMaisResultado";
+import SpcPositivoIntermediarioPjPage from "@/pages/629SpcPositivoIntermediarioPj";
+import SpcPositivoIntermediarioPjResultadoPage from "@/pages/629SpcPositivoIntermediarioPjResultado";
 import NotFound from "@/pages/not-found";
+import OperatorsPage from "@/pages/Operators";
 
 const queryClient = new QueryClient();
 const AUTH_STORAGE_KEY = "credits-platform-authenticated";
-const HOME_ROUTE = "/verticais/credito-risco/spc-maxi";
+const HOME_ROUTE = "/credito-risco/325-spc-maxi";
+const AUTH_TOKEN_KEY = "credits-platform-auth-token";
+const AUTH_USER_KEY = "credits-platform-auth-user";
+const API_URL = import.meta.env.VITE_API_URL
+
+interface OperatorCompanySummary {
+  id: string;
+  name: string;
+  cnpj: string;
+  role?: "ADMIN" | "OPERATOR";
+  companyStatus?: "ACTIVE" | "INACTIVE";
+}
+
+interface UserSession {
+  accessToken: string;
+  user: {
+    id: string;
+    name: string;
+    cpf: string;
+    email?: string;
+    phone?: string;
+    createdAt: string;
+    updatedAt: string;
+    companies?: OperatorCompanySummary[];
+  };
+}
 
 function HomeRedirect() {
   const [, setLocation] = useLocation();
@@ -50,7 +86,7 @@ function Router({
   onLogout,
 }: {
   isAuthenticated: boolean;
-  onLogin: (username: string, password: string) => boolean;
+  onLogin: (username: string, password: string) => Promise<boolean>;
   onLogout: () => void;
 }) {
   if (!isAuthenticated) {
@@ -70,8 +106,20 @@ function Router({
         <Route path="/login" component={ProtectedLoginRedirect} />
         <Route path="/" component={HomeRedirect} />
         <Route path="/home" component={HomePage} />
-        <Route path="/verticais/credito-risco/spc-maxi" component={SpcMaxiPage} />
-        <Route path="/verticais/credito-risco/spc-maxi/resultado" component={SpcMaxiResultadoPage} />
+        <Route path="/credito-risco/325-spc-maxi" component={SpcMaxiPage} />
+        <Route path="/credito-risco/325-spc-maxi/resultado">
+          <SpcMaxiResultadoPage />
+        </Route>
+        <Route path="/credito-risco/629-spc-positivo-intermediario-pj" component={SpcPositivoIntermediarioPjPage} />
+        <Route path="/credito-risco/629-spc-positivo-intermediario-pj/resultado" component={SpcPositivoIntermediarioPjResultadoPage} />
+        <Route path="/credito-risco/695-spc-mais" component={SpcMaisPage} />
+        <Route path="/credito-risco/695-spc-mais/resultado" component={SpcMaisResultadoPage} />
+        <Route path="/credito-risco/668-spc-avancada-pj" component={SpcAvancadaPage} />
+        <Route path="/credito-risco/668-spc-avancada-pj/resultado" component={SpcAvancadaResultadoPage} />
+        <Route path="/credito-risco/323-novo-spc-mix-mais" component={SpcMixMaisPage} />
+        <Route path="/credito-risco/323-novo-spc-mix-mais/resultado" component={SpcMixMaisResultadoPage} />
+        <Route path="/credito-risco/337-spc-relatorio-pj" component={SpcRelatorioPage} />
+        <Route path="/credito-risco/337-spc-relatorio-pj/resultado" component={SpcRelatorioResultadoPage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
@@ -84,21 +132,40 @@ function App() {
     return localStorage.getItem(AUTH_STORAGE_KEY) === "true";
   });
 
-  const handleLogin = (username: string, password: string) => {
-    const hasValidCredentials =
-      username.trim().toLowerCase() === "admin" && password === "123456";
+  const handleLogin = async (username: string, password: string) => {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/user/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: username.trim(), password }),
+      });
 
-    if (!hasValidCredentials) {
+      const data = await response.json();
+
+      if (!response.ok) {
+        return false;
+      }
+
+      const session = data.session as UserSession;
+
+      if (!session?.accessToken || !session?.user) {
+        return false;
+      }
+
+      localStorage.setItem(AUTH_STORAGE_KEY, "true");
+      localStorage.setItem(AUTH_TOKEN_KEY, session.accessToken);
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(session.user));
+      setIsAuthenticated(true);
+      return true;
+    } catch {
       return false;
     }
-
-    localStorage.setItem(AUTH_STORAGE_KEY, "true");
-    setIsAuthenticated(true);
-    return true;
   };
 
   const handleLogout = () => {
     localStorage.removeItem(AUTH_STORAGE_KEY);
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(AUTH_USER_KEY);
     setIsAuthenticated(false);
   };
 

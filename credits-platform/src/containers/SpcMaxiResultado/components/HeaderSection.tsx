@@ -1,8 +1,10 @@
-import { Printer, RefreshCw, Search, User } from "lucide-react";
+import { RefreshCw, Search, User } from "lucide-react";
+import { PrintButton } from "@/components/PrintButton";
 import { CopyButton } from "@/components/ui/copy-button";
 import { useStickyIdentification } from "@/hooks/useStickyIdentification";
 
 type HeaderSectionProps = {
+  productName?: string;
   protocol: string;
   dateTime: string;
   operator: string;
@@ -13,13 +15,14 @@ type HeaderSectionProps = {
   documentTypeLabel: "CPF" | "CNPJ";
   situacao: string;
   isRegular: boolean;
+  isPendenteRegularizacao: boolean;
   metadataText: string;
-  onPrint: () => void;
   onReload: () => void;
   onNewQuery: () => void;
 };
 
 export function HeaderSection({
+  productName = "SPC MAXI",
   protocol,
   dateTime,
   operator,
@@ -30,8 +33,8 @@ export function HeaderSection({
   documentTypeLabel,
   situacao,
   isRegular,
+  isPendenteRegularizacao,
   metadataText,
-  onPrint,
   onReload,
   onNewQuery,
 }: HeaderSectionProps) {
@@ -39,62 +42,60 @@ export function HeaderSection({
     useStickyIdentification();
 
   return (
-    <div className="bg-background pb-2">
-      <div className={isIdentificationFixed ? "invisible mb-6" : "mb-6"}>
+    <div className="bg-background pb-2 print:break-inside-avoid">
+      <div
+        className={
+          isIdentificationFixed ? "invisible mb-6 print:visible" : "mb-6"
+        }
+      >
         <h1 className="text-xl font-semibold text-gray-800">
-          Relatório SPC MAXI
+          Relatório {productName}
         </h1>
       </div>
 
       <div
         className={
           isIdentificationFixed
-            ? "invisible flex items-center justify-between mb-3 px-1"
+            ? "invisible flex items-center justify-between mb-3 px-1 print:visible"
             : "flex items-center justify-between mb-3 px-1"
         }
       >
         <div className="flex items-center gap-4 text-xs text-gray-400">
-          <span className="flex items-center">
-            <span className="text-gray-500 font-medium mr-1">Protocolo:</span>
+          {protocol && (
+            <>
+              <span className="flex items-center">
+                <span className="text-gray-500 font-medium mr-1">
+                  Protocolo:
+                </span>
 
-            <div className="flex items-center gap-2">
-              {protocol}
-              <CopyButton value={protocol} title="Copiar Protocolo" />
-            </div>
-          </span>
-
-          <span className="text-gray-200">|</span>
+                <div className="flex items-center gap-2">
+                  {protocol}
+                  <CopyButton value={protocol} title="Copiar Protocolo" />
+                </div>
+              </span>
+              <span className="text-gray-200">|</span>
+            </>
+          )}
 
           <span>
             <span className="text-gray-500 font-medium">Data/Hora:</span>{" "}
             {dateTime}
           </span>
 
-          <span className="text-gray-200">|</span>
+          {operator && (
+            <>
+              <span className="text-gray-200">|</span>
 
-          <span>
-            <span className="text-gray-500 font-medium">Operador:</span>{" "}
-            {operator}
-          </span>
+              <span>
+                <span className="text-gray-500 font-medium">Operador:</span>{" "}
+                {operator}
+              </span>
+            </>
+          )}
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onPrint}
-            className="flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors cursor-pointer"
-          >
-            <Printer size={14} />
-          </button>
-
-          <button
-            type="button"
-            onClick={onReload}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:border-gray-300 hover:text-gray-900 cursor-pointer"
-          >
-            <RefreshCw size={12} />
-            Recarregar
-          </button>
+        <div className="flex items-center gap-2" data-print-hidden>
+          <PrintButton />
 
           <button
             type="button"
@@ -109,10 +110,16 @@ export function HeaderSection({
       </div>
 
       <div ref={registerIdentificationAnchor} aria-hidden="true" />
-      <div className={isIdentificationFixed ? "h-19.5 mb-4" : undefined}>
+      <div
+        className={
+          isIdentificationFixed
+            ? "h-19.5 mb-4 print:h-auto print:mb-0"
+            : undefined
+        }
+      >
         <div
           id="section-identificacao"
-          className={`bg-white border border-gray-200 ${
+          className={`bg-white border border-gray-200 print:static print:rounded-xl print:shadow-none ${
             isIdentificationFixed
               ? "fixed top-0 right-0 left-(--layout-sidebar-width) z-50 rounded-none px-5 py-3 shadow-md"
               : "rounded-xl p-5 mb-4"
@@ -157,19 +164,31 @@ export function HeaderSection({
             <div className="w-px self-stretch bg-gray-100" />
 
             <div className="flex flex-col gap-1.5 flex-1">
-              <span
-                className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
-                style={{
-                  backgroundColor: isRegular ? "#DCFCE7" : "#FEE2E2",
-                  color: isRegular ? "#15803D" : "#DC2626",
-                }}
-              >
-                {situacao}
-              </span>
+              {situacao && (
+                <span
+                  className="rounded-full px-2 py-0.5 text-xs font-semibold self-start"
+                  style={{
+                    backgroundColor: isRegular
+                      ? "#DCFCE7"
+                      : isPendenteRegularizacao
+                        ? "#FEF3C7"
+                        : "#FEE2E2",
+                    color: isRegular
+                      ? "#15803D"
+                      : isPendenteRegularizacao
+                        ? "#D97706"
+                        : "#DC2626",
+                  }}
+                >
+                  {situacao}
+                </span>
+              )}
 
-              <span className="text-xs text-gray-400 whitespace-nowrap">
-                {metadataText}
-              </span>
+              {metadataText && (
+                <span className="text-xs text-gray-400 whitespace-nowrap">
+                  {metadataText}
+                </span>
+              )}
             </div>
           </div>
         </div>
