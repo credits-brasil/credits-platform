@@ -46,7 +46,7 @@ export function ConsultasRealizadasSection({
       (agora.getTime() - data.getTime()) / (1000 * 60 * 60 * 24) <= 90
     );
   }).length;
-
+  
   const consultasMes = Object.values(
     consultas.reduce(
       (acc: Record<string, { mes: string; total: number }>, consulta: any) => {

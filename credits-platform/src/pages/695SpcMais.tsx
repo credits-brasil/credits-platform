@@ -13,6 +13,7 @@ import {
   CPF_INSUMO_GROUPS,
 } from "@/constants/insumo-groups";
 import type { DocType } from "@/types/docType";
+import { SPC_MAIS_DEFAULT_INSUMOS } from "@/constants/spc-mais";
 import {
   detectDocTypeByInput,
   formatCnpj,
@@ -42,7 +43,9 @@ export default function SpcMaisPage() {
       (docType === "CPF" ? CPF_INSUMO_GROUPS : CNPJ_INSUMO_GROUPS).map(
         (group) => ({
           ...group,
-          items: group.items.filter((item) => item.id !== "78"),
+          items: group.items.filter(
+            (item) => !SPC_MAIS_DEFAULT_INSUMOS.includes(item.id),
+          ),
         }),
       ),
     [docType],
@@ -148,7 +151,9 @@ export default function SpcMaisPage() {
         document: rawClean,
         typeDocument: docType,
         telefone: shouldRequireTelefone ? telefoneClean : undefined,
-        insumos: Array.from(selected).filter((id) => id !== "78"),
+        insumos: Array.from(selected).filter(
+          (id) => !SPC_MAIS_DEFAULT_INSUMOS.includes(id),
+        ),
         consultedAt: new Date().toISOString(),
       });
 

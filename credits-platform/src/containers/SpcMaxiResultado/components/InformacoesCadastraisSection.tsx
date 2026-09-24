@@ -10,6 +10,7 @@ import { formatCPF } from "@/utils/formatCPF";
 import { formatCEP } from "@/utils/formatCEP";
 import { formatDate } from "@/utils/formatDate";
 import { formatPhone } from "@/utils/formatPhone";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 type InformacoesCadastraisSectionProps = {
   spcData: any;
@@ -25,6 +26,14 @@ export function InformacoesCadastraisSection({
   spcData,
   body,
 }: InformacoesCadastraisSectionProps) {
+  const capitalSocial = spcData?.["capital-social"];
+  const hasCapitalSocial =
+    capitalSocial != null &&
+    !(typeof capitalSocial === "string" && capitalSocial.trim() === "");
+
+  const streetAddresValue = spcData?.consumidor?.endereco?.logradouro && spcData?.consumidor?.endereco?.numero && spcData?.consumidor?.endereco?.complemento
+    ? `${spcData?.consumidor?.endereco?.logradouro}, ${spcData?.consumidor?.endereco?.numero} — ${spcData?.consumidor?.endereco?.complemento}`
+    : "-";  
   return (
     <div
       id="section-cadastrais"
@@ -40,6 +49,7 @@ export function InformacoesCadastraisSection({
         {
           [
             "dados-pessoais",
+            "capital-social",
             "contato-endereco",
             "dados-adicionais-contato-spc-brasil",
             "atividades-economicas-secundarias-spc-brasil",
@@ -159,7 +169,7 @@ export function InformacoesCadastraisSection({
                     <div className="flex items-center gap-2">
                       <p className="text-sm text-gray-800">{f.value || "–"}</p>
 
-                      {COPYABLE_FIELDS.has(f.label) && f.value && (
+                      {COPYABLE_FIELDS.has(f.label) && f?.value?.length > 0 && (
                         <CopyButton
                           value={String(f.value)}
                           title={`Copiar ${f.label}`}
@@ -173,6 +183,29 @@ export function InformacoesCadastraisSection({
             </div>
           </AccordionContent>
         </AccordionItem>
+
+        {hasCapitalSocial && (
+          <AccordionItem value="capital-social" className="border-gray-100">
+            <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
+              Capital Social
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="grid grid-cols-1 gap-2 pt-1 pb-2 sm:grid-cols-2 lg:grid-cols-4">
+                <div
+                  className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+                  style={{ backgroundColor: "#F8F9FB" }}
+                >
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                    Capital Social
+                  </span>
+                  <span className="text-base font-bold text-gray-800">
+                    {formatCurrency(capitalSocial)}
+                  </span>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        )}
 
         <AccordionItem
           value="contato-endereco"
@@ -201,26 +234,26 @@ export function InformacoesCadastraisSection({
                     },
                   ]
                   : []),
-                { label: "E-mail", value: spcData?.consumidor?.email },
+                { label: "E-mail", value: spcData?.consumidor?.email || "–" },
                 {
                   label: "CEP",
-                  value: formatCEP(spcData?.consumidor?.endereco?.cep),
+                  value: formatCEP(spcData?.consumidor?.endereco?.cep) || "–",
                 },
                 {
                   label: "Logradouro",
-                  value: `${spcData?.consumidor?.endereco?.logradouro}, ${spcData?.consumidor?.endereco?.numero} — ${spcData?.consumidor?.endereco?.complemento}`,
+                  value: streetAddresValue,
                 },
                 {
                   label: "Bairro",
-                  value: spcData?.consumidor?.endereco?.bairro,
+                  value: spcData?.consumidor?.endereco?.bairro || "–",
                 },
                 {
                   label: "Cidade",
-                  value: spcData?.consumidor?.endereco?.cidade,
+                  value: spcData?.consumidor?.endereco?.cidade || "–",
                 },
                 {
                   label: "Estado",
-                  value: spcData?.consumidor?.endereco?.estado,
+                  value: spcData?.consumidor?.endereco?.estado || "–",
                 },
                 { label: "País", value: "Brasil" },
               ].map((f) => (
@@ -239,7 +272,7 @@ export function InformacoesCadastraisSection({
                       "CEP",
                       "Logradouro",
                     ].includes(f.label) &&
-                      f.value && (
+                      (f?.value?.length > 0 || f?.value === "-") && (
                         <CopyButton
                           value={String(f.value)}
                           title={`Copiar ${f.label}`}
@@ -285,19 +318,19 @@ export function InformacoesCadastraisSection({
                       key={index}
                       className="border-b border-gray-50 transition-colors hover:bg-gray-50"
                     >
-                      <td className="py-2.5 pr-4 text-sm text-gray-800 break-words">
+                      <td className="py-2.5 pr-4 text-sm text-gray-800 break-words whitespace-pre-line">
                         {row.endereco}
                       </td>
 
-                      <td className="py-2.5 pr-4 text-sm text-gray-800">
+                      <td className="py-2.5 pr-4 text-sm text-gray-800 break-words whitespace-pre-line">
                         {row.email}
                       </td>
 
-                      <td className="py-2.5 pr-4 text-sm text-gray-800 whitespace-nowrap">
+                      <td className="py-2.5 pr-4 text-sm text-gray-800 whitespace-pre-line">
                         {row.telefone}
                       </td>
 
-                      <td className="py-2.5 pr-4 text-sm text-gray-800 whitespace-nowrap">
+                      <td className="py-2.5 pr-4 text-sm text-gray-800 whitespace-pre-line">
                         {row.celular}
                       </td>
                     </tr>
@@ -350,7 +383,7 @@ export function InformacoesCadastraisSection({
                             key={index}
                             className="border-b border-gray-50 transition-colors hover:bg-gray-50"
                           >
-                            <td className="py-2.5 pr-4 text-sm text-gray-800 break-words">
+                            <td className="py-2.5 pr-4 text-sm text-gray-800 wrap-break-word">
                               {row.code}
                             </td>
 
