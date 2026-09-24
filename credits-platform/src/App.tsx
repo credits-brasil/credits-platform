@@ -25,6 +25,7 @@ const queryClient = new QueryClient();
 const AUTH_STORAGE_KEY = "credits-platform-authenticated";
 const HOME_ROUTE = "/credito-risco/325-spc-maxi";
 const AUTH_TOKEN_KEY = "credits-platform-auth-token";
+const AUTH_REFRESH_TOKEN_KEY = "credits-platform-refresh-token";
 const AUTH_USER_KEY = "credits-platform-auth-user";
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -38,6 +39,8 @@ interface OperatorCompanySummary {
 
 interface UserSession {
   accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
   user: {
     id: string;
     name: string;
@@ -97,7 +100,7 @@ function Router({
   onLogin: (username: string, password: string) => Promise<string | null>;
   onLogout: () => void;
 }) {
-  if (isAuthenticated) {
+  if (!isAuthenticated) {
     return (
       <Switch>
         <Route path="/">
@@ -162,6 +165,7 @@ function App() {
 
       localStorage.setItem(AUTH_STORAGE_KEY, "true");
       localStorage.setItem(AUTH_TOKEN_KEY, session.accessToken);
+      localStorage.setItem(AUTH_REFRESH_TOKEN_KEY, session.refreshToken);
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(session.user));
       setIsAuthenticated(true);
       return null;
@@ -173,6 +177,7 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem(AUTH_STORAGE_KEY);
     localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY);
     localStorage.removeItem(AUTH_USER_KEY);
     setIsAuthenticated(false);
   };

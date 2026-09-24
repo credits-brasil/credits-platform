@@ -68,6 +68,21 @@ interface SpcMaxiRequest {
   consultedAt?: string;
 }
 
+function getConsultationContext() {
+  const storedCompany = localStorage.getItem("credits-platform-selected-company");
+  const company = storedCompany ? JSON.parse(storedCompany) : null;
+  const accessToken = localStorage.getItem("credits-platform-auth-token");
+
+  if (!accessToken || !company?.id) {
+    throw new Error("Sessão ou empresa selecionada não encontrada.");
+  }
+
+  return {
+    companyId: company.id,
+    authorization: `Bearer ${accessToken}`,
+  };
+}
+
 function formatConsultaDateTime(value?: string): string {
   if (!value) return "-";
 
@@ -219,13 +234,15 @@ export default function SpcMaxiResultadoPage({
       }
 
       const response = await fetch(
-        `https://credits-core.onrender.com${endpoint}`,
+        `http://localhost:3333${endpoint}`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: getConsultationContext().authorization,
           },
           body: JSON.stringify({
+            companyId: getConsultationContext().companyId,
             document: requestData.document,
             typeDocument: requestData.typeDocument,
             telefone: product ? undefined : requestData.telefone,
@@ -1129,8 +1146,10 @@ export default function SpcMaxiResultadoPage({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: getConsultationContext().authorization,
           },
           body: JSON.stringify({
+            companyId: getConsultationContext().companyId,
             document: requestData.document,
             typeDocument: requestData.typeDocument,
             telefone: product ? undefined : requestData.telefone,
