@@ -97,7 +97,7 @@ function Router({
   onLogin: (username: string, password: string) => Promise<string | null>;
   onLogout: () => void;
 }) {
-  if (!isAuthenticated) {
+  if (isAuthenticated) {
     return (
       <Switch>
         <Route path="/">
