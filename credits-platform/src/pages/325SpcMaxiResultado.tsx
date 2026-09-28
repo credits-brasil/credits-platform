@@ -26,6 +26,8 @@ import { formatCurrency } from "@/utils/formatCurrency";
 import { formatDate } from "@/utils/formatDate";
 import { getCompanyAge } from "@/utils/getCompanyAge";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 type SortKey =
   | "inclusao"
   | "vencimento"
@@ -234,7 +236,7 @@ export default function SpcMaxiResultadoPage({
       }
 
       const response = await fetch(
-        `http://localhost:3333${endpoint}`,
+        `${API_URL}${endpoint}`,
         {
           method: "POST",
           headers: {
@@ -1141,7 +1143,7 @@ export default function SpcMaxiResultadoPage({
 
     try {
       const response = await fetch(
-        `https://credits-core.onrender.com${endpoint}`,
+        `${API_URL}${endpoint}`,
         {
           method: "POST",
           headers: {
