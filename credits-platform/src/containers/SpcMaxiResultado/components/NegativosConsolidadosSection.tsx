@@ -26,7 +26,9 @@ type SortKey =
   | "motivo"
   | "banco"
   | "agencia"
-  | "fonte";
+  | "fonte"
+  | "data"
+  | "cartorio";
 type SortDir = "asc" | "desc";
 
 interface GroupItem {
@@ -46,6 +48,7 @@ interface NegativosConsolidadosSectionProps {
   setExpanded: Dispatch<SetStateAction<boolean>>;
   resumoTabela: {
     count: number | string;
+    valor: string;
     antiga: string;
     recente: string;
   };
@@ -174,6 +177,11 @@ export function NegativosConsolidadosSection({
         <span className="text-gray-300">|</span>
 
         <span>
+          Valor: <span className="font-semibold text-[#ED884A]">{resumoTabela.valor}</span>
+        </span>
+        <span className="text-gray-300">|</span>
+
+        <span>
           Mais antiga:{" "}
           <span className="font-semibold text-gray-700">
             {resumoTabela.antiga}
@@ -221,7 +229,7 @@ export function NegativosConsolidadosSection({
 
         <thead>
           <tr className="border-b border-gray-100">
-            {(activeGroup === "CCF"
+            {((activeGroup === "CCF"
               ? [
                   { label: "Inclusão", key: "inclusao" },
                   { label: "Motivo", key: "motivo" },
@@ -245,7 +253,7 @@ export function NegativosConsolidadosSection({
                     { label: "Origem", key: "origem" },
                     { label: "", key: null },
                   ] as { label: string; key: SortKey | null }[])
-            ).map(({ label, key }) => (
+            ) as NegativosTableColumn[]).map(({ label, key }) => (
               <th key={label} className="text-left pb-2 pr-4 last:pr-0">
                 {key ? (
                   <button
@@ -477,7 +485,7 @@ export function NegativosConsolidadosSection({
         </button>
       )}
 
-      {expanded && filtered.length > PAGE && (
+      {expanded && remaining > 0 && (
         <button
           type="button"
           onClick={() => setExpanded(false)}
