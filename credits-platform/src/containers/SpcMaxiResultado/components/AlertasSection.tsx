@@ -11,14 +11,15 @@ export interface AlertaItem {
 
 interface AlertasSectionProps {
   alertas: AlertaItem[];
+  sectionId?: string;
 }
 
-export function AlertasSection({ alertas }: AlertasSectionProps) {
+export function AlertasSection({ alertas, sectionId = "section-alertas" }: AlertasSectionProps) {
   if (!alertas.length) return null;
 
   return (
     <div
-      id="section-alertas"
+      id={sectionId}
       className="mb-4 rounded-xl border border-gray-200 bg-white p-5"
     >
       <h2 className="mb-4 text-sm font-semibold text-gray-700">Alertas</h2>
@@ -65,15 +66,7 @@ export function AlertasSection({ alertas }: AlertasSectionProps) {
                       {a.titulo}
                     </span>
 
-                    <span
-                      className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold capitalize whitespace-nowrap"
-                      style={{
-                        backgroundColor: cfg.badge.bg,
-                        color: cfg.badge.color,
-                      }}
-                    >
-                      {a.severidade}
-                    </span>
+
                   </div>
 
                   <p className="mb-2 text-xs text-gray-500">{a.descricao}</p>
