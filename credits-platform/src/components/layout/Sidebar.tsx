@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   Home,
   BookOpen,
@@ -167,6 +167,21 @@ export default function Sidebar({
     setExpandedItems((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const handleNavigation = (event: React.MouseEvent<HTMLAnchorElement>, path: string) => {
+    if (
+      !event.defaultPrevented &&
+      event.button === 0 &&
+      !event.metaKey &&
+      !event.ctrlKey &&
+      !event.shiftKey &&
+      !event.altKey &&
+      location !== path &&
+      !collapsed
+    ) {
+      onToggle();
+    }
+  };
+
   const isDirectlyActive = (item: MenuItem): boolean => {
     return !!item.path && location === item.path;
   };
@@ -185,8 +200,9 @@ export default function Sidebar({
     return (
       <div key={item.id} className="mb-0.5">
         {item.path && !hasSubItems ? (
-          <a
+          <Link
             href={item.path}
+            onClick={(event) => handleNavigation(event, item.path!)}
             title={collapsed ? item.label : undefined}
             className="w-full flex items-center rounded-md"
             style={{
@@ -224,7 +240,7 @@ export default function Sidebar({
                 {item.label}
               </span>
             )}
-          </a>
+          </Link>
         ) : (
           <button
             onClick={() => (hasSubItems ? toggleExpand(item.id) : undefined)}
@@ -290,9 +306,10 @@ export default function Sidebar({
             {item.subItems!.map((sub) => {
               const subActive = location === sub.path;
               return (
-                <a
+                <Link
                   key={sub.path}
                   href={sub.path}
+                  onClick={(event) => handleNavigation(event, sub.path)}
                   className="flex items-center rounded-md mx-1"
                   style={{
                     height: "36px",
@@ -331,7 +348,7 @@ export default function Sidebar({
                   <span className="whitespace-nowrap overflow-hidden text-ellipsis">
                     {sub.label}
                   </span>
-                </a>
+                </Link>
               );
             })}
           </div>
