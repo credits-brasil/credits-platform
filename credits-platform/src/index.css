@@ -171,7 +171,7 @@
 
 @media print {
   @page {
-    size: auto;
+    size: A4;
     margin: 20mm 10mm 14mm;
 
     @top-left {
@@ -272,7 +272,7 @@
     display: flex !important;
     width: 100%;
     /* Leave room for print unit rounding without overflowing the cover page. */
-    height: calc(100vh - 1mm);
+    height: 262mm;
     min-height: 0;
     align-items: center;
     justify-content: center;
@@ -293,8 +293,10 @@
     padding: 12px !important;
     margin-top: 0 !important;
     margin-bottom: 8px !important;
-    break-inside: avoid-page;
-    page-break-inside: avoid;
+    break-inside: auto;
+    page-break-inside: auto;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
   }
 
   /* Keep the report dense without reducing the size of its text. */
@@ -352,7 +354,10 @@
 
   /* A section taller than a sheet can flow between its intact inner blocks. */
   [data-print-document] [data-print-block],
-  [data-print-document] .grid > * {
+  [data-print-document] [data-print-negative-card],
+  [data-print-document] [data-print-summary-card],
+  [data-print-document] [data-print-score],
+  [data-print-document] .recharts-responsive-container {
     break-inside: avoid-page;
     page-break-inside: avoid;
   }
@@ -472,4 +477,85 @@
   [data-print-document] canvas {
     break-inside: avoid;
   }
+  /* Let long sections and table containers use the remaining page space. */
+  [data-print-document] :is(.h-full, .min-h-screen) {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  [data-print-document] :is(.overflow-auto, .overflow-x-auto, .overflow-y-auto, .overflow-hidden) {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  [data-print-document] :is(#section-cadastrais, #section-governanca, #section-historico-scr) .grid:has(table) {
+    display: block !important;
+  }
+
+  [data-print-document] :is(#section-cadastrais, #section-governanca, #section-historico-scr) .grid:has(table) > * {
+    margin-bottom: 8px;
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  [data-print-document] table {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  [data-print-document] p {
+    orphans: 2;
+    widows: 2;
+  }
+
+  /* The new score layout needs paper-specific widths, independent of viewport. */
+  #section-score-positivo > .grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  #section-score-positivo > .grid > .col-span-2 {
+    grid-column: auto !important;
+  }
+
+  [data-print-document] [data-print-score] {
+    grid-template-columns: 120px minmax(0, 1fr) !important;
+    min-height: 110px !important;
+    width: 100% !important;
+    max-width: none !important;
+    gap: 16px !important;
+  }
+
+  [data-print-document] [data-print-score-gauge] {
+    width: 120px !important;
+    height: 70px !important;
+  }
+
+  [data-print-document] [data-print-risk-badge] {
+    white-space: nowrap !important;
+    font-size: 9px !important;
+  }
+
+  #section-additional-scores > .grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  #section-operacoes-scr > .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  #section-operacoes-scr > .grid > div {
+    border: 0 !important;
+    padding: 6px !important;
+    break-inside: avoid;
+  }
+
+  #section-score-positivo > .grid > .grid {
+    break-inside: avoid;
+  }
+
+  #section-score-positivo > .grid > .grid p {
+    font-size: 11px !important;
+    line-height: 1.35;
+  }
+
 }

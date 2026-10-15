@@ -16,9 +16,8 @@ import { QuickNavigationSection } from "@/containers/SpcMaxiResultado/components
 import { ReloadConfirmationDialog } from "@/containers/SpcMaxiResultado/components/ReloadConfirmationDialog";
 import { ConsultarInsumoDialog } from "@/containers/SpcMaxiResultado/components/ConsultarInsumoDialog";
 import { ResumoFinanceiroSection } from "@/containers/SpcMaxiResultado/components/ResumoFinanceiroSection";
-import { ScrSummarySection } from "@/containers/SpcMaxiResultado/components/ScrSummarySection";
 import { NegativosConsolidadosSection } from "@/containers/SpcMaxiResultado/components/NegativosConsolidadosSection";
-import { AlertasSection } from "@/containers/SpcMaxiResultado/components/AlertasSection";
+import { type AlertaItem, AlertasSection } from "@/containers/SpcMaxiResultado/components/AlertasSection";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatCNPJ } from "@/utils/formatCNPJ";
 import { formatCPF } from "@/utils/formatCPF";
@@ -179,6 +178,7 @@ export default function SpcMaxiResultadoPage({
     gcTime: Infinity,
   });
   const excludedInsumos = [
+    ...(!product && requestData?.typeDocument === "CNPJ" ? ["5228"] : []),
     ...(product?.excludedInsumos ?? []),
     ...(requestData
       ? product?.excludedInsumosByDocType?.[requestData.typeDocument] ?? []
@@ -189,7 +189,7 @@ export default function SpcMaxiResultadoPage({
   const getRequestedInsumos = (insumos: string[]) =>
     Array.from(new Set([
       ...insumos.filter(canConsultInsumo),
-      "5228",
+      ...(!product && !excludedInsumos.includes("5228") ? ["5228"] : []),
     ]));
 
   const [extraConsultationExpired, setExtraConsultationExpired] = useState(() =>
@@ -304,17 +304,30 @@ export default function SpcMaxiResultadoPage({
   const initialScoreInsumos = useRef(
     (requestData?.insumos ?? []).map(String),
   );
-  const hasSelectedInsumos = initialScoreInsumos.current.length > 0;
-  const selectedScoreIds = ["5228", "78", "77", "5229", "5247"].filter((id) =>
-    initialScoreInsumos.current.includes(id) && !excludedInsumos.includes(id),
+  const isInsumoRequested = (id: string) =>
+    !excludedInsumos.includes(id) && (
+      requestData?.insumos.some((value) => String(value) === id) ||
+      defaultInsumos.includes(id)
+    );
+  const showFinancialBehavior = isInsumoRequested("5224") || isInsumoRequested("5227");
+  const includedScoreInsumos = Array.from(new Set([
+    ...initialScoreInsumos.current,
+    ...defaultInsumos,
+  ]));
+  const scoreOrder = requestData?.typeDocument === "CNPJ"
+    ? ["5229", "78", "77", "5247"]
+    : ["5228", "78", "77"];
+  const selectedScoreIds = scoreOrder.filter((id) =>
+    includedScoreInsumos.includes(id) && !excludedInsumos.includes(id),
   );
-  const selectedPrimaryScoreId = selectedScoreIds[0] ?? "5228";
-  const primaryScores: Record<string, { label: string; value: unknown; probability?: unknown }> = {
-    "5228": { label: "Score + Positivo", value: spcData?.["score-cadastro-positivo"]?.["detalhe-score-cadastro-positivo"]?.score, probability: spcData?.["score-cadastro-positivo"]?.["detalhe-score-cadastro-positivo"]?.probabilidadeInadimplencia },
-    "78": { label: "Score 12 meses", value: spcData?.["spc-score-12-meses"]?.["detalhe-spc-score-12-meses"]?.[0]?.score, probability: spcData?.["spc-score-12-meses"]?.["detalhe-spc-score-12-meses"]?.[0]?.probabilidade },
-    "77": { label: "Score 3 meses", value: spcData?.["spc-score-3-meses"]?.["detalhe-spc-score-3-meses"]?.score, probability: spcData?.["spc-score-3-meses"]?.["detalhe-spc-score-3-meses"]?.probabilidade },
-    "5229": { label: "Score PJ", value: spcData?.["score-pj"]?.["detalhe-score-pj"]?.score },
-    "5247": { label: "Score PJ MEI", value: spcData?.["score-pj-mei"]?.["detalhe-score-pj-mei"]?.score },
+  const selectedPrimaryScoreId = selectedScoreIds[0] ??
+    (requestData?.typeDocument === "CNPJ" ? "5229" : "5228");
+  const primaryScores: Record<string, { label: string; value: unknown; probability?: unknown; riskClass?: unknown }> = {
+    "5228": { label: "Score + Positivo", value: spcData?.["score-cadastro-positivo"]?.["detalhe-score-cadastro-positivo"]?.score, probability: spcData?.["score-cadastro-positivo"]?.["detalhe-score-cadastro-positivo"]?.probabilidadeInadimplencia, riskClass: spcData?.["score-cadastro-positivo"]?.["detalhe-score-cadastro-positivo"]?.classe },
+    "78": { label: "Score 12 meses", value: spcData?.["spc-score-12-meses"]?.["detalhe-spc-score-12-meses"]?.[0]?.score, probability: spcData?.["spc-score-12-meses"]?.["detalhe-spc-score-12-meses"]?.[0]?.probabilidade, riskClass: spcData?.["spc-score-12-meses"]?.["detalhe-spc-score-12-meses"]?.[0]?.classe },
+    "77": { label: "Score 3 meses", value: spcData?.["spc-score-3-meses"]?.["detalhe-spc-score-3-meses"]?.score, probability: spcData?.["spc-score-3-meses"]?.["detalhe-spc-score-3-meses"]?.probabilidade, riskClass: spcData?.["spc-score-3-meses"]?.["detalhe-spc-score-3-meses"]?.classe },
+    "5229": { label: "Score PJ", value: spcData?.["score-pj"]?.["detalhe-score-pj"]?.score, probability: spcData?.["score-pj"]?.["detalhe-score-pj"]?.probabilidade, riskClass: spcData?.["score-pj"]?.["detalhe-score-pj"]?.classe },
+    "5247": { label: "Score PJ MEI", value: spcData?.["score-pj-mei"]?.["detalhe-score-pj-mei"]?.score, probability: spcData?.["score-pj-mei"]?.["detalhe-score-pj-mei"]?.probabilidade, riskClass: spcData?.["score-pj-mei"]?.["detalhe-score-pj-mei"]?.classe },
   };
   const primaryScore = primaryScores[selectedPrimaryScoreId];
   const primaryScoreValue = primaryScore.value == null || String(primaryScore.value).trim() === ""
@@ -322,7 +335,7 @@ export default function SpcMaxiResultadoPage({
     : Number(primaryScore.value);
   const hasPositiveScore = Number.isFinite(primaryScoreValue);
   const [scoreRevealed, setScoreRevealed] = useState(() =>
-    initialScoreInsumos.current.some((id) => ["5228", "78", "77", "5229", "5247"].includes(id)),
+    selectedScoreIds.length > 0,
   );
   const [animatedPositiveScore, setAnimatedPositiveScore] = useState(0);
   const positiveScoreTarget = Number.isFinite(primaryScoreValue)
@@ -768,11 +781,40 @@ export default function SpcMaxiResultadoPage({
     participaMercadoCapitaisRaw === true ||
     String(participaMercadoCapitaisRaw).toLowerCase() === "true";
 
-  const alertas = [
+  const identidadeFraudeRaw = (spcData?.["alerta-identidade-fraude"] ?? spcData?.["alertta-identidade-fraude"])?.["detalhe-alerta-identidade-fraude"];
+  const identidadeFraudeDetalhes = Array.isArray(identidadeFraudeRaw)
+    ? identidadeFraudeRaw
+    : identidadeFraudeRaw ? [identidadeFraudeRaw] : [];
+  const alertasIdentidade: AlertaItem[] = isInsumoRequested("5262")
+    ? identidadeFraudeDetalhes.flatMap((item: any): AlertaItem[] => {
+        const indicador = String(item?.["alerta-fraude"] ?? "").toLowerCase();
+        if (indicador !== "true" && indicador !== "false") return [];
+        const ativo = indicador === "true";
+        return [{
+          titulo: "Alerta de Identidade à Fraude",
+          severidade: ativo ? "alto" : "baixo",
+          descricao: ativo
+            ? "Foi identificado um alerta de identidade na consulta."
+            : "Nenhum alerta de identidade identificado na consulta.",
+          fonte: "SPC Brasil",
+          tipo: "Antifraude",
+        }];
+      })
+    : [];
+
+  const alertas: Array<AlertaItem & { data?: string }> = [
+    ...alertasIdentidade,
+    ...(isInsumoRequested("5262") && !alertasIdentidade.length ? [{
+      titulo: "Alerta de Identidade à Fraude",
+      severidade: "medio" as const,
+      descricao: "Não há dados disponíveis para este insumo.",
+      fonte: "SPC Brasil",
+      tipo: "Antifraude",
+    }] : []),
     ...(participacaoMercadoCapitais
       ? [
           {
-            severidade: participaMercadoCapitais ? "medio" : "baixo",
+            severidade: participaMercadoCapitais ? "medio" as const : "baixo" as const,
             titulo: "Participação no Mercado de Capitais",
             descricao: participaMercadoCapitais
               ? "Há participação registrada no mercado de capitais."
@@ -785,7 +827,7 @@ export default function SpcMaxiResultadoPage({
     ...(enderecoDiferente
       ? [
           {
-            severidade: "baixo",
+            severidade: "baixo" as const,
             titulo: "Endereço desatualizado",
             descricao:
               "O endereço informado difere do último endereço registrado nas bases consultadas.",
@@ -797,7 +839,7 @@ export default function SpcMaxiResultadoPage({
     ...(alertaDocumento
       ? [
           {
-            severidade: "alto",
+            severidade: "alto" as const,
             titulo: "Alerta de documento",
             descricao: "Foi identificado um alerta de documento na consulta.",
             fonte: alertaDocumento?.["entidade-origem"] ?? "SPC Brasil",
@@ -822,7 +864,7 @@ export default function SpcMaxiResultadoPage({
     ...(possuiAltoVolumeConsultas
       ? [
           {
-            severidade: "alto",
+            severidade: "alto" as const,
             titulo: "Alto volume de consultas recentes",
             descricao: `${consultasUltimos30Dias.length} consultas nos últimos 30 dias — possível busca intensiva por crédito.`,
             data: consultasUltimos30Dias.sort(
@@ -847,7 +889,7 @@ export default function SpcMaxiResultadoPage({
       .filter(Number.isFinite);
     return {
       count: base.length,
-      valor: valores.length ? formatCurrency(valores.reduce((total: number, value: number) => total + value, 0)) : "?",
+      valor: valores.length ? formatCurrency(valores.reduce((total: number, value: number) => total + value, 0)) : "-",
       antiga: datas[0] ?? "-",
       recente: datas.at(-1) ?? "-",
     };
@@ -904,6 +946,7 @@ export default function SpcMaxiResultadoPage({
       label: "Score + Positivo",
       score: scoreCadastroPositivo,
       probability: primaryScores["5228"].probability,
+      riskClass: primaryScores["5228"].riskClass,
       insumoId: "5228",
       message:
         "Avalia o risco de crédito a partir do histórico de pagamentos e do comportamento financeiro do consumidor.\nCombina informações positivas e históricas para gerar uma análise mais completa do perfil de crédito.\nApoia decisões de concessão de crédito de forma mais segura e assertiva.",
@@ -913,6 +956,7 @@ export default function SpcMaxiResultadoPage({
       label: "Score 12 meses",
       score: score12Meses,
       probability: primaryScores["78"].probability,
+      riskClass: primaryScores["78"].riskClass,
       insumoId: "78",
       message:
         spcData?.["spc-score-12-meses"]?.["detalhe-spc-score-12-meses"]?.[0]?.[
@@ -924,6 +968,7 @@ export default function SpcMaxiResultadoPage({
       label: "Score 3 meses",
       score: score3Meses,
       probability: primaryScores["77"].probability,
+      riskClass: primaryScores["77"].riskClass,
       insumoId: "77",
       message:
         spcData?.["spc-score-3-meses"]?.["detalhe-spc-score-3-meses"]?.[
@@ -934,6 +979,8 @@ export default function SpcMaxiResultadoPage({
       source: "pj",
       label: "Score PJ",
       score: scorePj,
+      probability: primaryScores["5229"].probability,
+      riskClass: primaryScores["5229"].riskClass,
       insumoId: "5229",
       message:
         spcData?.["score-pj"]?.["detalhe-score-pj"]?.[
@@ -944,6 +991,8 @@ export default function SpcMaxiResultadoPage({
       source: "pj-mei",
       label: "Score PJ MEI",
       score: scorePjMei,
+      probability: primaryScores["5247"].probability,
+      riskClass: primaryScores["5247"].riskClass,
       insumoId: "5247",
       message:
         spcData?.["score-pj-mei"]?.["detalhe-score-pj-mei"]?.[
@@ -952,15 +1001,17 @@ export default function SpcMaxiResultadoPage({
     },
   ].filter((candidate) =>
     !excludedInsumos.includes(candidate.insumoId) &&
-    (candidate.source !== "cadastro" || scoreRevealed),
+    (candidate.source !== "cadastro" || scoreRevealed || defaultInsumos.includes(candidate.insumoId)),
   );
 
-  const remainingScoreCandidates = scoreCandidates.filter((candidate) =>
-    selectedScoreIds.slice(1).includes(candidate.insumoId),
+  const remainingScoreCandidates = selectedScoreIds.slice(1).flatMap((id) =>
+    scoreCandidates.filter((candidate) => candidate.insumoId === id),
   );
-  const scoreGridClassName = remainingScoreCandidates.length > 1
-    ? "md:grid-cols-2"
-    : "grid-cols-1";
+  const scoreGridClassName = requestData?.typeDocument === "CNPJ" && remainingScoreCandidates.length >= 3
+    ? "md:grid-cols-3"
+    : remainingScoreCandidates.length > 1
+      ? "md:grid-cols-2"
+      : "grid-cols-1";
 
   const getScoreColor = (value: number) => {
     if (value >= 675) return "#259f58";
@@ -1043,7 +1094,7 @@ export default function SpcMaxiResultadoPage({
         );
       case "Alerta de Identidade à Fraude":
         return Boolean(
-          nextSpcData?.["alerta-identidade-fraude"]?.[
+          (nextSpcData?.["alerta-identidade-fraude"] ?? nextSpcData?.["alertta-identidade-fraude"])?.[
             "detalhe-alerta-identidade-fraude"
           ]?.some(
             (item: any) =>
@@ -1192,7 +1243,7 @@ export default function SpcMaxiResultadoPage({
             label: "Alerta de Identidade à Fraude",
             insumoId: "5262",
             value:
-              spcData?.["alerta-identidade-fraude"]?.[
+              (spcData?.["alerta-identidade-fraude"] ?? spcData?.["alertta-identidade-fraude"])?.[
                 "detalhe-alerta-identidade-fraude"
               ]?.[0]?.["alerta-fraude"] === "true" ? (
                 <span
@@ -1204,7 +1255,7 @@ export default function SpcMaxiResultadoPage({
                 >
                   Alerta ativo
                 </span>
-              ) : spcData?.["alerta-identidade-fraude"]?.[
+              ) : (spcData?.["alerta-identidade-fraude"] ?? spcData?.["alertta-identidade-fraude"])?.[
                   "detalhe-alerta-identidade-fraude"
                 ]?.[0]?.["alerta-fraude"] === "false" ? (
                 <span
@@ -1242,6 +1293,10 @@ export default function SpcMaxiResultadoPage({
           },
         ]),
   ].filter((item) => !excludedInsumos.includes(item.insumoId));
+
+  const paymentCapacityItems = resumoFinanceiroItens.filter((item) =>
+    !["5262", "5267"].includes(item.insumoId),
+  );
 
   const pontualidadePagamentoPercent = (() => {
     const segmentos =
@@ -1450,7 +1505,17 @@ export default function SpcMaxiResultadoPage({
                 <div className="absolute inset-0 z-10 flex items-center justify-center">
                   <button
                     type="button"
-                    onClick={() => setScoreRevealed(true)}
+                    onClick={() => {
+                      if ((!product && requestData.typeDocument === "CPF") || hasPositiveScore) {
+                        setScoreRevealed(true);
+                      } else if (canConsultInsumo(selectedPrimaryScoreId)) {
+                        openExtraInsumoConfirmation({ label: primaryScore.label, insumoId: selectedPrimaryScoreId });
+                        setScoreRevealed(true);
+                      }
+                    }}
+                    disabled={(Boolean(product) || requestData.typeDocument === "CNPJ") && !hasPositiveScore && (
+                      !canConsultInsumo(selectedPrimaryScoreId) || hasExtraInsumoInProgress || extraConsultationExpired
+                    )}
                     className="inline-flex items-center gap-2 rounded-md bg-[#243871] px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1b2b58] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#243871] focus-visible:ring-offset-2"
                   >
                     <Eye size={14} aria-hidden="true" />
@@ -1469,7 +1534,7 @@ export default function SpcMaxiResultadoPage({
                   className={`relative z-0 ${scoreRevealed && hasPositiveScore ? "" : "pointer-events-none select-none blur-[10px]"}`}
                   aria-hidden={!scoreRevealed || !hasPositiveScore}
                 >
-                  <ScoreIndicator score={primaryScoreValue} animatedScore={animatedPositiveScore} probability={primaryScore.probability} />
+                  <ScoreIndicator score={primaryScoreValue} animatedScore={animatedPositiveScore} probability={primaryScore.probability} riskClass={primaryScore.riskClass} isPositiveScore={selectedPrimaryScoreId === "5228"} isTwelveMonthPf={isPessoaFisica && selectedPrimaryScoreId === "78"} isPjScore={selectedPrimaryScoreId === "5229" || (!isPessoaFisica && selectedPrimaryScoreId === "78")} />
 
                 </div>
             </div>
@@ -1536,7 +1601,7 @@ export default function SpcMaxiResultadoPage({
                 return (
                   <div key={scoreItem.source} className="min-w-0">
                     <h3 className="mb-4 text-sm font-semibold text-[#243871]">{scoreItem.label}</h3>
-                    <AnimatedScoreIndicator score={value} probability={scoreItem.probability} />
+                    <AnimatedScoreIndicator score={value} probability={scoreItem.probability} riskClass={scoreItem.riskClass} isPositiveScore={scoreItem.insumoId === "5228"} isTwelveMonthPf={isPessoaFisica && scoreItem.insumoId === "78"} isPjScore={scoreItem.insumoId === "5229" || (!isPessoaFisica && scoreItem.insumoId === "78")} />
                   </div>
                 );
               })}
@@ -1544,52 +1609,45 @@ export default function SpcMaxiResultadoPage({
           </div>
         )}
 
-        {!excludedInsumos.includes("5256") && (
-        <div id="section-operacoes-scr" className="mb-4 rounded-xl border border-gray-200 bg-white p-5">
-            <h2 className="text-sm font-semibold text-gray-700">Operações no SCR</h2>
-            {hasScrData && !unavailableExtraInsumos.includes("Opera??es no SCR") ? (
-            <div className="mt-4 grid grid-cols-4 divide-x divide-gray-100">
-              <div className="pr-4">
-                <h3 className="text-xs font-semibold text-gray-600">Quantidade</h3>
-                <p className="mt-2 text-base font-bold text-gray-600">{scrOperacao.resumoQuantidadeTotal ?? scrOperacao.quantidade ?? "-"}</p>
-              </div>
-              <div className="px-4">
-                <h3 className="text-xs font-semibold text-gray-600">Início de Relacionamento</h3>
-                <p className="mt-2 text-base font-bold text-gray-600">{formatDate(String(scrOperacao["data-inicio-relacionamento"] ?? ""))}</p>
-              </div>
-              <div className="px-4">
-                <h3 className="text-xs font-semibold text-gray-600">Valor Contratado</h3>
-                <p className="mt-2 text-base font-bold text-gray-600">{formatCurrency(scrOperacao["valor-total-contratado-inicial"])} a {formatCurrency(scrOperacao["valor-total-contratado-final"])}</p>
-              </div>
-              <div className="pl-4">
-                <h3 className="text-xs font-semibold text-gray-600">Instituições</h3>
-                <p className="mt-2 text-base font-bold text-gray-600">{scrOperacao["quantidade-instituicao-scr"] ?? "-"}</p>
-              </div>
-            </div>
-            ) : (
-              <div className="mt-4">
-                {defaultInsumos.includes("5256") || unavailableExtraInsumos.includes("Operações no SCR") ? (
-                  <span className="text-xs font-semibold text-gray-500">Não há dados disponíveis</span>
-                ) : (
-                  <ExtraInsumoButton
-                    label="Operações no SCR"
-                    consultingLabel={consultingExtraInsumo?.label}
-                    disabled={extraConsultationExpired || hasExtraInsumoInProgress || !canConsultInsumo("5256")}
-                    onConsultar={() => openExtraInsumoConfirmation({ label: "Operações no SCR", insumoId: "5256" })}
-                  />
-                )}
-              </div>
-            )}
-            {extraInsumoErrorLabel === "Operações no SCR" && (
-              <p className="mt-4 text-xs text-red-700">{extraInsumoErrorMessage}</p>
-            )}
+        <InformacoesCadastraisSection spcData={spcData} body={body} />
+
+        {isInsumoRequested("5267") && (
+          <div className="mb-4 rounded-xl border border-gray-200 bg-white p-5">
+            <ResumoFinanceiroSection items={resumoFinanceiroItens.filter((item) => item.insumoId === "5267")} />
           </div>
         )}
 
-        {hasSelectedInsumos && (
-          <>
+        <GovernancaSection
+          spcData={spcData}
+          showParticipacaoEmpresa={!excludedInsumos.includes("24")}
+        />
+
+
+
+        <NegativosConsolidadosSection
+          groups={GROUPS}
+          activeGroup={activeGroup}
+          setActiveGroup={setActiveGroup}
+          expanded={expanded}
+          setExpanded={setExpanded}
+          resumoTabela={resumoTabela}
+          visible={visible}
+          remaining={remaining}
+          shouldShowChart={shouldShowChart}
+          chartData={chartData}
+          handleSort={handleSort}
+          sortKey={sortKey}
+          sortDir={sortDir}
+          expandedRowKey={expandedRowKey}
+          setExpandedRowKey={setExpandedRowKey}
+          spcData={spcData}
+        />
+
+        <AlertasSection sectionId="section-antifraude" alertas={alertas} />
+
+        {showFinancialBehavior && (
         <div
-          id="section-score"
+          id="section-cadastro-positivo"
           className="bg-white rounded-xl border border-gray-200 p-5 mb-4 mt-2"
         >
           <h2 className="text-sm font-semibold text-gray-700 mb-4">
@@ -1740,54 +1798,13 @@ export default function SpcMaxiResultadoPage({
             )}
         </div>
 
-        {/* {!excludedInsumos.includes("5256") && (
-          <div
-            id="section-score"
-            className="bg-white rounded-xl border border-gray-200 p-5 mb-4 mt-2"
-          >
-            <h2 className="text-sm font-semibold text-gray-700 mb-4">SCR</h2>
+        )}
 
-            <div className="h-full min-w-0 w-full">
-              <ScrSummarySection
-                hasScrData={Boolean(hasScrData)}
-                scrOperacao={scrOperacao}
-                onConsultar={
-                  canConsultInsumo("5256")
-                    ? () =>
-                        handleConsultarInsumoExtra({
-                          label: "Operações no SCR",
-                          insumoId: "5256",
-                        })
-                    : undefined
-                }
-                isConsulting={consultingExtraInsumo?.label === "Operações no SCR"}
-                consultationDisabled={
-                  extraConsultationExpired || hasExtraInsumoInProgress
-                }
-                isUnavailable={
-                  (!hasScrData && defaultInsumos.includes("5256")) ||
-                  unavailableExtraInsumos.includes("Operações no SCR")
-                }
-              />
-            </div>
+        {showFinancialBehavior && <InformacoesPositivasSection spcData={spcData} />}
 
-            {consultingExtraInsumo?.label === "Operações no SCR" && (
-              <div className="mt-4 flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700">
-                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-                Consultando {consultingExtraInsumo.label}...
-              </div>
-            )}
-
-            {extraInsumoErrorLabel === "Operações no SCR" && (
-              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
-                {extraInsumoErrorMessage}
-              </div>
-            )}
-          </div>
-        )} */}
-
+        {paymentCapacityItems.some((item) => isInsumoRequested(item.insumoId)) && (
         <div
-          id="section-score"
+          id="section-capacidade-pagamento"
           className="bg-white rounded-xl border border-gray-200 p-5 mb-4 mt-2"
         >
           <h2 className="text-sm font-semibold text-gray-700 mb-4">
@@ -1795,7 +1812,7 @@ export default function SpcMaxiResultadoPage({
           </h2>
 
           <ResumoFinanceiroSection
-            items={resumoFinanceiroItens}
+            items={paymentCapacityItems}
             onConsultar={handleConsultarInsumoExtra}
             isConsulting={Boolean(consultingExtraInsumo)}
             loadingItemLabel={consultingExtraInsumo?.label ?? null}
@@ -1809,7 +1826,7 @@ export default function SpcMaxiResultadoPage({
           />
 
           {consultingExtraInsumo &&
-            resumoFinanceiroItens.some(
+            paymentCapacityItems.some(
               (item) => item.label === consultingExtraInsumo.label,
             ) && (
               <div className="mt-4 flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700">
@@ -1819,7 +1836,7 @@ export default function SpcMaxiResultadoPage({
             )}
 
           {extraInsumoErrorLabel &&
-            resumoFinanceiroItens.some(
+            paymentCapacityItems.some(
               (item) => item.label === extraInsumoErrorLabel,
             ) && (
               <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
@@ -1828,35 +1845,58 @@ export default function SpcMaxiResultadoPage({
             )}
         </div>
 
-        <NegativosConsolidadosSection
-          groups={GROUPS}
-          activeGroup={activeGroup}
-          setActiveGroup={setActiveGroup}
-          expanded={expanded}
-          setExpanded={setExpanded}
-          resumoTabela={resumoTabela}
-          visible={visible}
-          remaining={remaining}
-          shouldShowChart={shouldShowChart}
-          chartData={chartData}
-          handleSort={handleSort}
-          sortKey={sortKey}
-          sortDir={sortDir}
-          expandedRowKey={expandedRowKey}
-          setExpandedRowKey={setExpandedRowKey}
+        )}
+
+
+        {isInsumoRequested("5256") && (
+        <div id="section-operacoes-scr" className="mb-4 rounded-xl border border-gray-200 bg-white p-5">
+            <h2 className="text-sm font-semibold text-gray-700">Operações no SCR</h2>
+            {hasScrData && !unavailableExtraInsumos.includes("Opera??es no SCR") ? (
+            <div className="mt-4 grid grid-cols-4 divide-x divide-gray-100">
+              <div className="pr-4">
+                <h3 className="text-xs font-semibold text-gray-600">Quantidade</h3>
+                <p className="mt-2 text-base font-bold text-gray-600">{scrOperacao.resumoQuantidadeTotal ?? scrOperacao.quantidade ?? "-"}</p>
+              </div>
+              <div className="px-4">
+                <h3 className="text-xs font-semibold text-gray-600">Início de Relacionamento</h3>
+                <p className="mt-2 text-base font-bold text-gray-600">{formatDate(String(scrOperacao["data-inicio-relacionamento"] ?? ""))}</p>
+              </div>
+              <div className="px-4">
+                <h3 className="text-xs font-semibold text-gray-600">Valor Contratado</h3>
+                <p className="mt-2 text-base font-bold text-gray-600">{formatCurrency(scrOperacao["valor-total-contratado-inicial"])} a {formatCurrency(scrOperacao["valor-total-contratado-final"])}</p>
+              </div>
+              <div className="pl-4">
+                <h3 className="text-xs font-semibold text-gray-600">Instituições</h3>
+                <p className="mt-2 text-base font-bold text-gray-600">{scrOperacao["quantidade-instituicao-scr"] ?? "-"}</p>
+              </div>
+            </div>
+            ) : (
+              <div className="mt-4">
+                {defaultInsumos.includes("5256") || unavailableExtraInsumos.includes("Operações no SCR") ? (
+                  <span className="text-xs font-semibold text-gray-500">Não há dados disponíveis</span>
+                ) : (
+                  <ExtraInsumoButton
+                    label="Operações no SCR"
+                    consultingLabel={consultingExtraInsumo?.label}
+                    disabled={extraConsultationExpired || hasExtraInsumoInProgress || !canConsultInsumo("5256")}
+                    onConsultar={() => openExtraInsumoConfirmation({ label: "Operações no SCR", insumoId: "5256" })}
+                  />
+                )}
+              </div>
+            )}
+            {extraInsumoErrorLabel === "Operações no SCR" && (
+              <p className="mt-4 text-xs text-red-700">{extraInsumoErrorMessage}</p>
+            )}
+          </div>
+        )}
+
+        {isInsumoRequested("5257") && (
+        <HistoricoOperacoesScrSection
           spcData={spcData}
+          scorePj={scorePj}
+          getScoreColor={getScoreColor}
         />
-
-        <AlertasSection alertas={alertas} />
-
-        <InformacoesCadastraisSection spcData={spcData} body={body} />
-
-        <GovernancaSection
-          spcData={spcData}
-          showParticipacaoEmpresa={!excludedInsumos.includes("24")}
-        />
-
-        <InformacoesPositivasSection spcData={spcData} />
+        )}
 
         <ConsultasRealizadasSection
           spcData={spcData}
@@ -1864,15 +1904,7 @@ export default function SpcMaxiResultadoPage({
           setConsultasExpanded={setConsultasExpanded}
         />
 
-        <HistoricoOperacoesScrSection
-          spcData={spcData}
-          scorePj={scorePj}
-          getScoreColor={getScoreColor}
-        />
-
         <QuickNavigationSection />
-          </>
-        )}
       </div>
     </>
   );
