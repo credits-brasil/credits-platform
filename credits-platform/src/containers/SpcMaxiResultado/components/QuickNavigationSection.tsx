@@ -21,19 +21,9 @@ export function QuickNavigationSection() {
       label: "Identificação",
     },
     {
-      id: "section-score",
+      id: "section-score-positivo",
       icon: <BarChart2 size={16} />,
       label: "Score + Positivo",
-    },
-    {
-      id: "section-negativos",
-      icon: <AlertTriangle size={16} />,
-      label: "Negativos Consolidados",
-    },
-    {
-      id: "section-alertas",
-      icon: <ShieldAlert size={16} />,
-      label: "Alertas",
     },
     {
       id: "section-cadastrais",
@@ -41,15 +31,20 @@ export function QuickNavigationSection() {
       label: "Dados Cadastrais",
     },
     {
-      id: "section-consultas",
-      icon: <Search size={16} />,
-      label: "Consultas Realizadas",
+      id: "section-antifraude",
+      icon: <ShieldAlert size={16} />,
+      label: "Antifraude",
     },
     {
-      id: "section-historico-scr",
-      icon: <ClipboardList size={16} />,
-      label: "Histórico SCR",
+      id: "section-negativos",
+      icon: <AlertTriangle size={16} />,
+      label: "Negativos Consolidados",
     },
+    { id: "section-cadastro-positivo", icon: <BarChart2 size={16} />, label: "Cadastro Positivo" },
+    { id: "section-capacidade-pagamento", icon: <BarChart2 size={16} />, label: "Capacidade de Pagamento" },
+    { id: "section-operacoes-scr", icon: <ClipboardList size={16} />, label: "Operações SCR" },
+    { id: "section-historico-scr", icon: <ClipboardList size={16} />, label: "Histórico SCR" },
+    { id: "section-consultas", icon: <Search size={16} />, label: "Consultas Realizadas" },
   ];
 
   return (
