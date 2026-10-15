@@ -1,7 +1,7 @@
 import { FormEvent, useState } from "react";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
-import { ArrowLeft, Mail, Lock, Eye, EyeOff, KeyRound } from "lucide-react";
+import { ArrowLeft, Mail, Lock, Eye, EyeOff, KeyRound, Loader2 } from "lucide-react";
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import {
@@ -29,6 +29,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [keepConnected, setKeepConnected] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [recoveryStep, setRecoveryStep] = useState<"login" | "email" | "otp" | "password" | "firstAccess">("login");
   const [recoveryEmail, setRecoveryEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -44,25 +45,35 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const errorMessage = await onLogin(username, password);
+    if (isLoggingIn) return;
+    setIsLoggingIn(true);
+    setError(null);
 
-    if (errorMessage) {
-      if (errorMessage.toLowerCase().includes("primeiro acesso")) {
-        setRecoveryEmail(username.trim());
-        setFirstAccessCurrentPassword(password);
-        setFirstAccessNewPassword("");
-        setFirstAccessConfirmation("");
-        setRecoveryStep("firstAccess");
-        setError(null);
+    try {
+      const errorMessage = await onLogin(username, password);
+
+      if (errorMessage) {
+        if (errorMessage.toLowerCase().includes("primeiro acesso")) {
+          setRecoveryEmail(username.trim());
+          setFirstAccessCurrentPassword(password);
+          setFirstAccessNewPassword("");
+          setFirstAccessConfirmation("");
+          setRecoveryStep("firstAccess");
+          setError(null);
+          return;
+        }
+
+        setError(errorMessage);
         return;
       }
 
-      setError(errorMessage);
-      return;
+      setError(null);
+      setLocation("/credito-risco/325-spc-maxi");
+    } catch {
+      setError("Não foi possível entrar. Tente novamente.");
+    } finally {
+      setIsLoggingIn(false);
     }
-
-    setError(null);
-    setLocation("/credito-risco/325-spc-maxi");
   };
 
   const handleFirstAccessSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -621,12 +632,21 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
                 <button
                   type="submit"
+                  disabled={isLoggingIn}
+                  aria-busy={isLoggingIn}
+                  aria-label={isLoggingIn ? "Autenticando" : "Acessar plataforma"}
                   className="w-full mt-4 bg-[#F5821F] hover:bg-[#F5821F]/90 text-white font-bold py-3 px-4 rounded-lg shadow-lg shadow-[#F5821F]/20 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#F5821F]/30 active:translate-y-0 active:shadow-md flex items-center justify-center gap-2 group cursor-pointer"
                 >
-                  Acessar plataforma
-                  <span className="transform transition-transform group-hover:translate-x-1">
-                    →
-                  </span>
+                  {isLoggingIn ? (
+                    <Loader2 className="h-6 w-6 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <>
+                      Acessar plataforma
+                      <span className="transform transition-transform group-hover:translate-x-1">
+                        →
+                      </span>
+                    </>
+                  )}
                 </button>
               </form>
               ) : recoveryStep === "email" ? (
