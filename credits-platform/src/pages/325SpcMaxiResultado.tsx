@@ -7,7 +7,7 @@ import {
   PercentageProgressIndicatorComponent,
 } from "@/components";
 import { ConsultasRealizadasSection } from "@/containers/SpcMaxiResultado/components/ConsultasRealizadasSection";
-import { GovernancaSection } from "@/containers/SpcMaxiResultado/components/GovernancaSection";
+import { GovernancaSection, hasGovernancaData } from "@/containers/SpcMaxiResultado/components/GovernancaSection";
 import { HeaderSection } from "@/containers/SpcMaxiResultado/components/HeaderSection";
 import { HistoricoOperacoesScrSection } from "@/containers/SpcMaxiResultado/components/HistoricoOperacoesScrSection";
 import { InformacoesCadastraisSection } from "@/containers/SpcMaxiResultado/components/InformacoesCadastraisSection";
@@ -1612,7 +1612,7 @@ export default function SpcMaxiResultadoPage({
         <InformacoesCadastraisSection spcData={spcData} body={body} />
 
         {isInsumoRequested("5267") && (
-          <div className="mb-4 rounded-xl border border-gray-200 bg-white p-5">
+          <div id="section-quantidade-funcionarios" className="mb-4 rounded-xl border border-gray-200 bg-white p-5">
             <ResumoFinanceiroSection items={resumoFinanceiroItens.filter((item) => item.insumoId === "5267")} />
           </div>
         )}
@@ -1904,7 +1904,12 @@ export default function SpcMaxiResultadoPage({
           setConsultasExpanded={setConsultasExpanded}
         />
 
-        <QuickNavigationSection />
+        <QuickNavigationSection
+          showAdditionalScores={remainingScoreCandidates.length > 0}
+          showFinancialBehavior={showFinancialBehavior}
+          showQuantidadeFuncionarios={isInsumoRequested("5267")}
+          showGovernanca={hasGovernancaData(spcData, !excludedInsumos.includes("24"))}
+        />
       </div>
     </>
   );

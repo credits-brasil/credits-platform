@@ -11,6 +11,19 @@ interface GovernancaSectionProps {
   showParticipacaoEmpresa?: boolean;
 }
 
+export function hasGovernancaData(spcData: any, showParticipacaoEmpresa = true): boolean {
+  const quadroSocial = spcData?.["quadro-social-mais-completo-pj"]?.[
+    "detalhe-quadro-social-mais-completo-pj"
+  ];
+
+  return Boolean(
+    quadroSocial?.["controle-societario"]?.length ||
+    quadroSocial?.["quadro-administrativo"]?.length ||
+    (showParticipacaoEmpresa &&
+      spcData?.["participacao-empresa"]?.["detalhe-participacao-empresa"]?.length),
+  );
+}
+
 export function GovernancaSection({
   spcData,
   showParticipacaoEmpresa = true,
@@ -37,11 +50,7 @@ export function GovernancaSection({
     ? spcData?.["participacao-empresa"]?.["detalhe-participacao-empresa"] ?? []
     : [];
 
-  if (
-    !controleSocietario.length &&
-    !quadroAdministrativo.length &&
-    !participacaoEmpresa.length
-  ) {
+  if (!hasGovernancaData(spcData, showParticipacaoEmpresa)) {
     return null;
   }
 

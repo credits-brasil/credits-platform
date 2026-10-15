@@ -13,7 +13,17 @@ interface QuickNavigationItem {
   label: string;
 }
 
-export function QuickNavigationSection() {
+export function QuickNavigationSection({
+  showAdditionalScores = false,
+  showFinancialBehavior = false,
+  showQuantidadeFuncionarios = false,
+  showGovernanca = false,
+}: {
+  showAdditionalScores?: boolean;
+  showFinancialBehavior?: boolean;
+  showQuantidadeFuncionarios?: boolean;
+  showGovernanca?: boolean;
+}) {
   const items: QuickNavigationItem[] = [
     {
       id: "section-identificacao",
@@ -23,24 +33,26 @@ export function QuickNavigationSection() {
     {
       id: "section-score-positivo",
       icon: <BarChart2 size={16} />,
-      label: "Score + Positivo",
+      label: "Score",
     },
+    ...(showAdditionalScores ? [{ id: "section-additional-scores", icon: <BarChart2 size={16} />, label: "Outros Scores" }] : []),
     {
       id: "section-cadastrais",
       icon: <ClipboardList size={16} />,
       label: "Dados Cadastrais",
     },
-    {
-      id: "section-antifraude",
-      icon: <ShieldAlert size={16} />,
-      label: "Antifraude",
-    },
+    ...(showQuantidadeFuncionarios ? [{ id: "section-quantidade-funcionarios", icon: <BarChart2 size={16} />, label: "Quantidade de Funcionários" }] : []),
+    ...(showGovernanca ? [{ id: "section-governanca", icon: <ClipboardList size={16} />, label: "Governança" }] : []),
     {
       id: "section-negativos",
       icon: <AlertTriangle size={16} />,
       label: "Negativos Consolidados",
     },
-    { id: "section-cadastro-positivo", icon: <BarChart2 size={16} />, label: "Cadastro Positivo" },
+    { id: "section-antifraude", icon: <ShieldAlert size={16} />, label: "Antifraude" },
+    ...(showFinancialBehavior ? [
+      { id: "section-cadastro-positivo", icon: <BarChart2 size={16} />, label: "Comportamento Financeiro" },
+      { id: "section-informacoes-positivas", icon: <BarChart2 size={16} />, label: "Informações Positivas" },
+    ] : []),
     { id: "section-capacidade-pagamento", icon: <BarChart2 size={16} />, label: "Capacidade de Pagamento" },
     { id: "section-operacoes-scr", icon: <ClipboardList size={16} />, label: "Operações SCR" },
     { id: "section-historico-scr", icon: <ClipboardList size={16} />, label: "Histórico SCR" },
@@ -48,31 +60,37 @@ export function QuickNavigationSection() {
   ];
 
   return (
-    <div className="print:hidden fixed bottom-2 right-2 z-50 flex flex-col gap-2">
+    <div className="pointer-events-none print:hidden fixed bottom-2 right-2 z-50 flex flex-col gap-2">
       {items.map(({ id, icon, label }) => (
-        <div key={id} className="group flex items-center justify-end gap-2">
-          <span
-            className="pointer-events-none translate-x-1 whitespace-nowrap rounded-lg px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-100"
-            style={{ backgroundColor: "#243871" }}
-          >
-            {label}
-          </span>
-
+        <div key={id} className="flex items-center justify-end">
           <button
             type="button"
             onClick={() => {
               const el = document.getElementById(id);
               if (el) {
+                if (id === "section-identificacao") {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  return;
+                }
+                const identification = document.getElementById("section-identificacao");
+                const offset = Math.max(68, identification?.getBoundingClientRect().height ?? 0);
                 const y =
-                  el.getBoundingClientRect().top + window.scrollY - 68 - 16;
+                  el.getBoundingClientRect().top + window.scrollY - offset - 16;
                 window.scrollTo({ top: y, behavior: "smooth" });
               }
             }}
-            className="flex h-9 w-9 flex-shrink-0 cursor-pointer items-center justify-center rounded-full text-white shadow-md transition-all duration-150 hover:scale-110 hover:shadow-lg active:scale-95"
+            className="pointer-events-auto group relative flex h-9 w-9 flex-shrink-0 cursor-pointer items-center justify-center rounded-full text-white shadow-md transition-all duration-150 hover:scale-110 hover:shadow-lg active:scale-95"
             style={{ backgroundColor: "#ED884A" }}
             aria-label={label}
           >
             {icon}
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute right-full top-1/2 mr-2 -translate-y-1/2 translate-x-1 whitespace-nowrap rounded-lg px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100"
+              style={{ backgroundColor: "#243871" }}
+            >
+              {label}
+            </span>
           </button>
         </div>
       ))}
