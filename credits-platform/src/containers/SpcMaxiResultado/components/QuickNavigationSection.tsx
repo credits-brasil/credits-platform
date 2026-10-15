@@ -1,3 +1,4 @@
+import { useLayoutEffect, useState } from "react";
 import {
   User,
   Search,
@@ -24,6 +25,7 @@ export function QuickNavigationSection({
   showQuantidadeFuncionarios?: boolean;
   showGovernanca?: boolean;
 }) {
+  const [availableSectionIds, setAvailableSectionIds] = useState<string[]>([]);
   const items: QuickNavigationItem[] = [
     {
       id: "section-identificacao",
@@ -59,9 +61,23 @@ export function QuickNavigationSection({
     { id: "section-consultas", icon: <Search size={16} />, label: "Consultas Realizadas" },
   ];
 
+  // Check after the layout is committed: some sections return null without data.
+  useLayoutEffect(() => {
+    const availableIds = items
+      .filter(({ id }) => document.getElementById(id) !== null)
+      .map(({ id }) => id);
+
+    setAvailableSectionIds((previous) =>
+      previous.length === availableIds.length &&
+      previous.every((id, index) => id === availableIds[index])
+        ? previous
+        : availableIds,
+    );
+  });
+
   return (
     <div className="pointer-events-none print:hidden fixed bottom-2 right-2 z-50 flex flex-col gap-2">
-      {items.map(({ id, icon, label }) => (
+      {items.filter(({ id }) => availableSectionIds.includes(id)).map(({ id, icon, label }) => (
         <div key={id} className="flex items-center justify-end">
           <button
             type="button"
