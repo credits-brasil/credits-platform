@@ -25,6 +25,7 @@ import { formatCPF } from "@/utils/formatCPF";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { formatDate } from "@/utils/formatDate";
 import { getCompanyAge } from "@/utils/getCompanyAge";
+import { apiFetch } from "@/lib/auth";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -242,13 +243,12 @@ export default function SpcMaxiResultadoPage({
         throw new Error("Parâmetros da consulta não encontrados.");
       }
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_URL}${endpoint}`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: getConsultationContext().authorization,
           },
           body: JSON.stringify({
             companyId: getConsultationContext().companyId,
@@ -1101,13 +1101,12 @@ export default function SpcMaxiResultadoPage({
     );
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_URL}${endpoint}`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: getConsultationContext().authorization,
           },
           body: JSON.stringify({
             companyId: getConsultationContext().companyId,
