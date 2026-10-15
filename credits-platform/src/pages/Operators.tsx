@@ -37,6 +37,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatCpf } from "@/utils/formatCPF";
 import { formatPhone } from "@/utils/formatPhone";
 import { validateCPF } from "@/utils/validateCPF";
+import { apiFetch } from "@/lib/auth";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -109,7 +110,7 @@ const OPERATOR_STATUS_VARIANT: Record<OperatorCompanyStatus, "default" | "second
 };
 
 async function listCompanyOperators(companyId: string): Promise<CompanyOperator[]> {
-  const response = await fetch(`${API_URL}/api/company/${companyId}/operators`);
+  const response = await apiFetch(`${API_URL}/api/company/${companyId}/operators`);
 
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));
@@ -121,7 +122,7 @@ async function listCompanyOperators(companyId: string): Promise<CompanyOperator[
 }
 
 async function createCompanyOperator(companyId: string, payload: Record<string, string>) {
-  const response = await fetch(`${API_URL}/api/company/${companyId}/operators`, {
+  const response = await apiFetch(`${API_URL}/api/company/${companyId}/operators`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -137,7 +138,7 @@ async function createCompanyOperator(companyId: string, payload: Record<string, 
 }
 
 async function updateCompanyOperator(companyId: string, id: string, payload: Record<string, string>) {
-  const response = await fetch(`${API_URL}/api/company/${companyId}/operators/${id}`, {
+  const response = await apiFetch(`${API_URL}/api/company/${companyId}/operators/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -153,7 +154,7 @@ async function updateCompanyOperator(companyId: string, id: string, payload: Rec
 }
 
 async function deleteCompanyOperator(companyId: string, id: string) {
-  const response = await fetch(`${API_URL}/api/company/${companyId}/operators/${id}`, {
+  const response = await apiFetch(`${API_URL}/api/company/${companyId}/operators/${id}`, {
     method: "DELETE",
   });
 
