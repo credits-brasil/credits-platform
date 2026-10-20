@@ -56,6 +56,79 @@ function parseBRValue(s: string): number {
   );
 }
 
+function filterNegativosByGroup(records: any[], group: string): any[] {
+  return group === "TODOS"
+    ? records
+    : records.filter((r) => r.grupo === group);
+}
+
+function sortNegativos(
+  records: any[],
+  sortKey: SortKey | null,
+  sortDir: SortDir,
+): any[] {
+  if (!sortKey) return records;
+
+  return [...records].sort((a, b) => {
+    let va: string | number = a[sortKey];
+    let vb: string | number = b[sortKey];
+    if (sortKey === "inclusao" || sortKey === "vencimento") {
+      va = parseBRDate(String(a[sortKey] ?? ""));
+      vb = parseBRDate(String(b[sortKey] ?? ""));
+    } else if (sortKey === "valor") {
+      va = parseBRValue(String(a[sortKey] ?? ""));
+      vb = parseBRValue(String(b[sortKey] ?? ""));
+    } else {
+      va = String(a[sortKey] ?? "");
+      vb = String(b[sortKey] ?? "");
+    }
+    if (va < vb) return sortDir === "asc" ? -1 : 1;
+    if (va > vb) return sortDir === "asc" ? 1 : -1;
+    return 0;
+  });
+}
+
+function buildNegativosChartData(records: any[]) {
+  const grouped: Record<string, { data: string; valor: number }> = {};
+  records.forEach((item: any) => {
+    const data = item.vencimento || item.inclusao || item.data;
+    const valor = parseBRValue(String(item.valor ?? ""));
+    if (!data || !parseBRDate(data) || !Number.isFinite(valor)) return;
+    grouped[data] ??= { data, valor: 0 };
+    grouped[data].valor += valor;
+  });
+  const rows = Object.values(grouped).sort(
+    (a, b) => parseBRDate(a.data) - parseBRDate(b.data),
+  );
+
+  let acumulado = 0;
+
+  return rows.map((item) => {
+    acumulado += item.valor;
+
+    return {
+      ...item,
+      acumulado,
+    };
+  });
+}
+
+function buildNegativosResumo(records: any[]) {
+  const datas = records
+    .map((item: any) => item.inclusao || item.data || item.vencimento)
+    .filter((data: string) => Boolean(parseBRDate(data)))
+    .sort((a: string, b: string) => parseBRDate(a) - parseBRDate(b));
+  const valores = records
+    .map((item: any) => parseBRValue(String(item.valor ?? "")))
+    .filter(Number.isFinite);
+  return {
+    count: records.length,
+    valor: valores.length ? formatCurrency(valores.reduce((total: number, value: number) => total + value, 0)) : "-",
+    antiga: datas[0] ?? "-",
+    recente: datas.at(-1) ?? "-",
+  };
+}
+
 function normalizeContactValues(values: unknown, fallback: string): string[] {
   if (!Array.isArray(values) || values.length === 0) return [fallback];
 
@@ -670,67 +743,33 @@ export default function SpcMaxiResultadoPage({
     ...ccfRecords,
   ];
 
-  const chartData = (() => {
-    const records =
-      activeGroup === "TODOS"
-        ? ALL_RECORDS
-        : ALL_RECORDS.filter((r) => r.grupo === activeGroup);
-
-    const grouped: Record<string, { data: string; valor: number }> = {};
-    records.forEach((item: any) => {
-      const data = item.vencimento || item.inclusao || item.data;
-      const valor = parseBRValue(String(item.valor ?? ""));
-      if (!data || !parseBRDate(data) || !Number.isFinite(valor)) return;
-      grouped[data] ??= { data, valor: 0 };
-      grouped[data].valor += valor;
-    });
-    const rows = Object.values(grouped).sort(
-      (a, b) => parseBRDate(a.data) - parseBRDate(b.data),
-    );
-
-    let acumulado = 0;
-
-    return rows.map((item) => {
-      acumulado += item.valor;
-
-      return {
-        ...item,
-        acumulado,
-      };
-    });
-  })();
+  const base = filterNegativosByGroup(ALL_RECORDS, activeGroup);
+  const chartData = buildNegativosChartData(base);
 
   const activeGroupData = GROUPS.find((g) => g.key === activeGroup);
   const shouldShowChart =
     (activeGroupData?.count ?? 0) > 0 && chartData.length > 0;
 
-  const base =
-    activeGroup === "TODOS"
-      ? ALL_RECORDS
-      : ALL_RECORDS.filter((r) => r.grupo === activeGroup);
-  const filtered = sortKey
-    ? [...base].sort((a, b) => {
-        let va: string | number = a[sortKey];
-        let vb: string | number = b[sortKey];
-        if (sortKey === "inclusao" || sortKey === "vencimento") {
-          va = parseBRDate(String(a[sortKey] ?? ""));
-          vb = parseBRDate(String(b[sortKey] ?? ""));
-        } else if (sortKey === "valor") {
-          va = parseBRValue(String(a[sortKey] ?? ""));
-          vb = parseBRValue(String(b[sortKey] ?? ""));
-        } else {
-          va = String(a[sortKey] ?? "");
-          vb = String(b[sortKey] ?? "");
-        }
-        if (va < vb) return sortDir === "asc" ? -1 : 1;
-        if (va > vb) return sortDir === "asc" ? 1 : -1;
-        return 0;
-      })
-    : base;
+  const filtered = sortNegativos(base, sortKey, sortDir);
 
   const PAGE = 5;
   const visible = expanded ? filtered : filtered.slice(0, PAGE);
   const remaining = filtered.length - PAGE;
+
+  // The print shows every group stacked, with all of its records.
+  const negativosPrintGroups = GROUPS.map((group) => {
+    const records = filterNegativosByGroup(ALL_RECORDS, group.key);
+    const groupChartData = buildNegativosChartData(records);
+
+    return {
+      key: group.key,
+      label: group.label,
+      resumo: buildNegativosResumo(records),
+      records: sortNegativos(records, sortKey, sortDir),
+      chartData: groupChartData,
+      shouldShowChart: group.count > 0 && groupChartData.length > 0,
+    };
+  });
 
   const normalize = (value?: string) =>
     (value ?? "")
@@ -879,21 +918,7 @@ export default function SpcMaxiResultadoPage({
       : []),
   ];
 
-  const resumoTabela = (() => {
-    const datas = base
-      .map((item: any) => item.inclusao || item.data || item.vencimento)
-      .filter((data: string) => Boolean(parseBRDate(data)))
-      .sort((a: string, b: string) => parseBRDate(a) - parseBRDate(b));
-    const valores = base
-      .map((item: any) => parseBRValue(String(item.valor ?? "")))
-      .filter(Number.isFinite);
-    return {
-      count: base.length,
-      valor: valores.length ? formatCurrency(valores.reduce((total: number, value: number) => total + value, 0)) : "-",
-      antiga: datas[0] ?? "-",
-      recente: datas.at(-1) ?? "-",
-    };
-  })();
+  const resumoTabela = buildNegativosResumo(base);
 
   useEffect(() => {
     if (!requestData) {
@@ -1560,7 +1585,7 @@ export default function SpcMaxiResultadoPage({
                   >
                     <h3 className="text-xs font-semibold text-gray-700">{title}</h3>
                     {isUnavailable ? (
-                      <p className="mt-2 text-xs font-medium text-gray-500">N?o h? dados dispon?veis</p>
+                      <p className="mt-2 text-xs font-medium text-gray-500">Não há dados disponíveis</p>
                     ) : hasValue ? (
                       <p className="mt-2 text-lg font-bold text-gray-600">{item.value}</p>
                     ) : (
@@ -1640,6 +1665,7 @@ export default function SpcMaxiResultadoPage({
           sortDir={sortDir}
           expandedRowKey={expandedRowKey}
           setExpandedRowKey={setExpandedRowKey}
+          printGroups={negativosPrintGroups}
           spcData={spcData}
         />
 

@@ -1,10 +1,5 @@
-import type { Dispatch, SetStateAction } from "react";
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  ChevronDown,
-} from "lucide-react";
+import { Fragment, type Dispatch, type SetStateAction } from "react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown } from "lucide-react";
 import {
   Bar,
   CartesianGrid,
@@ -40,27 +35,41 @@ interface GroupItem {
   recente: string;
 }
 
+interface ResumoTabela {
+  count: number | string;
+  valor: string;
+  antiga: string;
+  recente: string;
+}
+
+type ChartPoint = { data: string; valor: number; acumulado: number };
+
+export interface NegativosPrintGroup {
+  key: string;
+  label: string;
+  resumo: ResumoTabela;
+  records: any[];
+  chartData: ChartPoint[];
+  shouldShowChart: boolean;
+}
+
 interface NegativosConsolidadosSectionProps {
   groups: GroupItem[];
   activeGroup: string;
   setActiveGroup: Dispatch<SetStateAction<string>>;
   expanded: boolean;
   setExpanded: Dispatch<SetStateAction<boolean>>;
-  resumoTabela: {
-    count: number | string;
-    valor: string;
-    antiga: string;
-    recente: string;
-  };
+  resumoTabela: ResumoTabela;
   visible: any[];
   remaining: number;
   shouldShowChart: boolean;
-  chartData: Array<{ data: string; valor: number; acumulado: number }>;
+  chartData: ChartPoint[];
   handleSort: (key: SortKey) => void;
   sortKey: SortKey | null;
   sortDir: SortDir;
   expandedRowKey: string | null;
   setExpandedRowKey: Dispatch<SetStateAction<string | null>>;
+  printGroups: NegativosPrintGroup[];
   spcData: any;
 }
 
@@ -68,6 +77,400 @@ type NegativosTableColumn = {
   label: string;
   key: SortKey | null;
 };
+
+/** Fits the chart in the printable width of an A4 sheet. */
+const PRINT_CHART_WIDTH = 680;
+
+function getColumns(group: string): NegativosTableColumn[] {
+  if (group === "CCF") {
+    return [
+      { label: "Inclusão", key: "inclusao" },
+      { label: "Motivo", key: "motivo" },
+      { label: "Agência", key: "agencia" },
+      { label: "Banco", key: "banco" },
+      { label: "Origem", key: "origem" },
+    ];
+  }
+
+  if (group === "PROTESTOS") {
+    return [
+      { label: "Data", key: "data" },
+      { label: "Cartório", key: "cartorio" },
+      { label: "Valor", key: "valor" },
+      { label: "Cidade", key: "cidade" },
+    ];
+  }
+
+  return [
+    { label: "Inclusão", key: "inclusao" },
+    { label: "Vencimento", key: "vencimento" },
+    { label: "Valor", key: "valor" },
+    { label: "Credor", key: "credor" },
+    { label: "Cidade", key: "cidade" },
+    { label: "Origem", key: "origem" },
+    { label: "", key: null },
+  ];
+}
+
+function getDetailFields(group: string, r: any) {
+  if (group === "PROTESTOS") {
+    return [
+      { label: "Data", value: r.data ?? "-" },
+      { label: "Cartório", value: r.cartorio ?? "-" },
+      { label: "Valor", value: r.valor ?? "-" },
+      { label: "Cidade", value: r.cidade ?? "-" },
+    ];
+  }
+
+  return [
+    { label: "Inclusão", value: r.inclusao ?? "-" },
+    { label: "Vencimento", value: r.vencimento ?? "-" },
+    { label: "Valor", value: r.valor ?? "-" },
+    { label: "Credor", value: r.credor ?? "-" },
+    { label: "Cidade", value: r.cidade ?? "-" },
+    { label: "Origem", value: r.origem ?? "-" },
+  ];
+}
+
+function NegativosColGroup({
+  group,
+  withExpandColumn,
+}: {
+  group: string;
+  withExpandColumn: boolean;
+}) {
+  if (group === "CCF") {
+    return (
+      <colgroup>
+        <col style={{ width: "120px" }} />
+        <col style={{ width: "120px" }} />
+        <col style={{ width: "120px" }} />
+        <col />
+        <col />
+      </colgroup>
+    );
+  }
+
+  return (
+    <colgroup>
+      <col style={{ width: "120px" }} />
+      <col style={{ width: "120px" }} />
+      <col />
+      <col />
+      {group !== "PROTESTOS" && (
+        <>
+          <col />
+          <col />
+        </>
+      )}
+      {withExpandColumn && <col style={{ width: "30px" }} />}
+    </colgroup>
+  );
+}
+
+function NegativosRowCells({
+  group,
+  record: r,
+}: {
+  group: string;
+  record: any;
+}) {
+  return (
+    <>
+      {group === "TODOS" && (
+        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+          {r.tipo}
+        </td>
+      )}
+
+      {group === "PROTESTOS" && (
+        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+          {r.data}
+        </td>
+      )}
+
+      {group === "PROTESTOS" && (
+        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+          {r.cartorio}
+        </td>
+      )}
+
+      {group === "CCF" && (
+        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+          {r.inclusao}
+        </td>
+      )}
+
+      {group === "CCF" && (
+        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+          {r.motivo}
+        </td>
+      )}
+
+      {group === "CCF" && (
+        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+          {r.agencia}
+        </td>
+      )}
+
+      {group === "CCF" && (
+        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+          {r.banco}
+        </td>
+      )}
+
+      {group === "CCF" && (
+        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+          {r.origem}
+        </td>
+      )}
+
+      {group !== "PROTESTOS" && group !== "CCF" && (
+        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+          {r.inclusao}
+        </td>
+      )}
+
+      {group !== "PROTESTOS" && group !== "CCF" && (
+        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+          {r.vencimento}
+        </td>
+      )}
+
+      {group !== "CCF" && (
+        <td className="py-2.5 pr-4 text-gray-800 font-medium whitespace-nowrap">
+          {r.valor}
+        </td>
+      )}
+
+      {group !== "PROTESTOS" && group !== "CCF" && (
+        <td className="py-2.5 pr-4 text-gray-700">{r.credor}</td>
+      )}
+
+      {group !== "CCF" && (
+        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
+          {r.cidade}
+        </td>
+      )}
+
+      {group !== "PROTESTOS" && group !== "CCF" && (
+        <td className="py-2.5 pr-4 text-gray-600">{r.origem}</td>
+      )}
+    </>
+  );
+}
+
+function NegativosResumo({
+  resumo,
+  className,
+}: {
+  resumo: ResumoTabela;
+  className: string;
+}) {
+  return (
+    <div
+      className={`flex items-center gap-3 text-xs text-gray-500 pb-3 border-b border-gray-100 ${className}`}
+    >
+      <span>
+        Total:{" "}
+        <span className="font-semibold text-gray-800">
+          {resumo.count} registros
+        </span>
+      </span>
+
+      <span className="text-gray-300">|</span>
+
+      <span>
+        Valor:{" "}
+        <span className="font-semibold text-[#ED884A]">{resumo.valor}</span>
+      </span>
+      <span className="text-gray-300">|</span>
+
+      <span>
+        Mais antiga:{" "}
+        <span className="font-semibold text-gray-700">{resumo.antiga}</span>
+      </span>
+
+      <span className="text-gray-300">|</span>
+
+      <span>
+        Mais recente:{" "}
+        <span className="font-semibold text-gray-700">{resumo.recente}</span>
+      </span>
+    </div>
+  );
+}
+
+/** Without `width` the chart follows its container; print copies need a fixed size. */
+function NegativosChart({
+  chartData,
+  width,
+}: {
+  chartData: ChartPoint[];
+  width?: number;
+}) {
+  const isAnimationActive = width === undefined;
+
+  const chart = (
+    <ComposedChart
+      width={width}
+      height={260}
+      data={chartData}
+      margin={{ top: 4, right: 16, left: 8, bottom: 55 }}
+    >
+      <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
+
+      <XAxis
+        dataKey="data"
+        interval={0}
+        angle={-35}
+        textAnchor="end"
+        height={65}
+        tickMargin={8}
+        tick={{ fontSize: 10, fill: "#9CA3AF" }}
+        tickLine={false}
+        axisLine={false}
+      />
+
+      <YAxis
+        tick={{ fontSize: 10, fill: "#9CA3AF" }}
+        tickLine={false}
+        axisLine={false}
+        tickFormatter={(v: number) =>
+          `R$ ${v.toLocaleString("pt-BR", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          })}`
+        }
+        width={80}
+      />
+
+      <Tooltip
+        formatter={(v: number, name: string) => [
+          `R$ ${v.toLocaleString("pt-BR", {
+            minimumFractionDigits: 2,
+          })}`,
+          name === "acumulado" ? "Acumulado" : "Valor",
+        ]}
+        labelStyle={{ fontSize: 11, color: "#374151" }}
+        contentStyle={{
+          fontSize: 11,
+          borderRadius: 8,
+          border: "1px solid #E5E7EB",
+        }}
+        cursor={{ fill: "#F9FAFB" }}
+      />
+
+      <Bar
+        dataKey="valor"
+        fill="#ED884A"
+        radius={[4, 4, 0, 0]}
+        maxBarSize={18}
+        isAnimationActive={isAnimationActive}
+      />
+
+      <Line
+        type="monotone"
+        dataKey="acumulado"
+        stroke="#243871"
+        strokeWidth={2}
+        dot={{ r: 3, fill: "#243871", strokeWidth: 0 }}
+        activeDot={{ r: 5 }}
+        isAnimationActive={isAnimationActive}
+      />
+    </ComposedChart>
+  );
+
+  return (
+    <div data-print-block className="mt-8 pt-6 border-t border-gray-100">
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+          Variação de Endividamento
+        </p>
+      </div>
+
+      {width === undefined ? (
+        <ResponsiveContainer width="100%" height={260}>
+          {chart}
+        </ResponsiveContainer>
+      ) : (
+        chart
+      )}
+    </div>
+  );
+}
+
+function NegativosPrintGroupBlock({ group }: { group: NegativosPrintGroup }) {
+  const columns = getColumns(group.key).filter(({ label }) => label !== "");
+
+  return (
+    <div
+      data-print-negative-group
+      className="mt-6 pt-4 border-t border-gray-200"
+    >
+      {/* Same look as the section titles, so each group reads as its own section. */}
+      <h2 className="mb-3 text-sm font-semibold text-gray-700">
+        Negativos Consolidados – {group.label}
+      </h2>
+
+      <NegativosResumo resumo={group.resumo} className="mb-3" />
+
+      {group.records.length > 0 ? (
+        <table data-print-compact-table className="w-full text-xs table-fixed">
+          <NegativosColGroup group={group.key} withExpandColumn={false} />
+
+          <thead>
+            <tr className="border-b border-gray-100">
+              {columns.map(({ label }) => (
+                <th
+                  key={label}
+                  className="text-left pb-2 pr-4 last:pr-0 text-[10px] font-semibold uppercase tracking-wide text-gray-400"
+                >
+                  {label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+
+          {group.records.map((r, i) => (
+            // One tbody per record keeps the row and its details on the same sheet.
+            <tbody key={i} data-print-block>
+              <tr className="border-b border-gray-50">
+                <NegativosRowCells group={group.key} record={r} />
+              </tr>
+
+              {/* CCF has no details; the others print them already expanded. */}
+              {group.key !== "CCF" && (
+                <tr className="border-b border-gray-100 bg-gray-50/50">
+                  <td colSpan={columns.length} className="p-0">
+                    <div className="grid grid-cols-3 gap-3 px-3 py-2">
+                      {getDetailFields(group.key, r).map((field) => (
+                        <div key={field.label} className="min-w-0">
+                          <p className="text-[7px] font-semibold uppercase tracking-wide text-gray-400">
+                            {field.label}
+                          </p>
+                          <p className="text-[8px] text-gray-700">
+                            {field.value || "-"}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          ))}
+        </table>
+      ) : (
+        <p className="text-xs text-gray-500">Não há registros.</p>
+      )}
+
+      {group.shouldShowChart && (
+        <NegativosChart chartData={group.chartData} width={PRINT_CHART_WIDTH} />
+      )}
+    </div>
+  );
+}
 
 export function NegativosConsolidadosSection({
   groups,
@@ -85,6 +488,7 @@ export function NegativosConsolidadosSection({
   sortDir,
   expandedRowKey,
   setExpandedRowKey,
+  printGroups,
   spcData,
 }: NegativosConsolidadosSectionProps) {
   return (
@@ -111,11 +515,12 @@ export function NegativosConsolidadosSection({
                 setActiveGroup(g.key);
                 setExpanded(false);
               }}
-              className="text-left rounded-xl border p-3 transition-all"
-              style={{
-                borderColor: isActive ? "#ED884A" : "#E5E7EB",
-                backgroundColor: isActive ? "#FFFBF7" : "#fff",
-              }}
+              // Every group is printed, so no card is highlighted on paper.
+              className={`text-left rounded-xl border p-3 transition-all print:border-[#E5E7EB] print:bg-white ${
+                isActive
+                  ? "border-[#ED884A] bg-[#FFFBF7]"
+                  : "border-[#E5E7EB] bg-white"
+              }`}
             >
               <p className="text-[10px] font-semibold text-gray-700 uppercase tracking-wide mb-2">
                 {g.label}
@@ -124,15 +529,17 @@ export function NegativosConsolidadosSection({
               <div className="flex items-baseline justify-between mb-2">
                 <span
                   data-print-negative-count
-                  className="text-xl font-bold"
-                  style={{ color: isActive ? "#ED884A" : "#1F2937" }}
+                  className={`text-xl font-bold print:text-[#1F2937] ${
+                    isActive ? "text-[#ED884A]" : "text-[#1F2937]"
+                  }`}
                 >
                   {g.count}
                 </span>
                 <span
                   data-print-negative-amount
-                  className="text-lg font-semibold"
-                  style={{ color: isActive ? "#ED884A" : "#374151" }}
+                  className={`text-lg font-semibold print:text-[#374151] ${
+                    isActive ? "text-[#ED884A]" : "text-[#374151]"
+                  }`}
                 >
                   {g.valor}
                 </span>
@@ -166,415 +573,160 @@ export function NegativosConsolidadosSection({
         })}
       </div>
 
-      <div className="flex items-center gap-3 text-xs text-gray-500 mt-10 mb-3 pb-3 border-b border-gray-100">
-        <span>
-          Total:{" "}
-          <span className="font-semibold text-gray-800">
-            {resumoTabela.count} registros
-          </span>
-        </span>
+      <div data-print-hidden>
+        <NegativosResumo resumo={resumoTabela} className="mt-10 mb-3" />
 
-        <span className="text-gray-300">|</span>
+        <table data-print-compact-table className="w-full text-xs table-fixed">
+          <NegativosColGroup group={activeGroup} withExpandColumn />
 
-        <span>
-          Valor: <span className="font-semibold text-[#ED884A]">{resumoTabela.valor}</span>
-        </span>
-        <span className="text-gray-300">|</span>
+          <thead>
+            <tr className="border-b border-gray-100">
+              {getColumns(activeGroup).map(({ label, key }) => (
+                <th key={label} className="text-left pb-2 pr-4 last:pr-0">
+                  {key ? (
+                    <button
+                      type="button"
+                      onClick={() => handleSort(key)}
+                      className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide transition-colors"
+                      style={{
+                        color: sortKey === key ? "#243871" : "#9CA3AF",
+                      }}
+                    >
+                      {label}
 
-        <span>
-          Mais antiga:{" "}
-          <span className="font-semibold text-gray-700">
-            {resumoTabela.antiga}
-          </span>
-        </span>
-
-        <span className="text-gray-300">|</span>
-
-        <span>
-          Mais recente:{" "}
-          <span className="font-semibold text-gray-700">
-            {resumoTabela.recente}
-          </span>
-        </span>
-      </div>
-
-      <table data-print-compact-table className="w-full text-xs table-fixed">
-        {activeGroup === "CCF" ? (
-          <colgroup>
-            <col style={{ width: "120px" }} />
-            <col style={{ width: "120px" }} />
-            <col style={{ width: "120px" }} />
-            <col />
-            <col />
-          </colgroup>
-        ) : activeGroup === "PROTESTOS" ? (
-          <colgroup>
-            <col style={{ width: "120px" }} />
-            <col style={{ width: "120px" }} />
-            <col />
-            <col />
-            <col style={{ width: "30px" }} />
-          </colgroup>
-        ) : (
-          <colgroup>
-            <col style={{ width: "120px" }} />
-            <col style={{ width: "120px" }} />
-            <col />
-            <col />
-            <col />
-            <col />
-            <col style={{ width: "30px" }} />
-          </colgroup>
-        )}
-
-        <thead>
-          <tr className="border-b border-gray-100">
-            {((activeGroup === "CCF"
-              ? [
-                  { label: "Inclusão", key: "inclusao" },
-                  { label: "Motivo", key: "motivo" },
-                  { label: "Agência", key: "agencia" },
-                  { label: "Banco", key: "banco" },
-                  { label: "Origem", key: "origem" },
-                ]
-              : activeGroup === "PROTESTOS"
-                ? [
-                    { label: "Data", key: "data" },
-                    { label: "Cartório", key: "cartorio" },
-                    { label: "Valor", key: "valor" },
-                    { label: "Cidade", key: "cidade" },
-                  ]
-                : ([
-                    { label: "Inclusão", key: "inclusao" },
-                    { label: "Vencimento", key: "vencimento" },
-                    { label: "Valor", key: "valor" },
-                    { label: "Credor", key: "credor" },
-                    { label: "Cidade", key: "cidade" },
-                    { label: "Origem", key: "origem" },
-                    { label: "", key: null },
-                  ] as { label: string; key: SortKey | null }[])
-            ) as NegativosTableColumn[]).map(({ label, key }) => (
-              <th key={label} className="text-left pb-2 pr-4 last:pr-0">
-                {key ? (
-                  <button
-                    type="button"
-                    onClick={() => handleSort(key)}
-                    className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide transition-colors"
-                    style={{
-                      color: sortKey === key ? "#243871" : "#9CA3AF",
-                    }}
-                  >
-                    {label}
-
-                    {sortKey === key ? (
-                      sortDir === "asc" ? (
-                        <ArrowUp size={10} />
+                      {sortKey === key ? (
+                        sortDir === "asc" ? (
+                          <ArrowUp size={10} />
+                        ) : (
+                          <ArrowDown size={10} />
+                        )
                       ) : (
-                        <ArrowDown size={10} />
-                      )
-                    ) : (
-                      <ArrowUpDown size={10} className="text-gray-300" />
-                    )}
-                  </button>
-                ) : null}
-              </th>
-            ))}
-          </tr>
-        </thead>
+                        <ArrowUpDown size={10} className="text-gray-300" />
+                      )}
+                    </button>
+                  ) : null}
+                </th>
+              ))}
+            </tr>
+          </thead>
 
-        <tbody>
-          {visible.map((r, i) => {
-            const rowKey = `${activeGroup}-${i}-${r.inclusao ?? r.data ?? ""}-${r.valor ?? ""}`;
-            const isRowExpanded = expandedRowKey === rowKey;
-            const detailColSpan =
-              activeGroup === "CCF"
-                ? 5
-                : activeGroup === "PROTESTOS"
-                  ? 5
-                  : 7;
+          <tbody>
+            {visible.map((r, i) => {
+              const rowKey = `${activeGroup}-${i}-${r.inclusao ?? r.data ?? ""}-${r.valor ?? ""}`;
+              const isRowExpanded = expandedRowKey === rowKey;
+              const detailColSpan =
+                activeGroup === "CCF" ? 5 : activeGroup === "PROTESTOS" ? 5 : 7;
 
-            const detailFields =
-              activeGroup === "PROTESTOS"
-                ? [
-                    { label: "Data", value: r.data ?? "-" },
-                    { label: "Cartório", value: r.cartorio ?? "-" },
-                    { label: "Valor", value: r.valor ?? "-" },
-                    { label: "Cidade", value: r.cidade ?? "-" },
-                  ]
-                : [
-                    { label: "Inclusão", value: r.inclusao ?? "-" },
-                    { label: "Vencimento", value: r.vencimento ?? "-" },
-                    { label: "Valor", value: r.valor ?? "-" },
-                    { label: "Credor", value: r.credor ?? "-" },
-                    { label: "Cidade", value: r.cidade ?? "-" },
-                    { label: "Origem", value: r.origem ?? "-" },
-                  ];
+              const detailFields = getDetailFields(activeGroup, r);
 
-            return (
-              <>
-                <tr
-                  key={rowKey}
-                  className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
-                >
-                  {activeGroup === "TODOS" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.tipo}
-                    </td>
-                  )}
+              return (
+                <Fragment key={rowKey}>
+                  <tr className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                    <NegativosRowCells group={activeGroup} record={r} />
 
-                  {activeGroup === "PROTESTOS" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.data}
-                    </td>
-                  )}
-
-                  {activeGroup === "PROTESTOS" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.cartorio}
-                    </td>
-                  )}
-
-                  {activeGroup === "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.inclusao}
-                    </td>
-                  )}
-
-                  {activeGroup === "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.motivo}
-                    </td>
-                  )}
-
-                  {activeGroup === "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.agencia}
-                    </td>
-                  )}
-
-                  {activeGroup === "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.banco}
-                    </td>
-                  )}
-
-                  {activeGroup === "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.origem}
-                    </td>
-                  )}
-
-                  {activeGroup !== "PROTESTOS" && activeGroup !== "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.inclusao}
-                    </td>
-                  )}
-
-                  {activeGroup !== "PROTESTOS" && activeGroup !== "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.vencimento}
-                    </td>
-                  )}
-
-                  {activeGroup !== "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-800 font-medium whitespace-nowrap">
-                      {r.valor}
-                    </td>
-                  )}
-
-                  {activeGroup !== "PROTESTOS" && activeGroup !== "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-700">
-                      {r.credor}
-                    </td>
-                  )}
-
-                  {activeGroup !== "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-                      {r.cidade}
-                    </td>
-                  )}
-
-                  {activeGroup !== "PROTESTOS" && activeGroup !== "CCF" && (
-                    <td className="py-2.5 pr-4 text-gray-600">
-                      {r.origem}
-                    </td>
-                  )}
-
-                  {activeGroup !== "CCF" && (
-                    <td className="py-2.5">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setExpandedRowKey((prev) =>
-                            prev === rowKey ? null : rowKey,
-                          )
-                        }
-                        className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer p-1 rounded-full hover:bg-gray-100"
-                        aria-label={
-                          isRowExpanded
-                            ? "Recolher detalhes"
-                            : "Expandir detalhes"
-                        }
-                      >
-                        <ChevronDown
-                          size={13}
-                          className={`transition-transform ${isRowExpanded ? "rotate-180" : "rotate-0"}`}
-                        />
-                      </button>
-                    </td>
-                  )}
-                </tr>
-
-                {activeGroup !== "CCF" && (
-                  <tr
-                    className={`bg-gray-50/50 transition-all ${
-                      isRowExpanded
-                        ? "border-b border-gray-50 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
-                        : "border-b border-transparent duration-300 ease-in-out"
-                    }`}
-                  >
-                    <td colSpan={detailColSpan} className="p-0">
-                      <div
-                        className={`overflow-hidden transition-[max-height,opacity] ${
-                          isRowExpanded
-                            ? "max-h-40 opacity-100 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
-                            : "max-h-0 opacity-0 duration-300 ease-in-out"
-                        }`}
-                      >
-                        <div
-                          className={`grid grid-cols-2 gap-3 px-3 py-3 transition-all md:grid-cols-3 ${
+                    {activeGroup !== "CCF" && (
+                      <td className="py-2.5">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedRowKey((prev) =>
+                              prev === rowKey ? null : rowKey,
+                            )
+                          }
+                          className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer p-1 rounded-full hover:bg-gray-100"
+                          aria-label={
                             isRowExpanded
-                              ? "translate-y-0 opacity-100 duration-500 delay-75"
-                              : "-translate-y-1 opacity-0 duration-200"
+                              ? "Recolher detalhes"
+                              : "Expandir detalhes"
+                          }
+                        >
+                          <ChevronDown
+                            size={13}
+                            className={`transition-transform ${isRowExpanded ? "rotate-180" : "rotate-0"}`}
+                          />
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+
+                  {activeGroup !== "CCF" && (
+                    <tr
+                      className={`bg-gray-50/50 transition-all ${
+                        isRowExpanded
+                          ? "border-b border-gray-50 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                          : "border-b border-transparent duration-300 ease-in-out"
+                      }`}
+                    >
+                      <td colSpan={detailColSpan} className="p-0">
+                        <div
+                          className={`overflow-hidden transition-[max-height,opacity] ${
+                            isRowExpanded
+                              ? "max-h-40 opacity-100 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                              : "max-h-0 opacity-0 duration-300 ease-in-out"
                           }`}
                         >
-                          {detailFields.map((field) => (
-                            <div
-                              key={`${rowKey}-${field.label}`}
-                              className="min-w-0"
-                            >
-                              <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                                {field.label}
-                              </p>
-                              <p className="truncate text-xs text-gray-700">
-                                {field.value || "-"}
-                              </p>
-                            </div>
-                          ))}
+                          <div
+                            className={`grid grid-cols-2 gap-3 px-3 py-3 transition-all md:grid-cols-3 ${
+                              isRowExpanded
+                                ? "translate-y-0 opacity-100 duration-500 delay-75"
+                                : "-translate-y-1 opacity-0 duration-200"
+                            }`}
+                          >
+                            {detailFields.map((field) => (
+                              <div
+                                key={`${rowKey}-${field.label}`}
+                                className="min-w-0"
+                              >
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                                  {field.label}
+                                </p>
+                                <p className="truncate text-xs text-gray-700">
+                                  {field.value || "-"}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </>
-            );
-          })}
-        </tbody>
-      </table>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              );
+            })}
+          </tbody>
+        </table>
 
-      {!expanded && remaining > 0 && (
-        <button
-          type="button"
-          onClick={() => setExpanded(true)}
-          className="mt-3 text-xs font-medium transition-colors"
-          style={{ color: "#243871" }}
-        >
-          Exibir mais {remaining}{" "}
-          {remaining === 1 ? "registro" : "registros"}
-          ...
-        </button>
-      )}
+        {!expanded && remaining > 0 && (
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className="mt-3 text-xs font-medium transition-colors"
+            style={{ color: "#243871" }}
+          >
+            Exibir mais {remaining} {remaining === 1 ? "registro" : "registros"}
+            ...
+          </button>
+        )}
 
-      {expanded && remaining > 0 && (
-        <button
-          type="button"
-          onClick={() => setExpanded(false)}
-          className="mt-3 text-xs font-medium transition-colors"
-          style={{ color: "#243871" }}
-        >
-          Recolher
-        </button>
-      )}
+        {expanded && remaining > 0 && (
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            className="mt-3 text-xs font-medium transition-colors"
+            style={{ color: "#243871" }}
+          >
+            Recolher
+          </button>
+        )}
 
-      {shouldShowChart && (
-        <div className="mt-8 pt-6 border-t border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-              Variação de Endividamento
-            </p>
-          </div>
+        {shouldShowChart && <NegativosChart chartData={chartData} />}
+      </div>
 
-          <ResponsiveContainer width="100%" height={260}>
-            <ComposedChart
-              data={chartData}
-              margin={{ top: 4, right: 16, left: 8, bottom: 55 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="#F3F4F6"
-                vertical={false}
-              />
-
-              <XAxis
-                dataKey="data"
-                interval={0}
-                angle={-35}
-                textAnchor="end"
-                height={65}
-                tickMargin={8}
-                tick={{ fontSize: 10, fill: "#9CA3AF" }}
-                tickLine={false}
-                axisLine={false}
-              />
-
-              <YAxis
-                tick={{ fontSize: 10, fill: "#9CA3AF" }}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(v: number) =>
-                  `R$ ${v.toLocaleString("pt-BR", {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                  })}`
-                }
-                width={80}
-              />
-
-              <Tooltip
-                formatter={(v: number, name: string) => [
-                  `R$ ${v.toLocaleString("pt-BR", {
-                    minimumFractionDigits: 2,
-                  })}`,
-                  name === "acumulado" ? "Acumulado" : "Valor",
-                ]}
-                labelStyle={{ fontSize: 11, color: "#374151" }}
-                contentStyle={{
-                  fontSize: 11,
-                  borderRadius: 8,
-                  border: "1px solid #E5E7EB",
-                }}
-                cursor={{ fill: "#F9FAFB" }}
-              />
-
-              <Bar
-                dataKey="valor"
-                fill="#ED884A"
-                radius={[4, 4, 0, 0]}
-                maxBarSize={18}
-              />
-
-              <Line
-                type="monotone"
-                dataKey="acumulado"
-                stroke="#243871"
-                strokeWidth={2}
-                dot={{ r: 3, fill: "#243871", strokeWidth: 0 }}
-                activeDot={{ r: 5 }}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
-      )}
+      <div className="hidden print:block">
+        {printGroups.map((group) => (
+          <NegativosPrintGroupBlock key={group.key} group={group} />
+        ))}
+      </div>
 
       {(() => {
         const riscoCreditoDetalhe =
