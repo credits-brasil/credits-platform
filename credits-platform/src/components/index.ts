@@ -5,3 +5,4 @@ export { InputComponent } from "./Input";
 export { PercentageProgressIndicatorComponent } from "./PercentageProgressIndicator";
 export { PrintButton } from "./PrintButton";
 export { PrintCover } from "./PrintCover";
+export { PrintSectionsDialog } from "./PrintSectionsDialog";

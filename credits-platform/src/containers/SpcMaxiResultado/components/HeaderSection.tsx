@@ -1,6 +1,7 @@
 import { RefreshCw, Search, User } from "lucide-react";
 import { PrintButton } from "@/components/PrintButton";
 import { CopyButton } from "@/components/ui/copy-button";
+import { REPORT_SECTIONS } from "@/constants/report-sections";
 import { useStickyIdentification } from "@/hooks/useStickyIdentification";
 
 type HeaderSectionProps = {
@@ -95,7 +96,7 @@ export function HeaderSection({
         </div>
 
         <div className="flex items-center gap-2" data-print-hidden>
-          <PrintButton />
+          <PrintButton sections={REPORT_SECTIONS} />
 
           <button
             type="button"
