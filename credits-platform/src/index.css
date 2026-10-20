@@ -244,6 +244,7 @@
   }
 
   [data-print-hidden],
+  [data-print-excluded],
   [role="dialog"],
   [data-radix-popper-content-wrapper] {
     display: none !important;
@@ -372,6 +373,15 @@
     height: auto !important;
     max-height: none !important;
     animation: none !important;
+  }
+
+  /* Each negatives group starts on its own sheet, so two groups never share one. */
+  [data-print-negative-group] + [data-print-negative-group] {
+    break-before: page;
+    page-break-before: always;
+    margin-top: 0 !important;
+    padding-top: 0;
+    border-top: 0;
   }
 
   [data-print-negative-card] {
