@@ -415,55 +415,51 @@ function NegativosPrintGroupBlock({ group }: { group: NegativosPrintGroup }) {
 
       <NegativosResumo resumo={group.resumo} className="mb-3" />
 
-      {group.records.length > 0 ? (
-        <table data-print-compact-table className="w-full text-xs table-fixed">
-          <NegativosColGroup group={group.key} withExpandColumn={false} />
+      <table data-print-compact-table className="w-full text-xs table-fixed">
+        <NegativosColGroup group={group.key} withExpandColumn={false} />
 
-          <thead>
-            <tr className="border-b border-gray-100">
-              {columns.map(({ label }) => (
-                <th
-                  key={label}
-                  className="text-left pb-2 pr-4 last:pr-0 text-[10px] font-semibold uppercase tracking-wide text-gray-400"
-                >
-                  {label}
-                </th>
-              ))}
+        <thead>
+          <tr className="border-b border-gray-100">
+            {columns.map(({ label }) => (
+              <th
+                key={label}
+                className="text-left pb-2 pr-4 last:pr-0 text-[10px] font-semibold uppercase tracking-wide text-gray-400"
+              >
+                {label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+
+        {group.records.map((r, i) => (
+          // One tbody per record keeps the row and its details on the same sheet.
+          <tbody key={i} data-print-block>
+            <tr className="border-b border-gray-50">
+              <NegativosRowCells group={group.key} record={r} />
             </tr>
-          </thead>
 
-          {group.records.map((r, i) => (
-            // One tbody per record keeps the row and its details on the same sheet.
-            <tbody key={i} data-print-block>
-              <tr className="border-b border-gray-50">
-                <NegativosRowCells group={group.key} record={r} />
+            {/* CCF has no details; the others print them already expanded. */}
+            {group.key !== "CCF" && (
+              <tr className="border-b border-gray-100 bg-gray-50/50">
+                <td colSpan={columns.length} className="p-0">
+                  <div className="grid grid-cols-3 gap-3 px-3 py-2">
+                    {getDetailFields(group.key, r).map((field) => (
+                      <div key={field.label} className="min-w-0">
+                        <p className="text-[7px] font-semibold uppercase tracking-wide text-gray-400">
+                          {field.label}
+                        </p>
+                        <p className="text-[8px] text-gray-700">
+                          {field.value || "-"}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </td>
               </tr>
-
-              {/* CCF has no details; the others print them already expanded. */}
-              {group.key !== "CCF" && (
-                <tr className="border-b border-gray-100 bg-gray-50/50">
-                  <td colSpan={columns.length} className="p-0">
-                    <div className="grid grid-cols-3 gap-3 px-3 py-2">
-                      {getDetailFields(group.key, r).map((field) => (
-                        <div key={field.label} className="min-w-0">
-                          <p className="text-[7px] font-semibold uppercase tracking-wide text-gray-400">
-                            {field.label}
-                          </p>
-                          <p className="text-[8px] text-gray-700">
-                            {field.value || "-"}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          ))}
-        </table>
-      ) : (
-        <p className="text-xs text-gray-500">Não há registros.</p>
-      )}
+            )}
+          </tbody>
+        ))}
+      </table>
 
       {group.shouldShowChart && (
         <NegativosChart chartData={group.chartData} width={PRINT_CHART_WIDTH} />
@@ -723,9 +719,11 @@ export function NegativosConsolidadosSection({
       </div>
 
       <div className="hidden print:block">
-        {printGroups.map((group) => (
-          <NegativosPrintGroupBlock key={group.key} group={group} />
-        ))}
+        {printGroups
+          .filter((group) => group.records.length > 0)
+          .map((group) => (
+            <NegativosPrintGroupBlock key={group.key} group={group} />
+          ))}
       </div>
 
       {(() => {
