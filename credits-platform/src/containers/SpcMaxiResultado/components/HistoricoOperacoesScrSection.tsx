@@ -17,17 +17,31 @@ interface HistoricoOperacoesScrSectionProps {
   getScoreColor: (value: number) => string;
 }
 
+function getHistoricoScr(spcData: any) {
+  return spcData?.["insumo-historico-operacao-scr"]?.[
+    "detalhe-insumo-historico-operacao-scr"
+  ];
+}
+
+/** The SCR history always comes with every `grupo-*` list; it has data only when one of them has items. */
+export function hasHistoricoScrData(spcData: any): boolean {
+  const historicoScr = getHistoricoScr(spcData);
+
+  if (!historicoScr || typeof historicoScr !== "object") return false;
+
+  return Object.values(historicoScr).some(
+    (grupo) => Array.isArray(grupo) && grupo.length > 0,
+  );
+}
+
 export function HistoricoOperacoesScrSection({
   spcData,
   scorePj,
   getScoreColor,
 }: HistoricoOperacoesScrSectionProps) {
-  const historicoScr =
-    spcData?.["insumo-historico-operacao-scr"]?.[
-      "detalhe-insumo-historico-operacao-scr"
-    ];
+  const historicoScr = getHistoricoScr(spcData);
 
-  if (!historicoScr) return null;
+  if (!hasHistoricoScrData(spcData)) return null;
 
   const grupoGarantia = historicoScr?.["grupo-garantia"] ?? [];
   const grupoModalidade = historicoScr?.["grupo-modalidade"] ?? [];
@@ -55,7 +69,7 @@ export function HistoricoOperacoesScrSection({
     F: "Financiamentos",
     O: "Outras Operações ou Contratos",
     OA: "Operações de Arrendamento",
-    CA: "Cartão de Credito",
+    CA: "Cartão de Crédito",
   };
 
   const grupoCarteiraAtivaVencidaPorModalidadeLabels: Record<string, string> = {
@@ -137,7 +151,7 @@ export function HistoricoOperacoesScrSection({
           inicial: valorEstimadoCarteiraAtivaVencidaPorModalidadeInicial,
           final: valorEstimadoCarteiraAtivaVencidaPorModalidadeFinal,
         };
-      case "Carteiras Vencidas em Prejuizo por Modalidade":
+      case "Carteiras Vencidas em Prejuízo por Modalidade":
         return {
           inicial:
             valorEstimadoCarteiraAtivaVencidaPrejuizoPorModalidadeInicial,
@@ -266,7 +280,9 @@ export function HistoricoOperacoesScrSection({
   };
 
   const scoreScr = Number(historicoScr?.score ?? scorePj ?? 0);
+  console.log("historicoScr:", historicoScr.score);
   const normalizedScoreScr = Math.min(Math.max(scoreScr, 0), 1000);
+  console.log("normalizedScoreScr:", normalizedScoreScr);
   const scoreScrColor = getScoreColor(normalizedScoreScr);
 
   const scoreScrRisco = (() => {
@@ -299,7 +315,7 @@ export function HistoricoOperacoesScrSection({
       className="mb-4 rounded-xl border border-gray-200 bg-white p-5"
     >
       <h2 className="mb-4 text-sm font-semibold text-gray-700">
-        Historico de Operações no SCR
+        Histórico de Operações no SCR
       </h2>
 
       <div className="mb-5 flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
@@ -486,7 +502,7 @@ export function HistoricoOperacoesScrSection({
         )}
 
         {renderGrupoTable(
-          "Carteiras Vencidas em Prejuizo por Modalidade",
+          "Carteiras Vencidas em Prejuízo por Modalidade",
           historicoScr?.[
             "grupo-carteira-ativa-vencida-prejuizo-por-modalidade"
           ] ?? [],

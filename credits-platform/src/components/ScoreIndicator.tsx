@@ -142,7 +142,7 @@ export function ScoreIndicator({
           <div
             className="relative h-2 overflow-visible rounded-full"
             role="img"
-            aria-label={`Escala de risco: ${hasPositiveScore ? positiveScoreRisk.label : "indispon?vel"}`}
+            aria-label={`Escala de risco: ${hasPositiveScore ? positiveScoreRisk.label : "indisponível"}`}
           >
             <div className="flex h-2 overflow-hidden rounded-full">
               {positiveRiskSegments.map((segment) => (

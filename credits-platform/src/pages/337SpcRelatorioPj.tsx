@@ -121,7 +121,7 @@ export default function SpcRelatorioPage() {
           </div>
 
           <div className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-slate-100 backdrop-blur-sm">
-            Consulta completa de crédito e risco
+            Consulta de crédito e risco
           </div>
         </div>
       </div>

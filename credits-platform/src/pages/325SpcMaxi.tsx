@@ -24,6 +24,15 @@ import {
 
 const DEFAULT_SELECTED = new Set<string>([]);
 
+// Only offered by SPC MAXI, so it is not part of the shared CNPJ groups.
+const CNPJ_CADASTRAL_EXTRA_INSUMOS = [{ id: "5241", label: "Grupo econômico" }];
+
+const SPC_MAXI_CNPJ_INSUMO_GROUPS = CNPJ_INSUMO_GROUPS.map((group) =>
+  group.id === "cadastral"
+    ? { ...group, items: [...group.items, ...CNPJ_CADASTRAL_EXTRA_INSUMOS] }
+    : group,
+);
+
 export default function SpcMaxiPage() {
   const queryClient = useQueryClient();
 
@@ -38,7 +47,7 @@ export default function SpcMaxiPage() {
   );
 
   const insumoGroups = useMemo(
-    () => (docType === "CPF" ? CPF_INSUMO_GROUPS : CNPJ_INSUMO_GROUPS),
+    () => (docType === "CPF" ? CPF_INSUMO_GROUPS : SPC_MAXI_CNPJ_INSUMO_GROUPS),
     [docType],
   );
 
@@ -166,7 +175,7 @@ export default function SpcMaxiPage() {
           </div>
 
           <div className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-slate-100 backdrop-blur-sm">
-            Consulta completa de crédito e risco
+            Consulta de crédito e risco
           </div>
         </div>
       </div>
