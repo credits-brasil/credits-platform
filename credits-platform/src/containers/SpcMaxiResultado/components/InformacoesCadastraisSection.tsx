@@ -6,6 +6,7 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { CopyButton } from "@/components/ui/copy-button";
+import { GoogleMapsButton } from "@/components/GoogleMapsButton";
 import { formatCNPJ } from "@/utils/formatCNPJ";
 import { formatCPF } from "@/utils/formatCPF";
 import { formatCEP } from "@/utils/formatCEP";
@@ -65,14 +66,53 @@ function formatEnderecoCompleto(endereco: Endereco): string {
   return joinFilled([joinFilled([rua, localidade], ", "), cep], " | ") || "-";
 }
 
+/** Only what helps Google Maps find the place, e.g. "Rua X, 120, Pinheiros, São Paulo, SP". */
+function formatEnderecoMapsQuery(endereco: Endereco): string {
+  return joinFilled(
+    [
+      endereco.logradouro,
+      endereco.numero,
+      endereco.bairro,
+      endereco.cidade,
+      endereco.estado,
+    ],
+    ", ",
+  );
+}
+
+/**
+ * Same as `formatEnderecoMapsQuery`, for addresses that come as text:
+ * "Rua X, 120 - Cj 902, Pinheiros - São Paulo - SP | CEP: 05409-000" -> "Rua X, 120, Pinheiros, São Paulo, SP".
+ */
+function getEnderecoMapsQueryFromText(enderecoTexto: string): string {
+  const [semCep] = enderecoTexto.split("|");
+  const partes = semCep.split(",").map((parte) => parte.trim());
+
+  if (partes.length < 2) return semCep.trim();
+
+  const logradouro = partes[0];
+  // Between street and locality: "number - complement".
+  const numero = partes.length > 2 ? partes[1].split(" - ")[0] : undefined;
+  const [bairro, cidade, estado] = partes[partes.length - 1].split(" - ");
+
+  return formatEnderecoMapsQuery({
+    logradouro,
+    numero: numero?.trim(),
+    bairro: bairro?.trim(),
+    cidade: cidade?.trim(),
+    estado: estado?.trim(),
+  });
+}
+
 type DadosAdicionaisRow = InformacoesCadastraisSectionProps["body"][number];
 
 const DADOS_ADICIONAIS_COLUMNS: Array<{
   key: keyof DadosAdicionaisRow;
   label: string;
   breakWords?: boolean;
+  showMapsLink?: boolean;
 }> = [
-  { key: "endereco", label: "Endereço", breakWords: true },
+  { key: "endereco", label: "Endereço", breakWords: true, showMapsLink: true },
   { key: "email", label: "Email", breakWords: true },
   { key: "telefone", label: "Tel. fixo" },
   { key: "celular", label: "Tel. Celular" },
@@ -82,10 +122,12 @@ function CopyableCell({
   value,
   label,
   breakWords,
+  showMapsLink,
 }: {
   value?: string;
   label: string;
   breakWords?: boolean;
+  showMapsLink?: boolean;
 }) {
   const hasValue = Boolean(value) && value !== "-";
 
@@ -103,6 +145,13 @@ function CopyableCell({
             value={value}
             title={`Copiar ${label}`}
             className="mt-0.5 shrink-0 text-gray-400 hover:text-[#243871] transition-colors hover:cursor-pointer"
+          />
+        )}
+
+        {hasValue && showMapsLink && (
+          <GoogleMapsButton
+            address={getEnderecoMapsQueryFromText(value!)}
+            className="mt-0.5"
           />
         )}
       </div>
@@ -128,10 +177,12 @@ export function InformacoesCadastraisSection({
   const { data: viaCep } = useViaCep(endereco?.cep);
 
   // ViaCEP has the street name for the CEP; fall back to SPC while it loads or fails.
-  const enderecoCompleto = formatEnderecoCompleto({
+  const enderecoConsumidor: Endereco = {
     ...endereco,
     logradouro: viaCep?.logradouro || endereco?.logradouro,
-  });
+  };
+  const enderecoCompleto = formatEnderecoCompleto(enderecoConsumidor);
+  const enderecoMapsQuery = formatEnderecoMapsQuery(enderecoConsumidor);
 
   return (
     <div
@@ -336,6 +387,10 @@ export function InformacoesCadastraisSection({
                           className="text-gray-400 hover:text-[#243871] transition-colors hover:cursor-pointer"
                         />
                       )}
+
+                    {f.label === "Endereço" && enderecoMapsQuery && (
+                      <GoogleMapsButton address={enderecoMapsQuery} />
+                    )}
                   </div>
                 </div>
               ))}
@@ -373,14 +428,17 @@ export function InformacoesCadastraisSection({
                       key={index}
                       className="border-b border-gray-50 transition-colors hover:bg-gray-50"
                     >
-                      {DADOS_ADICIONAIS_COLUMNS.map(({ key, label, breakWords }) => (
-                        <CopyableCell
-                          key={key}
-                          value={row[key]}
-                          label={label}
-                          breakWords={breakWords}
-                        />
-                      ))}
+                      {DADOS_ADICIONAIS_COLUMNS.map(
+                        ({ key, label, breakWords, showMapsLink }) => (
+                          <CopyableCell
+                            key={key}
+                            value={row[key]}
+                            label={label}
+                            breakWords={breakWords}
+                            showMapsLink={showMapsLink}
+                          />
+                        ),
+                      )}
                     </tr>
                   ))}
                 </tbody>

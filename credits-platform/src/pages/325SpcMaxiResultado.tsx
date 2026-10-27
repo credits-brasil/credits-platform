@@ -181,7 +181,7 @@ function formatConsultaDateTime(value?: string): string {
     .replace(", ", " às ");
 }
 
-const EXTRA_CONSULTATION_WINDOW_MS = 1 * 60 * 1000;
+const EXTRA_CONSULTATION_WINDOW_MS = 5 * 60 * 1000;
 
 function isExtraConsultationExpired(value?: string): boolean {
   if (!value) return false;
@@ -931,6 +931,20 @@ export default function SpcMaxiResultadoPage({
       : []
     : [];
 
+    const itHasMensagemComplemento = spcData?.["mensagem-complemento"]
+
+  const alertaLiminar: AlertaItem[] =  
+  itHasMensagemComplemento ? [
+    {
+      titulo: "Alerta Liminar",
+      severidade: "padrao",
+      descricao: "Foi identificado um alerta liminar na consulta.",
+      fonte: "SPC Brasil",
+      tipo: "Liminar",
+    }
+  ] : [];
+
+
   const alertas: Array<AlertaItem & { data?: string }> = [
     ...alertasIdentidade,
     ...(isInsumoRequested("5262") && !alertasIdentidade.length ? [{
@@ -1007,6 +1021,7 @@ export default function SpcMaxiResultadoPage({
         ]
       : []),
       ...alertasHistoricoScr,
+      ...alertaLiminar,
   ];
 
   const resumoTabela = buildNegativosResumo(base);
