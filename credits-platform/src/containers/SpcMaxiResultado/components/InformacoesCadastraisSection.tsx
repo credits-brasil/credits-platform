@@ -60,7 +60,7 @@ export function InformacoesCadastraisSection({
       >
         <AccordionItem value="dados-pessoais" className="border-gray-100">
           <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
-            Dados Cadastral
+            Dados Cadastrais
           </AccordionTrigger>
           <AccordionContent>
             <div className="grid grid-cols-3 gap-x-8 gap-y-4 pt-1 pb-2">
@@ -350,7 +350,7 @@ export function InformacoesCadastraisSection({
               className="border-gray-100"
             >
               <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
-                Atividades Econômicas Secundarias - SPC Brasil
+                Atividades Econômicas Secundárias - SPC Brasil
               </AccordionTrigger>
 
               <AccordionContent>

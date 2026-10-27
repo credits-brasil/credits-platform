@@ -793,7 +793,7 @@ export function NegativosConsolidadosSection({
                   style={{ backgroundColor: "#F8F9FB" }}
                 >
                   <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-                    Taxa Mal Pagador
+                    Taxa Mau Pagador
                   </span>
 
                   <span className="text-base font-bold text-gray-800">

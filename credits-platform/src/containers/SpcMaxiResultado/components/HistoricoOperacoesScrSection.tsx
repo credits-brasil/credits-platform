@@ -55,7 +55,7 @@ export function HistoricoOperacoesScrSection({
     F: "Financiamentos",
     O: "Outras Operações ou Contratos",
     OA: "Operações de Arrendamento",
-    CA: "Cartão de Credito",
+    CA: "Cartão de Crédito",
   };
 
   const grupoCarteiraAtivaVencidaPorModalidadeLabels: Record<string, string> = {
@@ -137,7 +137,7 @@ export function HistoricoOperacoesScrSection({
           inicial: valorEstimadoCarteiraAtivaVencidaPorModalidadeInicial,
           final: valorEstimadoCarteiraAtivaVencidaPorModalidadeFinal,
         };
-      case "Carteiras Vencidas em Prejuizo por Modalidade":
+      case "Carteiras Vencidas em Prejuízo por Modalidade":
         return {
           inicial:
             valorEstimadoCarteiraAtivaVencidaPrejuizoPorModalidadeInicial,
@@ -299,7 +299,7 @@ export function HistoricoOperacoesScrSection({
       className="mb-4 rounded-xl border border-gray-200 bg-white p-5"
     >
       <h2 className="mb-4 text-sm font-semibold text-gray-700">
-        Historico de Operações no SCR
+        Histórico de Operações no SCR
       </h2>
 
       <div className="mb-5 flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
@@ -486,7 +486,7 @@ export function HistoricoOperacoesScrSection({
         )}
 
         {renderGrupoTable(
-          "Carteiras Vencidas em Prejuizo por Modalidade",
+          "Carteiras Vencidas em Prejuízo por Modalidade",
           historicoScr?.[
             "grupo-carteira-ativa-vencida-prejuizo-por-modalidade"
           ] ?? [],

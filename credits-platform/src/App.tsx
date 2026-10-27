@@ -160,7 +160,7 @@ function TermsConsentGate({
         <div className="space-y-4">
           <h2 className="text-lg font-bold text-[#0A1F5C]">Termo de Aceite - Plataforma Credits</h2>
 
-          <p><strong>Bem vindo(a)</strong></p>
+          <p><strong>Bem-vindo(a)</strong></p>
 
           <p><strong>Aviso Importante: Novas Funcionalidades Disponíveis na Plataforma Credits</strong></p>
 
@@ -172,13 +172,13 @@ function TermsConsentGate({
           <p>
             Além dos Produtos já disponibilizados, você terá acesso a Novos Produtos e Funcionalidades
             que trarão novas oportunidades e ferramentas avançadas à disposição. Algumas funcionalidades
-            podem resultar em cobranças adicionais, somente se utilizadas. Para saber mais informações,
+            podem resultar em cobranças adicionais, somente se utilizadas. Para mais informações,
             contate o seu consultor comercial.
           </p>
 
           <p>
-            Os seus contratos atuais com a Credits Brasil permanecem inalterados. Enviamos um guia de
-            utilização detalhado para facilitar sua adaptação para o seu e-mail.
+            Os seus contratos atuais com a Credits Brasil permanecem inalterados. Enviamos para o seu e-mail um guia
+            de utilização detalhado para facilitar sua adaptação.
           </p>
 
           <p><strong>Ciente dos termos, você concorda que:</strong></p>
