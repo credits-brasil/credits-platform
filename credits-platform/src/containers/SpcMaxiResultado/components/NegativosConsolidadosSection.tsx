@@ -21,6 +21,8 @@ type SortKey =
   | "motivo"
   | "banco"
   | "agencia"
+  | "contaCorrente"
+  | "cheques"
   | "fonte"
   | "data"
   | "cartorio";
@@ -84,10 +86,12 @@ const PRINT_CHART_WIDTH = 680;
 function getColumns(group: string): NegativosTableColumn[] {
   if (group === "CCF") {
     return [
-      { label: "Inclusão", key: "inclusao" },
-      { label: "Motivo", key: "motivo" },
-      { label: "Agência", key: "agencia" },
+      { label: "Data Inclusão", key: "inclusao" },
       { label: "Banco", key: "banco" },
+      { label: "Agência", key: "agencia" },
+      { label: "Conta Corrente", key: "contaCorrente" },
+      { label: "Cheque Inicial / Final", key: "cheques" },
+      { label: "Motivo", key: "motivo" },
       { label: "Origem", key: "origem" },
     ];
   }
@@ -142,9 +146,11 @@ function NegativosColGroup({
   if (group === "CCF") {
     return (
       <colgroup>
-        <col style={{ width: "120px" }} />
-        <col style={{ width: "120px" }} />
-        <col style={{ width: "120px" }} />
+        <col style={{ width: "110px" }} />
+        <col />
+        <col style={{ width: "80px" }} />
+        <col style={{ width: "110px" }} />
+        <col style={{ width: "150px" }} />
         <col />
         <col />
       </colgroup>
@@ -202,9 +208,7 @@ function NegativosRowCells({
       )}
 
       {group === "CCF" && (
-        <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-          {r.motivo}
-        </td>
+        <td className="py-2.5 pr-4 text-gray-600">{r.banco}</td>
       )}
 
       {group === "CCF" && (
@@ -215,14 +219,22 @@ function NegativosRowCells({
 
       {group === "CCF" && (
         <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-          {r.banco}
+          {r.contaCorrente}
         </td>
       )}
 
       {group === "CCF" && (
         <td className="py-2.5 pr-4 text-gray-600 whitespace-nowrap">
-          {r.origem}
+          {r.cheques}
         </td>
+      )}
+
+      {group === "CCF" && (
+        <td className="py-2.5 pr-4 text-gray-600">{r.motivo}</td>
+      )}
+
+      {group === "CCF" && (
+        <td className="py-2.5 pr-4 text-gray-600">{r.origem}</td>
       )}
 
       {group !== "PROTESTOS" && group !== "CCF" && (
@@ -611,7 +623,7 @@ export function NegativosConsolidadosSection({
               const rowKey = `${activeGroup}-${i}-${r.inclusao ?? r.data ?? ""}-${r.valor ?? ""}`;
               const isRowExpanded = expandedRowKey === rowKey;
               const detailColSpan =
-                activeGroup === "CCF" ? 5 : activeGroup === "PROTESTOS" ? 5 : 7;
+                activeGroup === "CCF" ? 7 : activeGroup === "PROTESTOS" ? 5 : 7;
 
               const detailFields = getDetailFields(activeGroup, r);
 
