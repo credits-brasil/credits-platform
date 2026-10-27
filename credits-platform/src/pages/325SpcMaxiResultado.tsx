@@ -38,6 +38,8 @@ type SortKey =
   | "motivo"
   | "banco"
   | "agencia"
+  | "contaCorrente"
+  | "cheques"
   | "fonte"
   | "data"
   | "cartorio";
@@ -522,7 +524,7 @@ export default function SpcMaxiResultadoPage({
     return [];
   })();
 
-  const ccfRecords =
+  const ccfSourceRecords =
     ccfSource.map((item: any) => {
       const inclusao =
         item?.$?.["data-ultimo-cheque"] ??
@@ -551,12 +553,68 @@ export default function SpcMaxiResultadoPage({
         cidade: item?.cidade ? `${item.cidade}/${item.estado ?? ""}` : "-",
         origem: item?.origem,
         motivo: `${item?.motivo?.codigo} - ${item?.motivo?.descricao}`,
-        banco: item?.["ultimo-cheque"]?.banco?.nome,
+        banco:
+          [
+            item?.["ultimo-cheque"]?.banco?.codigo,
+            item?.["ultimo-cheque"]?.banco?.nome,
+          ]
+            .filter(Boolean)
+            .join(" - ") || "-",
         agencia: item?.["ultimo-cheque"]?.["numero-agencia"],
+        contaCorrente: "-",
+        cheques: "-",
         fonte: "CCF",
         grupo: "CCF",
       };
     }) ?? [];
+
+  // Cheque contra-ordem (contumácia) records are shown in the CCF group too.
+  const contumaciaSource = (() => {
+    const payload = spcData?.contumacia ?? spcData?.cotumacia;
+    const detalhes = payload?.["detalhe-contumacia"] ?? payload?.detalhe;
+
+    if (Array.isArray(detalhes)) return detalhes;
+    if (detalhes) return [detalhes];
+    if (Array.isArray(payload)) return payload;
+
+    return [];
+  })();
+
+  const contumaciaRecords = contumaciaSource.map((item: any) => {
+    const dadosBancarios = item?.["cheque-inicial"]?.["dados-bancarios"];
+    const inclusao = item?.["data-inclusao"] ?? item?.["data-ocorrencia"];
+    const banco =
+      [dadosBancarios?.banco?.codigo, dadosBancarios?.banco?.nome]
+        .filter(Boolean)
+        .join(" - ") || "-";
+    const cidade =
+      [item?.cidade, item?.estado].filter(Boolean).join(" / ") || "-";
+
+    return {
+      tipo: "",
+      inclusao: inclusao
+        ? String(inclusao).includes("/")
+          ? inclusao
+          : formatDate(inclusao)
+        : "-",
+      vencimento: "–",
+      valor: "–",
+      credor: banco,
+      cidade,
+      origem: item?.origem ?? "-",
+      motivo: item?.motivo?.descricao ?? item?.motivo ?? "-",
+      banco,
+      agencia: dadosBancarios?.["numero-agencia"] ?? "-",
+      contaCorrente: dadosBancarios?.["numero-conta-corrente"] ?? "-",
+      cheques: `${item?.["cheque-inicial"]?.numero ?? "-"} / ${
+        item?.["cheque-final"]?.numero ?? "-"
+      }`,
+      fonte: "CCF",
+      grupo: "CCF",
+    };
+  });
+
+  const ccfRecords = [...ccfSourceRecords, ...contumaciaRecords];
 
   const dadosAdicionaisContato =
     spcData?.["dados-adicionais-contato"] ??
