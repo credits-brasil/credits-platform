@@ -153,7 +153,7 @@ export function ScrSummarySection({
       value: `${formatCurrency(scrOperacao["valor-total-contratado-inicial"] ?? undefined)} a ${formatCurrency(scrOperacao["valor-total-contratado-final"] ?? undefined)}`,
     },
     {
-      label: "Quantidade instituição",
+      label: "Quantidade de instituições",
       value: scrOperacao["quantidade-instituicao-scr"] ?? "-",
     },
   ];

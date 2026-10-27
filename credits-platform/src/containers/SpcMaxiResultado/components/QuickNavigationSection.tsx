@@ -17,12 +17,10 @@ interface QuickNavigationItem {
 export function QuickNavigationSection({
   showAdditionalScores = false,
   showFinancialBehavior = false,
-  showQuantidadeFuncionarios = false,
   showGovernanca = false,
 }: {
   showAdditionalScores?: boolean;
   showFinancialBehavior?: boolean;
-  showQuantidadeFuncionarios?: boolean;
   showGovernanca?: boolean;
 }) {
   const [availableSectionIds, setAvailableSectionIds] = useState<string[]>([]);
@@ -43,7 +41,6 @@ export function QuickNavigationSection({
       icon: <ClipboardList size={16} />,
       label: "Dados Cadastrais",
     },
-    ...(showQuantidadeFuncionarios ? [{ id: "section-quantidade-funcionarios", icon: <BarChart2 size={16} />, label: "Quantidade de Funcionários" }] : []),
     ...(showGovernanca ? [{ id: "section-governanca", icon: <ClipboardList size={16} />, label: "Governança" }] : []),
     {
       id: "section-negativos",

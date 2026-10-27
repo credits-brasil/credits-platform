@@ -308,7 +308,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           <div className="w-[1px] h-8 bg-white/20"></div>
 
           <div className="text-[0.65rem] lg:text-xs font-semibold tracking-widest leading-tight text-white/80">
-            INTELIGENCIA PARA NEGOCIOS
+            INTELIGÊNCIA PARA NEGÓCIOS
           </div>
         </div>
 
@@ -323,7 +323,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             </div>
 
             <h1 className="font-serif text-4xl lg:text-5xl xl:text-6xl font-bold leading-[1.1] mb-6">
-              Decisoes mais
+              Decisões mais
               <br />
               seguras começam
               <br />
@@ -331,7 +331,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             </h1>
 
             <p className="text-white/70 text-lg lg:text-xl leading-relaxed max-w-md">
-              Acesse as solucoes CREDITS para consultar informacoes, analisar
+              Acesse as soluções CREDITS para consultar informações, analisar
               riscos e proteger o crescimento da sua empresa.
             </p>
           </motion.div>
@@ -400,7 +400,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 <div className="w-2 h-2 rounded-full bg-[#F5821F]"></div>
 
                 <span className="text-xs font-bold tracking-widest text-slate-500">
-                  AREA RESTRITA
+                  ÁREA RESTRITA
                 </span>
               </div>
 
@@ -782,7 +782,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             >
               <div className="flex items-center gap-2 text-xs font-medium text-slate-500 text-center">
                 <Lock className="h-3.5 w-3.5 shrink-0" />
-                Seus dados sao tratados com seguranca e privacidade.
+                Seus dados são tratados com segurança e privacidade.
               </div>
 
               <img

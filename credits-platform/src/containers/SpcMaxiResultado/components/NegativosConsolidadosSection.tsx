@@ -397,7 +397,7 @@ function NegativosChart({
     <div data-print-block className="mt-8 pt-6 border-t border-gray-100">
       <div className="flex items-center justify-between mb-4">
         <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-          Variação de Endividamento
+          Variação por período do endividamento
         </p>
       </div>
 
@@ -582,133 +582,137 @@ export function NegativosConsolidadosSection({
       </div>
 
       <div data-print-hidden>
-        <NegativosResumo resumo={resumoTabela} className="mt-10 mb-3" />
+        {visible.length > 0 && (
+          <>
+            <NegativosResumo resumo={resumoTabela} className="mt-10 mb-3" />
 
-        <table data-print-compact-table className="w-full text-xs table-fixed">
-          <NegativosColGroup group={activeGroup} withExpandColumn />
+            <table data-print-compact-table className="w-full text-xs table-fixed">
+              <NegativosColGroup group={activeGroup} withExpandColumn />
 
-          <thead>
-            <tr className="border-b border-gray-100">
-              {getColumns(activeGroup).map(({ label, key }) => (
-                <th key={label} className="text-left pb-2 pr-4 last:pr-0">
-                  {key ? (
-                    <button
-                      type="button"
-                      onClick={() => handleSort(key)}
-                      className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide transition-colors"
-                      style={{
-                        color: sortKey === key ? "#243871" : "#9CA3AF",
-                      }}
-                    >
-                      {label}
-
-                      {sortKey === key ? (
-                        sortDir === "asc" ? (
-                          <ArrowUp size={10} />
-                        ) : (
-                          <ArrowDown size={10} />
-                        )
-                      ) : (
-                        <ArrowUpDown size={10} className="text-gray-300" />
-                      )}
-                    </button>
-                  ) : null}
-                </th>
-              ))}
-            </tr>
-          </thead>
-
-          <tbody>
-            {visible.map((r, i) => {
-              const rowKey = `${activeGroup}-${i}-${r.inclusao ?? r.data ?? ""}-${r.valor ?? ""}`;
-              const isRowExpanded = expandedRowKey === rowKey;
-              const detailColSpan =
-                activeGroup === "CCF" ? 7 : activeGroup === "PROTESTOS" ? 5 : 7;
-
-              const detailFields = getDetailFields(activeGroup, r);
-
-              return (
-                <Fragment key={rowKey}>
-                  <tr className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                    <NegativosRowCells group={activeGroup} record={r} />
-
-                    {activeGroup !== "CCF" && (
-                      <td className="py-2.5">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  {getColumns(activeGroup).map(({ label, key }) => (
+                    <th key={label} className="text-left pb-2 pr-4 last:pr-0">
+                      {key ? (
                         <button
                           type="button"
-                          onClick={() =>
-                            setExpandedRowKey((prev) =>
-                              prev === rowKey ? null : rowKey,
-                            )
-                          }
-                          className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer p-1 rounded-full hover:bg-gray-100"
-                          aria-label={
-                            isRowExpanded
-                              ? "Recolher detalhes"
-                              : "Expandir detalhes"
-                          }
+                          onClick={() => handleSort(key)}
+                          className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide transition-colors"
+                          style={{
+                            color: sortKey === key ? "#243871" : "#9CA3AF",
+                          }}
                         >
-                          <ChevronDown
-                            size={13}
-                            className={`transition-transform ${isRowExpanded ? "rotate-180" : "rotate-0"}`}
-                          />
-                        </button>
-                      </td>
-                    )}
-                  </tr>
+                          {label}
 
-                  {activeGroup !== "CCF" && (
-                    <tr
-                      className={`bg-gray-50/50 transition-all ${
-                        isRowExpanded
-                          ? "border-b border-gray-50 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
-                          : "border-b border-transparent duration-300 ease-in-out"
-                      }`}
-                    >
-                      <td colSpan={detailColSpan} className="p-0">
-                        <div
-                          className={`overflow-hidden transition-[max-height,opacity] ${
+                          {sortKey === key ? (
+                            sortDir === "asc" ? (
+                              <ArrowUp size={10} />
+                            ) : (
+                              <ArrowDown size={10} />
+                            )
+                          ) : (
+                            <ArrowUpDown size={10} className="text-gray-300" />
+                          )}
+                        </button>
+                      ) : null}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody>
+                {visible.map((r, i) => {
+                  const rowKey = `${activeGroup}-${i}-${r.inclusao ?? r.data ?? ""}-${r.valor ?? ""}`;
+                  const isRowExpanded = expandedRowKey === rowKey;
+                  const detailColSpan =
+                    activeGroup === "CCF" ? 7 : activeGroup === "PROTESTOS" ? 5 : 7;
+
+                  const detailFields = getDetailFields(activeGroup, r);
+
+                  return (
+                    <Fragment key={rowKey}>
+                      <tr className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                        <NegativosRowCells group={activeGroup} record={r} />
+
+                        {activeGroup !== "CCF" && (
+                          <td className="py-2.5">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setExpandedRowKey((prev) =>
+                                  prev === rowKey ? null : rowKey,
+                                )
+                              }
+                              className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer p-1 rounded-full hover:bg-gray-100"
+                              aria-label={
+                                isRowExpanded
+                                  ? "Recolher detalhes"
+                                  : "Expandir detalhes"
+                              }
+                            >
+                              <ChevronDown
+                                size={13}
+                                className={`transition-transform ${isRowExpanded ? "rotate-180" : "rotate-0"}`}
+                              />
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+
+                      {activeGroup !== "CCF" && (
+                        <tr
+                          className={`bg-gray-50/50 transition-all ${
                             isRowExpanded
-                              ? "max-h-40 opacity-100 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
-                              : "max-h-0 opacity-0 duration-300 ease-in-out"
+                              ? "border-b border-gray-50 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                              : "border-b border-transparent duration-300 ease-in-out"
                           }`}
                         >
-                          <div
-                            className={`grid grid-cols-2 gap-3 px-3 py-3 transition-all md:grid-cols-3 ${
-                              isRowExpanded
-                                ? "translate-y-0 opacity-100 duration-500 delay-75"
-                                : "-translate-y-1 opacity-0 duration-200"
-                            }`}
-                          >
-                            {detailFields.map((field) => (
+                          <td colSpan={detailColSpan} className="p-0">
+                            <div
+                              className={`overflow-hidden transition-[max-height,opacity] ${
+                                isRowExpanded
+                                  ? "max-h-40 opacity-100 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                                  : "max-h-0 opacity-0 duration-300 ease-in-out"
+                              }`}
+                            >
                               <div
-                                key={`${rowKey}-${field.label}`}
-                                className="min-w-0"
+                                className={`grid grid-cols-2 gap-3 px-3 py-3 transition-all md:grid-cols-3 ${
+                                  isRowExpanded
+                                    ? "translate-y-0 opacity-100 duration-500 delay-75"
+                                    : "-translate-y-1 opacity-0 duration-200"
+                                }`}
                               >
-                                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                                  {field.label}
-                                </p>
-                                <p className="truncate text-xs text-gray-700">
-                                  {field.value || "-"}
-                                </p>
+                                {detailFields.map((field) => (
+                                  <div
+                                    key={`${rowKey}-${field.label}`}
+                                    className="min-w-0"
+                                  >
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                                      {field.label}
+                                    </p>
+                                    <p className="truncate text-xs text-gray-700">
+                                      {field.value || "-"}
+                                    </p>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
-              );
-            })}
-          </tbody>
-        </table>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </>
+        )}
 
         {!expanded && remaining > 0 && (
           <button
             type="button"
             onClick={() => setExpanded(true)}
-            className="mt-3 text-xs font-medium transition-colors"
+            className="mt-3 text-xs font-medium cursor-pointer transition-colors"
             style={{ color: "#243871" }}
           >
             Exibir mais {remaining} {remaining === 1 ? "registro" : "registros"}
@@ -793,7 +797,7 @@ export function NegativosConsolidadosSection({
                   style={{ backgroundColor: "#F8F9FB" }}
                 >
                   <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-                    Taxa Mal Pagador
+                    Taxa Mau Pagador
                   </span>
 
                   <span className="text-base font-bold text-gray-800">
