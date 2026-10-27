@@ -20,9 +20,15 @@ import SpcMaisResultadoPage from "@/pages/695SpcMaisResultado";
 import SpcPositivoIntermediarioPjPage from "@/pages/629SpcPositivoIntermediarioPj";
 import SpcPositivoIntermediarioPjResultadoPage from "@/pages/629SpcPositivoIntermediarioPjResultado";
 import NotFound from "@/pages/not-found";
-import OperatorsPage from "@/pages/Operators";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 0,
+      gcTime: 0,
+    },
+  }
+});
 const AUTH_STORAGE_KEY = "credits-platform-authenticated";
 const HOME_ROUTE = "/credito-risco/325-spc-maxi";
 const AUTH_TOKEN_KEY = "credits-platform-auth-token";

@@ -24,7 +24,7 @@ export function AlertasSection({ alertas, sectionId = "section-alertas" }: Alert
     >
       <h2 className="mb-4 text-sm font-semibold text-gray-700">Alertas</h2>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         {alertas.map((a, i) => {
           const cfg =
             a.severidade === "alto"

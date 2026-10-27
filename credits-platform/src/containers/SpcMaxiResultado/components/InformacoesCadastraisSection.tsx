@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Accordion,
   AccordionItem,
@@ -10,7 +11,16 @@ import { formatCPF } from "@/utils/formatCPF";
 import { formatCEP } from "@/utils/formatCEP";
 import { formatDate } from "@/utils/formatDate";
 import { formatPhone } from "@/utils/formatPhone";
-import { formatCurrency } from "@/utils/formatCurrency";
+import { useViaCep } from "@/hooks/useViaCep";
+import { useIsPrinting } from "@/hooks/useIsPrinting";
+
+const ACCORDION_ITEMS = [
+  "dados-pessoais",
+  "contato-endereco",
+  "dados-adicionais-contato-spc-brasil",
+  "atividades-economicas-secundarias-spc-brasil",
+  "administrador-spc-brasil",
+];
 
 type InformacoesCadastraisSectionProps = {
   spcData: any;
@@ -20,20 +30,109 @@ type InformacoesCadastraisSectionProps = {
     telefone?: string;
     celular?: string;
   }>;
+  /** Undefined when the insumo was not requested; empty when it came without data. */
+  quantidadeFuncionarios?: string;
 };
+
+type Endereco = {
+  logradouro?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+  cep?: string;
+};
+
+const joinFilled = (parts: Array<string | undefined>, separator: string) =>
+  parts.filter(Boolean).join(separator);
+
+/** e.g. "Rua X, 120 - Cj 902, Pinheiros - São Paulo - SP | CEP: 05409-000" */
+function formatEnderecoCompleto(endereco: Endereco): string {
+  const rua = joinFilled(
+    [
+      joinFilled([endereco.logradouro, endereco.numero], ", "),
+      endereco.complemento,
+    ],
+    " - ",
+  );
+  const localidade = joinFilled(
+    [endereco.bairro, endereco.cidade, endereco.estado],
+    " - ",
+  );
+  const cep = endereco.cep ? `CEP: ${formatCEP(endereco.cep)}` : undefined;
+
+  return joinFilled([joinFilled([rua, localidade], ", "), cep], " | ") || "-";
+}
+
+type DadosAdicionaisRow = InformacoesCadastraisSectionProps["body"][number];
+
+const DADOS_ADICIONAIS_COLUMNS: Array<{
+  key: keyof DadosAdicionaisRow;
+  label: string;
+  breakWords?: boolean;
+}> = [
+  { key: "endereco", label: "Endereço", breakWords: true },
+  { key: "email", label: "Email", breakWords: true },
+  { key: "telefone", label: "Tel. fixo" },
+  { key: "celular", label: "Tel. Celular" },
+];
+
+function CopyableCell({
+  value,
+  label,
+  breakWords,
+}: {
+  value?: string;
+  label: string;
+  breakWords?: boolean;
+}) {
+  const hasValue = Boolean(value) && value !== "-";
+
+  return (
+    <td
+      className={`py-2.5 pr-4 text-sm text-gray-800 whitespace-pre-line ${
+        breakWords ? "break-words" : ""
+      }`}
+    >
+      <div className="flex items-start gap-2">
+        <span className="min-w-0">{value}</span>
+
+        {hasValue && (
+          <CopyButton
+            value={value}
+            title={`Copiar ${label}`}
+            className="mt-0.5 shrink-0 text-gray-400 hover:text-[#243871] transition-colors hover:cursor-pointer"
+          />
+        )}
+      </div>
+    </td>
+  );
+}
 
 export function InformacoesCadastraisSection({
   spcData,
   body,
+  quantidadeFuncionarios,
 }: InformacoesCadastraisSectionProps) {
-  const capitalSocial = spcData?.["capital-social"];
-  const hasCapitalSocial =
-    capitalSocial != null &&
-    !(typeof capitalSocial === "string" && capitalSocial.trim() === "");
+  // Collapsed on screen, but every item is printed open.
+  const [openItems, setOpenItems] = useState<string[]>([]);
+  const isPrinting = useIsPrinting();
 
-  const streetAddresValue = spcData?.consumidor?.endereco?.logradouro && spcData?.consumidor?.endereco?.numero && spcData?.consumidor?.endereco?.complemento
-    ? `${spcData?.consumidor?.endereco?.logradouro}, ${spcData?.consumidor?.endereco?.numero} — ${spcData?.consumidor?.endereco?.complemento}`
-    : "-";  
+  const administradorRaw = spcData?.administrador?.["detalhe-administrador"];
+  const administradores: any[] = (
+    Array.isArray(administradorRaw) ? administradorRaw : [administradorRaw]
+  ).filter(Boolean);
+
+  const endereco = spcData?.consumidor?.endereco;
+  const { data: viaCep } = useViaCep(endereco?.cep);
+
+  // ViaCEP has the street name for the CEP; fall back to SPC while it loads or fails.
+  const enderecoCompleto = formatEnderecoCompleto({
+    ...endereco,
+    logradouro: viaCep?.logradouro || endereco?.logradouro,
+  });
+
   return (
     <div
       id="section-cadastrais"
@@ -45,17 +144,8 @@ export function InformacoesCadastraisSection({
 
       <Accordion
         type="multiple"
-        defaultValue=
-        {
-          [
-            "dados-pessoais",
-            "capital-social",
-            "contato-endereco",
-            "dados-adicionais-contato-spc-brasil",
-            "atividades-economicas-secundarias-spc-brasil",
-            "administrador-spc-brasil"
-          ]
-        }
+        value={isPrinting ? ACCORDION_ITEMS : openItems}
+        onValueChange={setOpenItems}
         className="w-full"
       >
         <AccordionItem value="dados-pessoais" className="border-gray-100">
@@ -149,6 +239,14 @@ export function InformacoesCadastraisSection({
                         return descricao ?? code ?? "-";
                       })(),
                     },
+                    ...(quantidadeFuncionarios !== undefined
+                      ? [
+                        {
+                          label: "Quantidade de Funcionários",
+                          value: quantidadeFuncionarios,
+                        },
+                      ]
+                      : []),
                   ]),
               ].map((f) => {
                 const COPYABLE_FIELDS = new Set([
@@ -184,29 +282,6 @@ export function InformacoesCadastraisSection({
           </AccordionContent>
         </AccordionItem>
 
-        {hasCapitalSocial && (
-          <AccordionItem value="capital-social" className="border-gray-100">
-            <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
-              Capital Social
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="grid grid-cols-1 gap-2 pt-1 pb-2 sm:grid-cols-2 lg:grid-cols-4">
-                <div
-                  className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
-                  style={{ backgroundColor: "#F8F9FB" }}
-                >
-                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-                    Capital Social
-                  </span>
-                  <span className="text-base font-bold text-gray-800">
-                    {formatCurrency(capitalSocial)}
-                  </span>
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        )}
-
         <AccordionItem
           value="contato-endereco"
           className="border-gray-100 last:border-b-0"
@@ -235,29 +310,12 @@ export function InformacoesCadastraisSection({
                   ]
                   : []),
                 { label: "E-mail", value: spcData?.consumidor?.email || "–" },
-                {
-                  label: "CEP",
-                  value: formatCEP(spcData?.consumidor?.endereco?.cep) || "–",
-                },
-                {
-                  label: "Logradouro",
-                  value: streetAddresValue,
-                },
-                {
-                  label: "Bairro",
-                  value: spcData?.consumidor?.endereco?.bairro || "–",
-                },
-                {
-                  label: "Cidade",
-                  value: spcData?.consumidor?.endereco?.cidade || "–",
-                },
-                {
-                  label: "Estado",
-                  value: spcData?.consumidor?.endereco?.estado || "–",
-                },
-                { label: "País", value: "Brasil" },
+                { label: "Endereço", value: enderecoCompleto },
               ].map((f) => (
-                <div key={f.label}>
+                <div
+                  key={f.label}
+                  className={f.label === "Endereço" ? "col-span-3" : undefined}
+                >
                   <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
                     {f.label}
                   </p>
@@ -269,8 +327,7 @@ export function InformacoesCadastraisSection({
                       "Telefone principal",
                       "Telefone secundário",
                       "E-mail",
-                      "CEP",
-                      "Logradouro",
+                      "Endereço",
                     ].includes(f.label) &&
                       (f?.value?.length > 0 || f?.value === "-") && (
                         <CopyButton
@@ -291,7 +348,7 @@ export function InformacoesCadastraisSection({
           className="border-gray-100 last:border-b-0"
         >
           <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
-            Dados Adicionais de Contato - SPC Brasil
+            Dados Adicionais de Contato
           </AccordionTrigger>
 
           <AccordionContent>
@@ -299,16 +356,14 @@ export function InformacoesCadastraisSection({
               <table className="w-full text-xs table-fixed">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    {["Endereço", "Email", "Tel. fixo", "Tel. Celular"].map(
-                      (h) => (
-                        <th
-                          key={h}
-                          className="text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide pb-2 pr-4 last:pr-0"
-                        >
-                          {h}
-                        </th>
-                      ),
-                    )}
+                    {DADOS_ADICIONAIS_COLUMNS.map(({ label }) => (
+                      <th
+                        key={label}
+                        className="text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide pb-2 pr-4 last:pr-0"
+                      >
+                        {label}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
 
@@ -318,21 +373,14 @@ export function InformacoesCadastraisSection({
                       key={index}
                       className="border-b border-gray-50 transition-colors hover:bg-gray-50"
                     >
-                      <td className="py-2.5 pr-4 text-sm text-gray-800 break-words whitespace-pre-line">
-                        {row.endereco}
-                      </td>
-
-                      <td className="py-2.5 pr-4 text-sm text-gray-800 break-words whitespace-pre-line">
-                        {row.email}
-                      </td>
-
-                      <td className="py-2.5 pr-4 text-sm text-gray-800 whitespace-pre-line">
-                        {row.telefone}
-                      </td>
-
-                      <td className="py-2.5 pr-4 text-sm text-gray-800 whitespace-pre-line">
-                        {row.celular}
-                      </td>
+                      {DADOS_ADICIONAIS_COLUMNS.map(({ key, label, breakWords }) => (
+                        <CopyableCell
+                          key={key}
+                          value={row[key]}
+                          label={label}
+                          breakWords={breakWords}
+                        />
+                      ))}
                     </tr>
                   ))}
                 </tbody>
@@ -350,7 +398,7 @@ export function InformacoesCadastraisSection({
               className="border-gray-100"
             >
               <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
-                Atividades Econômicas Secundárias - SPC Brasil
+                Atividades Econômicas Secundárias
               </AccordionTrigger>
 
               <AccordionContent>
@@ -399,40 +447,39 @@ export function InformacoesCadastraisSection({
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem
-              value="administrador-spc-brasil"
-              className="border-gray-100 last:border-b-0"
-            >
-              <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
-                Administrador - SPC Brasil
-              </AccordionTrigger>
+            {administradores.length > 0 && (
+              <AccordionItem
+                value="administrador-spc-brasil"
+                className="border-gray-100 last:border-b-0"
+              >
+                <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
+                  Administrador
+                </AccordionTrigger>
 
-              <AccordionContent>
-                <div className="mt-5 border-t border-gray-100 pt-4">
-                  <table className="w-full text-xs table-fixed">
-                    <thead>
-                      <tr className="border-b border-gray-100">
-                        {[
-                          "Nome",
-                          "Documento",
-                          "Cargo",
-                          "Tipo Relacionamento",
-                          "Data Entrada",
-                        ].map((h) => (
-                          <th
-                            key={h}
-                            className="text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide pb-2 pr-4 last:pr-0"
-                          >
-                            {h}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
+                <AccordionContent>
+                  <div className="mt-5 border-t border-gray-100 pt-4">
+                    <table className="w-full text-xs table-fixed">
+                      <thead>
+                        <tr className="border-b border-gray-100">
+                          {[
+                            "Nome",
+                            "Documento",
+                            "Cargo",
+                            "Tipo Relacionamento",
+                            "Data Entrada",
+                          ].map((h) => (
+                            <th
+                              key={h}
+                              className="text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide pb-2 pr-4 last:pr-0"
+                            >
+                              {h}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
 
-                    <tbody>
-                      {(spcData?.administrador?.["detalhe-administrador"] ?? [])
-                        .filter((row: any) => row)
-                        .map((row: any, index: number) => {
+                      <tbody>
+                        {administradores.map((row: any, index: number) => {
                           const documento = String(row?.documento ?? "");
                           const documentoFormatado =
                             documento.length === 11
@@ -466,11 +513,12 @@ export function InformacoesCadastraisSection({
                             </tr>
                           );
                         })}
-                    </tbody>
-                  </table>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
+                      </tbody>
+                    </table>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            )}
           </>
         )}
       </Accordion>

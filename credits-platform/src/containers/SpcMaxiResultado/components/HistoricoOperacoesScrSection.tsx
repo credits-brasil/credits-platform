@@ -17,17 +17,31 @@ interface HistoricoOperacoesScrSectionProps {
   getScoreColor: (value: number) => string;
 }
 
+function getHistoricoScr(spcData: any) {
+  return spcData?.["insumo-historico-operacao-scr"]?.[
+    "detalhe-insumo-historico-operacao-scr"
+  ];
+}
+
+/** The SCR history always comes with every `grupo-*` list; it has data only when one of them has items. */
+export function hasHistoricoScrData(spcData: any): boolean {
+  const historicoScr = getHistoricoScr(spcData);
+
+  if (!historicoScr || typeof historicoScr !== "object") return false;
+
+  return Object.values(historicoScr).some(
+    (grupo) => Array.isArray(grupo) && grupo.length > 0,
+  );
+}
+
 export function HistoricoOperacoesScrSection({
   spcData,
   scorePj,
   getScoreColor,
 }: HistoricoOperacoesScrSectionProps) {
-  const historicoScr =
-    spcData?.["insumo-historico-operacao-scr"]?.[
-      "detalhe-insumo-historico-operacao-scr"
-    ];
+  const historicoScr = getHistoricoScr(spcData);
 
-  if (!historicoScr) return null;
+  if (!hasHistoricoScrData(spcData)) return null;
 
   const grupoGarantia = historicoScr?.["grupo-garantia"] ?? [];
   const grupoModalidade = historicoScr?.["grupo-modalidade"] ?? [];
@@ -266,7 +280,9 @@ export function HistoricoOperacoesScrSection({
   };
 
   const scoreScr = Number(historicoScr?.score ?? scorePj ?? 0);
+  console.log("historicoScr:", historicoScr.score);
   const normalizedScoreScr = Math.min(Math.max(scoreScr, 0), 1000);
+  console.log("normalizedScoreScr:", normalizedScoreScr);
   const scoreScrColor = getScoreColor(normalizedScoreScr);
 
   const scoreScrRisco = (() => {

@@ -9,13 +9,13 @@ import {
 import { ConsultasRealizadasSection } from "@/containers/SpcMaxiResultado/components/ConsultasRealizadasSection";
 import { GovernancaSection, hasGovernancaData } from "@/containers/SpcMaxiResultado/components/GovernancaSection";
 import { HeaderSection } from "@/containers/SpcMaxiResultado/components/HeaderSection";
-import { HistoricoOperacoesScrSection } from "@/containers/SpcMaxiResultado/components/HistoricoOperacoesScrSection";
+import { HistoricoOperacoesScrSection, hasHistoricoScrData } from "@/containers/SpcMaxiResultado/components/HistoricoOperacoesScrSection";
 import { InformacoesCadastraisSection } from "@/containers/SpcMaxiResultado/components/InformacoesCadastraisSection";
 import { InformacoesPositivasSection } from "@/containers/SpcMaxiResultado/components/InformacoesPositivasSection";
 import { QuickNavigationSection } from "@/containers/SpcMaxiResultado/components/QuickNavigationSection";
 import { ReloadConfirmationDialog } from "@/containers/SpcMaxiResultado/components/ReloadConfirmationDialog";
 import { ConsultarInsumoDialog } from "@/containers/SpcMaxiResultado/components/ConsultarInsumoDialog";
-import { ResumoFinanceiroSection } from "@/containers/SpcMaxiResultado/components/ResumoFinanceiroSection";
+import { ExtraConsultationExpiredDialog } from "@/containers/SpcMaxiResultado/components/ExtraConsultationExpiredDialog";
 import { NegativosConsolidadosSection } from "@/containers/SpcMaxiResultado/components/NegativosConsolidadosSection";
 import { type AlertaItem, AlertasSection } from "@/containers/SpcMaxiResultado/components/AlertasSection";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -131,12 +131,17 @@ function buildNegativosResumo(records: any[]) {
   };
 }
 
-function normalizeContactValues(values: unknown, fallback: string): string[] {
-  if (!Array.isArray(values) || values.length === 0) return [fallback];
+/** Values made only of placeholders and separators, like "- , - - -", carry no information. */
+function hasContactContent(value: unknown): value is string {
+  return typeof value === "string" && /[a-z0-9]/i.test(value);
+}
 
-  return values.map((value) =>
-    typeof value === "string" && value.trim().length > 0 ? value : "-",
-  );
+function normalizeContactValues(values: unknown, fallback: string): string[] {
+  if (!Array.isArray(values) || values.length === 0) {
+    return [hasContactContent(fallback) ? fallback : "-"];
+  }
+
+  return values.map((value) => (hasContactContent(value) ? value : "-"));
 }
 
 interface SpcMaxiRequest {
@@ -176,7 +181,7 @@ function formatConsultaDateTime(value?: string): string {
     .replace(", ", " às ");
 }
 
-const EXTRA_CONSULTATION_WINDOW_MS = 5 * 60 * 1000;
+const EXTRA_CONSULTATION_WINDOW_MS = 1 * 60 * 1000;
 
 function isExtraConsultationExpired(value?: string): boolean {
   if (!value) return false;
@@ -192,11 +197,14 @@ function ExtraInsumoButton({
   label,
   consultingLabel,
   disabled = false,
+  blocked = false,
   onConsultar,
 }: {
   label: string;
   consultingLabel?: string;
   disabled?: boolean;
+  /** Looks disabled but stays clickable, so the click can explain why. */
+  blocked?: boolean;
   onConsultar: () => void;
 }) {
   const isConsulting = consultingLabel === label;
@@ -206,7 +214,10 @@ function ExtraInsumoButton({
       type="button"
       onClick={onConsultar}
       disabled={Boolean(consultingLabel) || disabled}
-      className="flex items-center gap-2 self-start rounded-md px-2 py-0.5 text-[10px] font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
+      aria-disabled={blocked || undefined}
+      className={`flex items-center gap-2 self-start rounded-md px-2 py-0.5 text-[10px] font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-70 ${
+        blocked ? "cursor-not-allowed opacity-70" : ""
+      }`}
       style={{ backgroundColor: "#C7D2FE", color: "#243871" }}
     >
       {isConsulting ? (
@@ -262,14 +273,12 @@ export default function SpcMaxiResultadoPage({
   const canConsultInsumo = (id: string) =>
     !excludedInsumos.includes(id) && !defaultInsumos.includes(id);
   const getRequestedInsumos = (insumos: string[]) =>
-    Array.from(new Set([
-      ...insumos.filter(canConsultInsumo),
-      ...(!product && !excludedInsumos.includes("5228") ? ["5228"] : []),
-    ]));
+    Array.from(new Set(insumos.filter(canConsultInsumo)));
 
   const [extraConsultationExpired, setExtraConsultationExpired] = useState(() =>
     isExtraConsultationExpired(requestData?.consultedAt),
   );
+  const [showExpiredDialog, setShowExpiredDialog] = useState(false);
 
   useEffect(() => {
     if (!requestData?.consultedAt) {
@@ -286,16 +295,17 @@ export default function SpcMaxiResultadoPage({
     const remainingTime =
       consultedAt + EXTRA_CONSULTATION_WINDOW_MS - Date.now();
 
-    if (remainingTime <= 0) {
+    const expireExtraConsultation = () => {
       setExtraConsultationExpired(true);
       setPendingExtraInsumo(null);
+    };
+
+    if (remainingTime <= 0) {
+      expireExtraConsultation();
       return;
     }
 
-    const timeoutId = window.setTimeout(() => {
-      setExtraConsultationExpired(true);
-      setPendingExtraInsumo(null);
-    }, remainingTime);
+    const timeoutId = window.setTimeout(expireExtraConsultation, remainingTime);
 
     return () => window.clearTimeout(timeoutId);
   }, [requestData?.consultedAt]);
@@ -458,6 +468,7 @@ export default function SpcMaxiResultadoPage({
   const hasExtraInsumoInProgress = Boolean(
     pendingExtraInsumo || consultingExtraInsumo,
   );
+  const isConsultingScore = consultingExtraInsumo?.id === selectedPrimaryScoreId;
 
   useEffect(() => {
     setExpandedRowKey(null);
@@ -483,11 +494,12 @@ export default function SpcMaxiResultadoPage({
     label: string;
     insumoId: string;
   }) => {
-    if (
-      extraConsultationExpired ||
-      hasExtraInsumoInProgress ||
-      !canConsultInsumo(item.insumoId)
-    ) {
+    if (extraConsultationExpired) {
+      setShowExpiredDialog(true);
+      return;
+    }
+
+    if (hasExtraInsumoInProgress || !canConsultInsumo(item.insumoId)) {
       return;
     }
     setPendingExtraInsumo(item);
@@ -656,6 +668,7 @@ export default function SpcMaxiResultadoPage({
             celular: celulares[index] ?? "-",
           }));
         })
+        .filter((row) => Object.values(row).some(hasContactContent))
     : [];
 
      console.log("body", body)
@@ -737,6 +750,9 @@ export default function SpcMaxiResultadoPage({
     },
   ];
 
+  const verifySpcDataCidade = (item: any) =>
+    item["cidade-associado"] ? `${item["cidade-associado"]}/${item.estado}` : `${item["nome-entidade"]}` || `${"-"}`;
+
   const spcRecords =
     spcData?.spc?.["detalhe-spc"]?.map((item: any) => ({
       tipo: item["comprador-fiador-avalista"],
@@ -749,7 +765,7 @@ export default function SpcMaxiResultadoPage({
       contrato: item.contrato,
       "comprador-fiador-avalista": item["comprador-fiador-avalista"],
       credor: item["nome-associado"],
-      cidade: `${item["cidade-associado"]}/${item.estado}`,
+      cidade: verifySpcDataCidade(item),
       origem: item["nome-entidade"],
       telefone: item["telefone-associado"],
       fonte: "SPC",
@@ -770,7 +786,7 @@ export default function SpcMaxiResultadoPage({
         }),
         contrato: item.contrato,
         credor: item.origem,
-        cidade: `${item.cidade}/${item.estado}`,
+        cidade: item.cidade && item.estado ? `${item.cidade}/${item.estado}` : `${"-"}`,
         origem: item["titulo-ocorrencia"],
         fonte: "SERASA",
         grupo: "SERASA",
@@ -806,7 +822,7 @@ export default function SpcMaxiResultadoPage({
 
   const activeGroupData = GROUPS.find((g) => g.key === activeGroup);
   const shouldShowChart =
-    (activeGroupData?.count ?? 0) > 0 && chartData.length > 0;
+    (activeGroupData?.count ?? 0) > 0 && chartData.length >= 2;
 
   const filtered = sortNegativos(base, sortKey, sortDir);
 
@@ -825,7 +841,7 @@ export default function SpcMaxiResultadoPage({
       resumo: buildNegativosResumo(records),
       records: sortNegativos(records, sortKey, sortDir),
       chartData: groupChartData,
-      shouldShowChart: group.count > 0 && groupChartData.length > 0,
+      shouldShowChart: group.count > 0 && groupChartData.length >= 2,
     };
   });
 
@@ -855,6 +871,8 @@ export default function SpcMaxiResultadoPage({
 
   const consultas =
     spcData?.["consulta-realizada"]?.["detalhe-consulta-realizada"] ?? [];
+
+  const hasHistoricoScr = hasHistoricoScrData(spcData);
 
   const hoje = new Date();
   const umMesAtras = new Date();
@@ -897,6 +915,20 @@ export default function SpcMaxiResultadoPage({
           tipo: "Antifraude",
         }];
       })
+    : [];
+
+  const alertasHistoricoScr: AlertaItem[] = isInsumoRequested("5257") ?
+   !hasHistoricoScr
+      ? [
+          {
+            titulo: "Alerta de Histórico SCR",
+            severidade: "medio",
+            descricao: "Nenhuma informação disponível para este documento.",
+            fonte: "SPC Brasil",
+            tipo: "Histórico SCR",
+          }
+        ]
+      : []
     : [];
 
   const alertas: Array<AlertaItem & { data?: string }> = [
@@ -974,6 +1006,7 @@ export default function SpcMaxiResultadoPage({
           },
         ]
       : []),
+      ...alertasHistoricoScr,
   ];
 
   const resumoTabela = buildNegativosResumo(base);
@@ -1102,6 +1135,7 @@ export default function SpcMaxiResultadoPage({
     return "#f6a020";
   };
 
+
   const rendaPresumidaValue = isPessoaFisica
     ? spcData?.["renda-presumida-spc"]?.resumo?.["valor-total"]
     : (spcData?.["faturamento-presumido"]?.["detalhe-faturamento-presumido"]?.[
@@ -1122,7 +1156,14 @@ export default function SpcMaxiResultadoPage({
 
   const quantidadeFuncionariosValue = isPessoaFisica
     ? null
-    : spcData?.["quantidade-funcionario"]?.resumo?.["quantidade-total"];
+    : spcData?.["quantidade-funcionario"]?.["detalhe-quantidade-funcionario"]?.["qtdeFuncionario"];
+
+  // Shown in Dados Cadastrais only when the insumo was requested; empty means it came without data.
+  const quantidadeFuncionarios = isInsumoRequested("5267")
+    ? quantidadeFuncionariosValue != null
+      ? Number(quantidadeFuncionariosValue).toLocaleString("pt-BR")
+      : ""
+    : undefined;
 
   const limiteSugeridoIndisponivel = Boolean(
     spcData?.["limite-credito-sugerido"] &&
@@ -1298,6 +1339,8 @@ export default function SpcMaxiResultadoPage({
       setExtraInsumoErrorLabel(item.label);
     } finally {
       setConsultingExtraInsumo(null);
+
+      if (insumoId === selectedPrimaryScoreId) setScoreRevealed(true);
     }
   };
 
@@ -1363,22 +1406,32 @@ export default function SpcMaxiResultadoPage({
               ? formatCurrency(gastoEstimadoPjValue)
               : "",
           },
-          {
-            label: "Quantidade de Funcionários",
-            insumoId: "5267",
-            value:
-              quantidadeFuncionariosValue !== undefined &&
-              quantidadeFuncionariosValue !== null
-                ? Number(quantidadeFuncionariosValue ?? 0).toLocaleString(
-                    "pt-BR",
-                  )
-                : "",
-          },
         ]),
   ].filter((item) => !excludedInsumos.includes(item.insumoId));
 
+  const capitalSocial = spcData?.["capital-social"];
+  const hasCapitalSocial =
+    capitalSocial != null &&
+    !(typeof capitalSocial === "string" && capitalSocial.trim() === "");
+
+  // Capital Social leads the PJ indicators, followed by the financial summary ones.
+  const scoreIndicatorItems = [
+    ...(!isPessoaFisica && hasCapitalSocial
+      ? [
+          {
+            label: "Capital Social",
+            insumoId: "capital-social",
+            value: formatCurrency(capitalSocial),
+          },
+        ]
+      : []),
+    ...resumoFinanceiroItens.filter((item) =>
+      ["5122", "5178", "5142", "5179", "5194", "5185"].includes(item.insumoId),
+    ),
+  ];
+
   const paymentCapacityItems = resumoFinanceiroItens.filter((item) =>
-    !["5262", "5267"].includes(item.insumoId),
+    item.insumoId !== "5262",
   );
 
   const pontualidadePagamentoPercent = (() => {
@@ -1459,20 +1512,14 @@ export default function SpcMaxiResultadoPage({
     };
   })();
 
-  const historicoScrScoreData =
-    spcData?.["insumo-historico-operacao-scr"]?.[
-      "detalhe-insumo-historico-operacao-scr"
-    ];
+  
 
   const hasScrData = spcData?.["insumo-operacao-scr"];
   const hasComportamentoFinanceiroData =
     Boolean(hasPontualidadeData) ||
     Boolean(hasComprometimentoData) ||
     Boolean(hasScrData) ||
-    Boolean(historicoScrScoreData);
-
-
-
+    hasHistoricoScr;
 
   console.log("spcData", spcData);
   console.log("spcData?.consumidor", spcData?.consumidor);
@@ -1543,6 +1590,13 @@ export default function SpcMaxiResultadoPage({
         onConfirm={handleConfirmExtraInsumo}
       />
 
+      <ExtraConsultationExpiredDialog
+        open={showExpiredDialog}
+        onOpenChange={setShowExpiredDialog}
+        windowMs={EXTRA_CONSULTATION_WINDOW_MS}
+        onNewConsultation={() => navigate(searchPath)}
+      />
+
       <div className="w-full" data-print-document>
         <PrintCover />
 
@@ -1589,20 +1643,30 @@ export default function SpcMaxiResultadoPage({
                   <button
                     type="button"
                     onClick={() => {
-                      if ((!product && requestData.typeDocument === "CPF") || hasPositiveScore) {
+                      // A score already in the response is only revealed; otherwise it is an extra consultation.
+                      if (hasPositiveScore) {
                         setScoreRevealed(true);
-                      } else if (canConsultInsumo(selectedPrimaryScoreId)) {
+                      } else {
                         openExtraInsumoConfirmation({ label: primaryScore.label, insumoId: selectedPrimaryScoreId });
-                        setScoreRevealed(true);
                       }
                     }}
-                    disabled={(Boolean(product) || requestData.typeDocument === "CNPJ") && !hasPositiveScore && (
-                      !canConsultInsumo(selectedPrimaryScoreId) || hasExtraInsumoInProgress || extraConsultationExpired
+                    disabled={!hasPositiveScore && (
+                      !canConsultInsumo(selectedPrimaryScoreId) || hasExtraInsumoInProgress
                     )}
-                    className="inline-flex items-center gap-2 rounded-md bg-[#243871] px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1b2b58] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#243871] focus-visible:ring-offset-2"
+                    aria-disabled={(!hasPositiveScore && extraConsultationExpired) || undefined}
+                    className={`inline-flex items-center gap-2 rounded-md bg-[#243871] px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1b2b58] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#243871] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 ${
+                      !hasPositiveScore && extraConsultationExpired ? "cursor-not-allowed opacity-70" : ""
+                    }`}
                   >
-                    <Eye size={14} aria-hidden="true" />
-                    Ver Score
+                    {isConsultingScore ? (
+                      <span
+                        aria-hidden="true"
+                        className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent"
+                      />
+                    ) : (
+                      <Eye size={14} aria-hidden="true" />
+                    )}
+                    {isConsultingScore ? "Consultando..." : "Ver Score"}
                   </button>
                 </div>
               )}
@@ -1623,13 +1687,17 @@ export default function SpcMaxiResultadoPage({
             </div>
             {/* Financial indicators */}
             <div className="grid grid-cols-2 gap-1">
-              {resumoFinanceiroItens.filter((item) => ["5122", "5178", "5142", "5179", "5194", "5185"].includes(item.insumoId)).map((item) => {
+              {scoreIndicatorItems.map((item, index) => {
                 const hasValue = item.value !== "" && item.value != null;
                 const wasRequested = requestData.insumos.includes(item.insumoId) ||
                   defaultInsumos.includes(item.insumoId);
                 const isUnavailable = unavailableExtraInsumos.includes(item.label) ||
                   (item.label === "Limite Sugerido" && limiteSugeridoIndisponivel) ||
                   (!hasValue && wasRequested);
+                // A lone item on the last row takes the full width.
+                const isLastOddItem =
+                  index === scoreIndicatorItems.length - 1 &&
+                  scoreIndicatorItems.length % 2 === 1;
                 const title = item.label === "Limite Sugerido"
                   ? "Limite de Crédito Sugerido"
                   : item.label === "Comprometimento"
@@ -1639,7 +1707,7 @@ export default function SpcMaxiResultadoPage({
                 return (
                   <div
                     key={item.insumoId}
-                    className={`${["5194", "5185"].includes(item.insumoId) ? "col-span-2 " : ""}rounded-lg border border-gray-100 bg-gray-50 p-3`}
+                    className={`${isLastOddItem ? "col-span-2 " : ""}rounded-lg border border-gray-100 bg-gray-50 p-3`}
                   >
                     <h3 className="text-xs font-semibold text-gray-700">{title}</h3>
                     {isUnavailable ? (
@@ -1655,7 +1723,8 @@ export default function SpcMaxiResultadoPage({
                           <ExtraInsumoButton
                             label={item.label}
                             consultingLabel={consultingExtraInsumo?.label}
-                            disabled={extraConsultationExpired || hasExtraInsumoInProgress || !canConsultInsumo(item.insumoId)}
+                            disabled={hasExtraInsumoInProgress || !canConsultInsumo(item.insumoId)}
+                            blocked={extraConsultationExpired}
                             onConsultar={() => openExtraInsumoConfirmation({ label: item.label, insumoId: item.insumoId })}
                           />
                         </div>
@@ -1692,20 +1761,16 @@ export default function SpcMaxiResultadoPage({
           </div>
         )}
 
-        <InformacoesCadastraisSection spcData={spcData} body={body} />
-
-        {isInsumoRequested("5267") && (
-          <div id="section-quantidade-funcionarios" className="mb-4 rounded-xl border border-gray-200 bg-white p-5">
-            <ResumoFinanceiroSection items={resumoFinanceiroItens.filter((item) => item.insumoId === "5267")} />
-          </div>
-        )}
+        <InformacoesCadastraisSection
+          spcData={spcData}
+          body={body}
+          quantidadeFuncionarios={quantidadeFuncionarios}
+        />
 
         <GovernancaSection
           spcData={spcData}
           showParticipacaoEmpresa={!excludedInsumos.includes("24")}
         />
-
-
 
         <NegativosConsolidadosSection
           groups={GROUPS}
@@ -1725,6 +1790,12 @@ export default function SpcMaxiResultadoPage({
           setExpandedRowKey={setExpandedRowKey}
           printGroups={negativosPrintGroups}
           spcData={spcData}
+        />
+
+        <ConsultasRealizadasSection
+          spcData={spcData}
+          consultasExpanded={consultasExpanded}
+          setConsultasExpanded={setConsultasExpanded}
         />
 
         <AlertasSection sectionId="section-antifraude" alertas={alertas} />
@@ -1772,9 +1843,8 @@ export default function SpcMaxiResultadoPage({
                       <ExtraInsumoButton
                         label="Pontualidade de Pagamento"
                         consultingLabel={consultingExtraInsumo?.label}
-                        disabled={
-                          extraConsultationExpired || hasExtraInsumoInProgress
-                        }
+                        disabled={hasExtraInsumoInProgress}
+                        blocked={extraConsultationExpired}
                         onConsultar={() =>
                           openExtraInsumoConfirmation({
                             label: "Pontualidade de Pagamento",
@@ -1841,9 +1911,8 @@ export default function SpcMaxiResultadoPage({
                             : "Comportamento de Gastos"
                         }
                         consultingLabel={consultingExtraInsumo?.label}
-                        disabled={
-                          extraConsultationExpired || hasExtraInsumoInProgress
-                        }
+                        disabled={hasExtraInsumoInProgress}
+                        blocked={extraConsultationExpired}
                         onConsultar={() =>
                           openExtraInsumoConfirmation({
                             label: spcData?.consumidor?.cpf
@@ -1886,52 +1955,6 @@ export default function SpcMaxiResultadoPage({
 
         {showFinancialBehavior && <InformacoesPositivasSection spcData={spcData} />}
 
-        {paymentCapacityItems.some((item) => isInsumoRequested(item.insumoId)) && (
-        <div
-          id="section-capacidade-pagamento"
-          className="bg-white rounded-xl border border-gray-200 p-5 mb-4 mt-2"
-        >
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">
-            Resumo Financeiro
-          </h2>
-
-          <ResumoFinanceiroSection
-            items={paymentCapacityItems}
-            onConsultar={handleConsultarInsumoExtra}
-            isConsulting={Boolean(consultingExtraInsumo)}
-            loadingItemLabel={consultingExtraInsumo?.label ?? null}
-            unavailableLabels={[
-              ...unavailableExtraInsumos,
-              ...(limiteSugeridoIndisponivel ? ["Limite Sugerido"] : []),
-            ]}
-            consultationDisabled={
-              extraConsultationExpired || hasExtraInsumoInProgress
-            }
-          />
-
-          {consultingExtraInsumo &&
-            paymentCapacityItems.some(
-              (item) => item.label === consultingExtraInsumo.label,
-            ) && (
-              <div className="mt-4 flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700">
-                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-                Consultando {consultingExtraInsumo.label}...
-              </div>
-            )}
-
-          {extraInsumoErrorLabel &&
-            paymentCapacityItems.some(
-              (item) => item.label === extraInsumoErrorLabel,
-            ) && (
-              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
-                {extraInsumoErrorMessage}
-              </div>
-            )}
-        </div>
-
-        )}
-
-
         {isInsumoRequested("5256") && (
         <div id="section-operacoes-scr" className="mb-4 rounded-xl border border-gray-200 bg-white p-5">
             <h2 className="text-sm font-semibold text-gray-700">Operações no SCR</h2>
@@ -1962,7 +1985,8 @@ export default function SpcMaxiResultadoPage({
                   <ExtraInsumoButton
                     label="Operações no SCR"
                     consultingLabel={consultingExtraInsumo?.label}
-                    disabled={extraConsultationExpired || hasExtraInsumoInProgress || !canConsultInsumo("5256")}
+                    disabled={hasExtraInsumoInProgress || !canConsultInsumo("5256")}
+                    blocked={extraConsultationExpired}
                     onConsultar={() => openExtraInsumoConfirmation({ label: "Operações no SCR", insumoId: "5256" })}
                   />
                 )}
@@ -1974,24 +1998,17 @@ export default function SpcMaxiResultadoPage({
           </div>
         )}
 
-        {isInsumoRequested("5257") && (
-        <HistoricoOperacoesScrSection
-          spcData={spcData}
-          scorePj={scorePj}
-          getScoreColor={getScoreColor}
-        />
+        {isInsumoRequested("5257") && hasHistoricoScr && (
+          <HistoricoOperacoesScrSection
+            spcData={spcData}
+            scorePj={scorePj}
+            getScoreColor={getScoreColor}
+          />
         )}
-
-        <ConsultasRealizadasSection
-          spcData={spcData}
-          consultasExpanded={consultasExpanded}
-          setConsultasExpanded={setConsultasExpanded}
-        />
 
         <QuickNavigationSection
           showAdditionalScores={remainingScoreCandidates.length > 0}
           showFinancialBehavior={showFinancialBehavior}
-          showQuantidadeFuncionarios={isInsumoRequested("5267")}
           showGovernanca={hasGovernancaData(spcData, !excludedInsumos.includes("24"))}
         />
       </div>
