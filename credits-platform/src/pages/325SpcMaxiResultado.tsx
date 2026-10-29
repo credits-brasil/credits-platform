@@ -15,8 +15,10 @@ import { InformacoesPositivasSection } from "@/containers/SpcMaxiResultado/compo
 import { QuickNavigationSection } from "@/containers/SpcMaxiResultado/components/QuickNavigationSection";
 import { ReloadConfirmationDialog } from "@/containers/SpcMaxiResultado/components/ReloadConfirmationDialog";
 import { ConsultarInsumoDialog } from "@/containers/SpcMaxiResultado/components/ConsultarInsumoDialog";
+import { ConsultarDocumentoDialog, type DocumentoConsulta } from "@/containers/SpcMaxiResultado/components/ConsultarDocumentoDialog";
 import { ExtraConsultationExpiredDialog } from "@/containers/SpcMaxiResultado/components/ExtraConsultationExpiredDialog";
-import { NegativosConsolidadosSection } from "@/containers/SpcMaxiResultado/components/NegativosConsolidadosSection";
+import { GRUPO_ECONOMICO_KEY, NegativosConsolidadosSection } from "@/containers/SpcMaxiResultado/components/NegativosConsolidadosSection";
+import { countGrupoEconomicoSocios } from "@/containers/SpcMaxiResultado/components/GrupoEconomicoBlock";
 import { type AlertaItem, AlertasSection } from "@/containers/SpcMaxiResultado/components/AlertasSection";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatCNPJ } from "@/utils/formatCNPJ";
@@ -241,9 +243,33 @@ interface SpcMaxiResultadoPageProps {
   };
 }
 
-export default function SpcMaxiResultadoPage({
+/** Documents consulted from the grupo econômico always go to SPC MAXI. */
+const DOCUMENTO_CONSULTA_PRODUCT_NAME = "325 SPC MAXI";
+const DOCUMENTO_CONSULTA_REQUEST_KEY = "325-spc-maxi-request";
+const DOCUMENTO_CONSULTA_RESULT_PATH = "/credito-risco/325-spc-maxi/resultado";
+
+export default function SpcMaxiResultadoPage(
+  props: SpcMaxiResultadoPageProps = {},
+) {
+  const productKey = props.product?.slug ?? "325-spc-maxi";
+  const queryClient = useQueryClient();
+  const { data: requestData } = useQuery<SpcMaxiRequest | undefined>({
+    queryKey: [`${productKey}-request`],
+    queryFn: () =>
+      queryClient.getQueryData<SpcMaxiRequest>([`${productKey}-request`]),
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
+
+  // A new consultation started from this page keeps the same route, so remount to reset its state.
+  return (
+    <SpcMaxiResultadoContent key={requestData?.consultedAt ?? ""} {...props} />
+  );
+}
+
+function SpcMaxiResultadoContent({
   product,
-}: SpcMaxiResultadoPageProps = {}) {
+}: SpcMaxiResultadoPageProps) {
   const productKey = product?.slug ?? "325-spc-maxi";
   const productName = product?.name ?? "325 SPC MAXI";
   const endpoint = product?.endpoint ?? "/api/325-spc-maxi";
@@ -450,6 +476,8 @@ export default function SpcMaxiResultadoPage({
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [consultasExpanded, setConsultasExpanded] = useState(false);
   const [showRedirectModal, setShowRedirectModal] = useState(false);
+  const [pendingDocumentoConsulta, setPendingDocumentoConsulta] =
+    useState<DocumentoConsulta | null>(null);
   const [pendingExtraInsumo, setPendingExtraInsumo] = useState<{
     label: string;
     insumoId: string;
@@ -511,6 +539,24 @@ export default function SpcMaxiResultadoPage({
     const item = pendingExtraInsumo;
     setPendingExtraInsumo(null);
     void handleConsultarInsumoExtra(item);
+  };
+
+  const handleConfirmDocumentoConsulta = () => {
+    if (!pendingDocumentoConsulta) return;
+
+    const { documento, typeDocument } = pendingDocumentoConsulta;
+    setPendingDocumentoConsulta(null);
+
+    // Always SPC MAXI: it accepts CPF and CNPJ, while some products using this page are PJ only.
+    queryClient.setQueryData<SpcMaxiRequest>([DOCUMENTO_CONSULTA_REQUEST_KEY], {
+      document: documento.replace(/\D/g, ""),
+      typeDocument,
+      insumos: [],
+      consultedAt: new Date().toISOString(),
+    });
+
+    window.scrollTo({ top: 0 });
+    navigate(DOCUMENTO_CONSULTA_RESULT_PATH);
   };
 
   const handleSort = (key: SortKey) => {
@@ -748,6 +794,19 @@ export default function SpcMaxiResultadoPage({
             .at(-1)?.inclusao ?? "-")
         : "-",
     },
+    // Grupo econômico only applies to PJ consultations.
+    ...(requestData?.typeDocument === "CNPJ"
+      ? [
+          {
+            key: GRUPO_ECONOMICO_KEY,
+            label: "GRUPO ECONÔMICO",
+            count: countGrupoEconomicoSocios(spcData),
+            valor: "–",
+            antiga: "-",
+            recente: "-",
+          },
+        ]
+      : []),
   ];
 
   const verifySpcDataCidade = (item: any) =>
@@ -1605,6 +1664,17 @@ export default function SpcMaxiResultadoPage({
         onConfirm={handleConfirmExtraInsumo}
       />
 
+      <ConsultarDocumentoDialog
+        open={Boolean(pendingDocumentoConsulta)}
+        productName={DOCUMENTO_CONSULTA_PRODUCT_NAME}
+        consulta={pendingDocumentoConsulta}
+        onOpenChange={(open) => {
+          if (!open) setPendingDocumentoConsulta(null);
+        }}
+        onCancel={() => setPendingDocumentoConsulta(null)}
+        onConfirm={handleConfirmDocumentoConsulta}
+      />
+
       <ExtraConsultationExpiredDialog
         open={showExpiredDialog}
         onOpenChange={setShowExpiredDialog}
@@ -1805,6 +1875,7 @@ export default function SpcMaxiResultadoPage({
           setExpandedRowKey={setExpandedRowKey}
           printGroups={negativosPrintGroups}
           spcData={spcData}
+          onConsultarDocumento={setPendingDocumentoConsulta}
         />
 
         <ConsultasRealizadasSection
