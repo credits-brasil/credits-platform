@@ -283,10 +283,10 @@ export function GrupoEconomicoBlock({
     });
 
   return (
-    <div className="mt-10 print:mt-6 print:pt-4 print:border-t print:border-gray-200">
-      {/* Same look as the other printed groups, so it reads as its own section. */}
+    <div>
+      {/* Same look as the section titles, so it reads as its own section on paper. */}
       <h2 className="hidden print:block mb-3 text-sm font-semibold text-gray-700">
-        Negativos Consolidados – Grupo Econômico
+        Governança – Grupo Econômico
       </h2>
 
       <div className="flex items-center gap-3 text-xs text-gray-500 pb-3 mb-3 border-b border-gray-100">

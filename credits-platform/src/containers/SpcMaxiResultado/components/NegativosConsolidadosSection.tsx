@@ -10,10 +10,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { GrupoEconomicoBlock } from "./GrupoEconomicoBlock";
-import type { DocumentoConsulta } from "./ConsultarDocumentoDialog";
-
-export const GRUPO_ECONOMICO_KEY = "GRUPO_ECONOMICO";
 
 type SortKey =
   | "inclusao"
@@ -77,7 +73,6 @@ interface NegativosConsolidadosSectionProps {
   setExpandedRowKey: Dispatch<SetStateAction<string | null>>;
   printGroups: NegativosPrintGroup[];
   spcData: any;
-  onConsultarDocumento?: (consulta: DocumentoConsulta) => void;
 }
 
 type NegativosTableColumn = {
@@ -503,11 +498,7 @@ export function NegativosConsolidadosSection({
   setExpandedRowKey,
   printGroups,
   spcData,
-  onConsultarDocumento,
 }: NegativosConsolidadosSectionProps) {
-  // The page only adds the grupo econômico card for PJ consultations.
-  const hasGrupoEconomico = groups.some((g) => g.key === GRUPO_ECONOMICO_KEY);
-
   return (
     <div
       id="section-negativos"
@@ -520,15 +511,9 @@ export function NegativosConsolidadosSection({
         </h2>
       </div>
 
-      <div
-        className={`grid gap-3 mb-5 ${
-          hasGrupoEconomico ? "grid-cols-5" : "grid-cols-4"
-        }`}
-      >
+      <div className="grid grid-cols-4 gap-3 mb-5">
         {groups.map((g) => {
           const isActive = activeGroup === g.key;
-          // Grupo econômico has no amount or dates, only the sócios count.
-          const isGrupoEconomico = g.key === GRUPO_ECONOMICO_KEY;
           return (
             <button
               key={g.key}
@@ -558,43 +543,39 @@ export function NegativosConsolidadosSection({
                 >
                   {g.count}
                 </span>
-                {!isGrupoEconomico && (
-                  <span
-                    data-print-negative-amount
-                    className={`text-lg font-semibold print:text-[#374151] ${
-                      isActive ? "text-[#ED884A]" : "text-[#374151]"
-                    }`}
-                  >
-                    {g.valor}
-                  </span>
-                )}
+                <span
+                  data-print-negative-amount
+                  className={`text-lg font-semibold print:text-[#374151] ${
+                    isActive ? "text-[#ED884A]" : "text-[#374151]"
+                  }`}
+                >
+                  {g.valor}
+                </span>
               </div>
-              {!isGrupoEconomico && (
-                <div className="flex justify-between">
-                  <div>
-                    <p className="text-[9px] text-gray-400 uppercase tracking-wide">
-                      Antiga
-                    </p>
-                    <p
-                      data-print-negative-date
-                      className="text-xs font-medium text-gray-600"
-                    >
-                      {g.antiga}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[9px] text-gray-400 uppercase tracking-wide">
-                      Recente
-                    </p>
-                    <p
-                      data-print-negative-date
-                      className="text-xs font-medium text-gray-600"
-                    >
-                      {g.recente}
-                    </p>
-                  </div>
+              <div className="flex justify-between">
+                <div>
+                  <p className="text-[9px] text-gray-400 uppercase tracking-wide">
+                    Antiga
+                  </p>
+                  <p
+                    data-print-negative-date
+                    className="text-xs font-medium text-gray-600"
+                  >
+                    {g.antiga}
+                  </p>
                 </div>
-              )}
+                <div className="text-right">
+                  <p className="text-[9px] text-gray-400 uppercase tracking-wide">
+                    Recente
+                  </p>
+                  <p
+                    data-print-negative-date
+                    className="text-xs font-medium text-gray-600"
+                  >
+                    {g.recente}
+                  </p>
+                </div>
+              </div>
             </button>
           );
         })}
@@ -760,20 +741,6 @@ export function NegativosConsolidadosSection({
             <NegativosPrintGroupBlock key={group.key} group={group} />
           ))}
       </div>
-
-      {/* On screen only under its own card; the print always includes it, like the other groups. */}
-      {hasGrupoEconomico && (
-        <div
-          className={
-            activeGroup === GRUPO_ECONOMICO_KEY ? "" : "hidden print:block"
-          }
-        >
-          <GrupoEconomicoBlock
-            spcData={spcData}
-            onConsultarDocumento={onConsultarDocumento}
-          />
-        </div>
-      )}
 
       {(() => {
         const riscoCreditoDetalhe =
