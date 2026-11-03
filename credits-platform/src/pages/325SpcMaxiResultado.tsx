@@ -979,16 +979,23 @@ function SpcMaxiResultadoContent({
       : []
     : [];
 
-    const itHasMensagemComplemento = spcData?.["mensagem-complemento"]
+  // SPC wraps the message as "S===Texto da Mensagem===S"; strip the markers and normalize to sentence case.
+  const mensagemComplementoRaw = spcData?.["mensagem-complemento"];
+  const mensagemComplemento =
+    typeof mensagemComplementoRaw === "string"
+      ? mensagemComplementoRaw.replace(/^\s*S===|===S\s*$/g, "").trim().toLowerCase()
+      : "";
+  const mensagemComplementoFormatada =
+    mensagemComplemento.charAt(0).toUpperCase() + mensagemComplemento.slice(1);
 
-  const alertaLiminar: AlertaItem[] =  
-  itHasMensagemComplemento ? [
+  const alertaLiminar: AlertaItem[] =
+  mensagemComplementoFormatada ? [
     {
-      titulo: "Alerta Liminar",
+      titulo: "Mensagem Complementar",
       severidade: "padrao",
-      descricao: "Foi identificado um alerta liminar na consulta.",
+      descricao: mensagemComplementoFormatada,
       fonte: "SPC Brasil",
-      tipo: "Liminar",
+      tipo: "Mensagem Complementar",
     }
   ] : [];
 

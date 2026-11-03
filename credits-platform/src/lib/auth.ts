@@ -4,6 +4,21 @@ export const AUTH_TOKEN_KEY = "credits-platform-auth-token";
 export const AUTH_REFRESH_TOKEN_KEY = "credits-platform-refresh-token";
 export const AUTH_STORAGE_KEY = "credits-platform-authenticated";
 export const AUTH_USER_KEY = "credits-platform-auth-user";
+export const LAST_ACTIVITY_KEY = "credits-platform-last-activity";
+
+/** Shared through localStorage so activity in any open tab keeps the session alive. */
+export function markUserActivity() {
+  if (typeof window === "undefined") return;
+
+  localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
+}
+
+export function getLastUserActivity(): number | null {
+  if (typeof window === "undefined") return null;
+
+  const value = Number(localStorage.getItem(LAST_ACTIVITY_KEY));
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
 
 export function getStoredAuthTokens() {
   if (typeof window === "undefined") {

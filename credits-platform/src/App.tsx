@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { apiFetch, clearAuthSession } from "@/lib/auth";
+import { apiFetch, clearAuthSession, markUserActivity } from "@/lib/auth";
+import { useIdleLogout } from "@/hooks/useIdleLogout";
+import { toast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/layout/Layout";
@@ -396,6 +398,7 @@ function App() {
       localStorage.setItem(AUTH_TOKEN_KEY, session.accessToken);
       localStorage.setItem(AUTH_REFRESH_TOKEN_KEY, session.refreshToken);
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify({ ...session.user, acceptedTerms }));
+      markUserActivity();
       setIsAuthenticated(true);
       setHasAcceptedTerms(acceptedTerms);
       return null;
@@ -439,6 +442,14 @@ function App() {
     setIsAuthenticated(false);
     setHasAcceptedTerms(true);
   };
+
+  useIdleLogout(isAuthenticated, () => {
+    handleLogout();
+    toast({
+      title: "Sessão encerrada por inatividade.",
+      description: "Faça login novamente para continuar.",
+    });
+  });
 
   return (
     <QueryClientProvider client={queryClient}>
