@@ -9,6 +9,7 @@ import type { DocumentoConsulta } from "./ConsultarDocumentoDialog";
 import {
   countGrupoEconomicoSocios,
   GrupoEconomicoBlock,
+  toArray,
 } from "./GrupoEconomicoBlock";
 
 interface GovernancaSectionProps {
@@ -35,10 +36,11 @@ export function hasGovernancaData(
   ];
 
   return Boolean(
-    quadroSocial?.["controle-societario"]?.length ||
-    quadroSocial?.["quadro-administrativo"]?.length ||
+    toArray(quadroSocial?.["controle-societario"]).length ||
+    toArray(quadroSocial?.["quadro-administrativo"]).length ||
     (showParticipacaoEmpresa &&
-      spcData?.["participacao-empresa"]?.["detalhe-participacao-empresa"]?.length) ||
+      toArray(spcData?.["participacao-empresa"]?.["detalhe-participacao-empresa"])
+        .length) ||
     (showGrupoEconomico && countGrupoEconomicoSocios(spcData) > 0),
   );
 }
@@ -68,10 +70,11 @@ export function GovernancaSection({
       "detalhe-quadro-social-mais-completo-pj"
     ];
 
-  const controleSocietario = quadroSocial?.["controle-societario"] ?? [];
-  const quadroAdministrativo = quadroSocial?.["quadro-administrativo"] ?? [];
+  // The SPC payload returns a single object instead of an array when there is only one entry.
+  const controleSocietario = toArray<any>(quadroSocial?.["controle-societario"]);
+  const quadroAdministrativo = toArray<any>(quadroSocial?.["quadro-administrativo"]);
   const participacaoEmpresa = showParticipacaoEmpresa
-    ? spcData?.["participacao-empresa"]?.["detalhe-participacao-empresa"] ?? []
+    ? toArray<any>(spcData?.["participacao-empresa"]?.["detalhe-participacao-empresa"])
     : [];
 
   if (!hasGovernancaData(spcData, showParticipacaoEmpresa, showGrupoEconomico)) {
@@ -306,7 +309,7 @@ export function GovernancaSection({
             </thead>
 
             <tbody>
-              {activeRows.map((row: any, index: number) => {
+              {activeRows?.map((row: any, index: number) => {
                 const socio = row?.["detalhes-socio-1"]?.$ ?? {};
                 const socioPercentual = row?.["detalhes-socio-2"]?.$ ?? {};
                 const administrativo = row?.administrativo?.$ ?? {};
