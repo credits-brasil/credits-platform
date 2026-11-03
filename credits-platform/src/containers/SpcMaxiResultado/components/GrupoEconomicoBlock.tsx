@@ -26,7 +26,7 @@ const COLUMNS = [
 ];
 
 /** The API returns a single object instead of an array when there is only one item. */
-function toArray<T>(value: T | T[] | undefined | null): T[] {
+export function toArray<T>(value: T | T[] | undefined | null): T[] {
   if (Array.isArray(value)) return value;
   return value ? [value] : [];
 }
