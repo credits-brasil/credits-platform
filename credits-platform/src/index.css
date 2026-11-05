@@ -195,11 +195,12 @@
       content: "";
       padding: 16px 0;
       border-bottom: 0.2mm solid #e5e7eb;
-      background-image: url("/partner-logos.png");
+      /* Single combined file: Chrome mis-renders multiple background layers in page margin boxes. */
+      background-image: url("/partner-logos/cdl-spc-positivo.svg");
       background-origin: content-box;
       background-position: right center;
       background-repeat: no-repeat;
-      background-size: auto 9mm;
+      background-size: auto 6mm;
     }
 
     @bottom-left {
