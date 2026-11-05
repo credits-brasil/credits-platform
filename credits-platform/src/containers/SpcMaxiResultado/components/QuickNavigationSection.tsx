@@ -6,7 +6,9 @@ import {
   BarChart2,
   AlertTriangle,
   ClipboardList,
+  ListPlus,
 } from "lucide-react";
+import { scrollToReportSection } from "@/containers/SpcMaxiResultado/scrollToReportSection";
 
 interface QuickNavigationItem {
   id: string;
@@ -56,6 +58,7 @@ export function QuickNavigationSection({
     { id: "section-operacoes-scr", icon: <ClipboardList size={16} />, label: "Operações SCR" },
     { id: "section-historico-scr", icon: <ClipboardList size={16} />, label: "Histórico SCR" },
     { id: "section-consultas", icon: <Search size={16} />, label: "Consultas Realizadas" },
+    { id: "section-insumos-adicionais", icon: <ListPlus size={16} />, label: "Insumos Opcionais" },
   ];
 
   // Check after the layout is committed: some sections return null without data.
@@ -78,20 +81,7 @@ export function QuickNavigationSection({
         <div key={id} className="flex items-center justify-end">
           <button
             type="button"
-            onClick={() => {
-              const el = document.getElementById(id);
-              if (el) {
-                if (id === "section-identificacao") {
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                  return;
-                }
-                const identification = document.getElementById("section-identificacao");
-                const offset = Math.max(68, identification?.getBoundingClientRect().height ?? 0);
-                const y =
-                  el.getBoundingClientRect().top + window.scrollY - offset - 16;
-                window.scrollTo({ top: y, behavior: "smooth" });
-              }
-            }}
+            onClick={() => scrollToReportSection(id)}
             className="pointer-events-auto group relative flex h-9 w-9 flex-shrink-0 cursor-pointer items-center justify-center rounded-full text-white shadow-md transition-all duration-150 hover:scale-110 hover:shadow-lg active:scale-95"
             style={{ backgroundColor: "#ED884A" }}
             aria-label={label}
