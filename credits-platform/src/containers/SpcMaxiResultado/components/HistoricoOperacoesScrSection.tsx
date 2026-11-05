@@ -58,14 +58,14 @@ export function HistoricoOperacoesScrSection({
   const grupoModalidadeLabels: Record<string, string> = {
     F: "Financiamentos",
     A: "Adiantamentos",
-    E: "Emprestimos",
+    E: "Empréstimos",
     O: "Outras Operações ou Contratos",
     OA: "Operações de Arrendamento",
   };
 
   const grupoCarteiraAtivaVencerPorModalidadeLabels: Record<string, string> = {
-    E: "Emprestimos",
-    A: "Adiantamenos",
+    E: "Empréstimos",
+    A: "Adiantamentos",
     F: "Financiamentos",
     O: "Outras Operações ou Contratos",
     OA: "Operações de Arrendamento",
@@ -73,8 +73,8 @@ export function HistoricoOperacoesScrSection({
   };
 
   const grupoCarteiraAtivaVencidaPorModalidadeLabels: Record<string, string> = {
-    E: "Emprestimos",
-    A: "Adiantamenos",
+    E: "Empréstimos",
+    A: "Adiantamentos",
     F: "Financiamentos",
     O: "Outras Operações",
     C: "Contratos",
@@ -85,8 +85,8 @@ export function HistoricoOperacoesScrSection({
     string,
     string
   > = {
-    E: "Emprestimos",
-    A: "Adiantamenos",
+    E: "Empréstimos",
+    A: "Adiantamentos",
     F: "Financiamentos",
     O: "Outras Operações",
     OA: "Operações de Arrendamento",

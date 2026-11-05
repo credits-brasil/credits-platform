@@ -2328,7 +2328,7 @@ function SpcMaxiResultadoContent({
         {isInsumoRequested("5256") && (
         <div id="section-operacoes-scr" className="mb-4 rounded-xl border border-gray-200 bg-white p-5">
             <h2 className="text-sm font-semibold text-gray-700">Operações no SCR</h2>
-            {hasScrData && !unavailableExtraInsumos.includes("Opera??es no SCR") ? (
+            {hasScrData && !unavailableExtraInsumos.includes("Operações no SCR") ? (
             <div className="mt-4 grid grid-cols-4 divide-x divide-gray-100">
               <div className="pr-4">
                 <h3 className="text-xs font-semibold text-gray-600">Quantidade</h3>
