@@ -17,6 +17,21 @@ import { ReloadConfirmationDialog } from "@/containers/SpcMaxiResultado/componen
 import { ConsultarInsumoDialog } from "@/containers/SpcMaxiResultado/components/ConsultarInsumoDialog";
 import { ConsultarDocumentoDialog, type DocumentoConsulta } from "@/containers/SpcMaxiResultado/components/ConsultarDocumentoDialog";
 import { ExtraConsultationExpiredDialog } from "@/containers/SpcMaxiResultado/components/ExtraConsultationExpiredDialog";
+import { ConsultarInsumosAdicionaisDialog } from "@/containers/SpcMaxiResultado/components/ConsultarInsumosAdicionaisDialog";
+import { InsumosAdicionaisSection } from "@/containers/SpcMaxiResultado/components/InsumosAdicionaisSection";
+import {
+  CNPJ_INSUMO_GROUPS,
+  CPF_INSUMO_GROUPS,
+  type Insumo,
+} from "@/constants/insumo-groups";
+import { SPC_MAXI_CNPJ_INSUMO_GROUPS } from "@/constants/spc-maxi";
+import { REPORT_SECTIONS } from "@/constants/report-sections";
+import type { PrintSection } from "@/components/PrintSectionsDialog";
+import { NovasSecoesBanner } from "@/containers/SpcMaxiResultado/components/NovasSecoesBanner";
+import {
+  getRenderedReportSectionIds,
+  scrollToTopAndWait,
+} from "@/containers/SpcMaxiResultado/scrollToReportSection";
 import { NegativosConsolidadosSection } from "@/containers/SpcMaxiResultado/components/NegativosConsolidadosSection";
 import { type AlertaItem, AlertasSection } from "@/containers/SpcMaxiResultado/components/AlertasSection";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -153,6 +168,15 @@ interface SpcMaxiRequest {
   consultedAt?: string;
 }
 
+function getSpcResultQueryKey(productKey: string, request?: SpcMaxiRequest) {
+  return [
+    productKey,
+    request?.document,
+    request?.typeDocument,
+    request?.consultedAt,
+  ];
+}
+
 function getConsultationContext() {
   const storedCompany = localStorage.getItem("credits-platform-selected-company");
   const company = storedCompany ? JSON.parse(storedCompany) : null;
@@ -242,6 +266,42 @@ interface SpcMaxiResultadoPageProps {
   };
 }
 
+/** Labels the result sections use to flag an extra insumo that came back without data. */
+const EXTRA_INSUMO_LABELS: Record<string, string> = {
+  "5122": "Renda Presumida",
+  "5142": "Limite Sugerido",
+  "5194": "Comprometimento",
+  "5262": "Alerta de Identidade à Fraude",
+  "5256": "Operações no SCR",
+  "5227": "Pontualidade de Pagamento",
+  "5224": "Comportamento de Gastos",
+};
+
+/** Report sections where each (non-score) insumo shows up, to point the user to them. */
+const INSUMO_SECTION_IDS: Record<string, string[]> = {
+  "5122": ["section-score-positivo"],
+  "5142": ["section-score-positivo"],
+  "5194": ["section-score-positivo"],
+  "5178": ["section-score-positivo"],
+  "5179": ["section-score-positivo"],
+  "5185": ["section-score-positivo"],
+  "5262": ["section-antifraude"],
+  "5265": ["section-antifraude"],
+  "5267": ["section-cadastrais"],
+  "24": ["section-governanca"],
+  "49": ["section-governanca"],
+  "23": ["section-governanca"],
+  "5186": ["section-governanca"],
+  "5241": ["section-governanca"],
+  "5224": ["section-cadastro-positivo", "section-informacoes-positivas"],
+  "5227": ["section-cadastro-positivo", "section-informacoes-positivas"],
+  "5256": ["section-operacoes-scr"],
+  "5257": ["section-historico-scr", "section-antifraude"],
+};
+
+const INSUMOS_ADICIONAIS_ERROR_MESSAGE =
+  "Não foi possível consultar os insumos selecionados. Tente novamente.";
+
 /** Documents consulted from the grupo econômico always go to SPC MAXI. */
 const DOCUMENTO_CONSULTA_PRODUCT_NAME = "325 SPC MAXI";
 const DOCUMENTO_CONSULTA_REQUEST_KEY = "325-spc-maxi-request";
@@ -323,6 +383,7 @@ function SpcMaxiResultadoContent({
     const expireExtraConsultation = () => {
       setExtraConsultationExpired(true);
       setPendingExtraInsumo(null);
+      setPendingInsumosAdicionais(null);
     };
 
     if (remainingTime <= 0) {
@@ -341,12 +402,10 @@ function SpcMaxiResultadoContent({
     isError,
     error,
   } = useQuery({
-    queryKey: [
-      productKey,
-      requestData?.document,
-      requestData?.typeDocument,
-      requestData?.insumos,
-    ],
+    // Keyed by the consultation, not by its insumos: extra insumos replace the data under
+    // this same (observed) key. A new key would be dropped right away by the global
+    // `gcTime: 0`, refetched, and show the loading screen.
+    queryKey: getSpcResultQueryKey(productKey, requestData),
 
     queryFn: async () => {
       if (!requestData) {
@@ -424,12 +483,16 @@ function SpcMaxiResultadoContent({
     ...initialScoreInsumos.current,
     ...defaultInsumos,
   ]));
+  // Scores consulted after the first load, in the order they were added.
+  const [addedScoreInsumos, setAddedScoreInsumos] = useState<string[]>([]);
   const scoreOrder = requestData?.typeDocument === "CNPJ"
     ? ["5229", "78", "77", "5247"]
     : ["5228", "78", "77"];
-  const selectedScoreIds = scoreOrder.filter((id) =>
-    includedScoreInsumos.includes(id) && !excludedInsumos.includes(id),
-  );
+  // Added scores go after the initial ones, so the scores already on screen keep their place.
+  const selectedScoreIds = [
+    ...scoreOrder.filter((id) => includedScoreInsumos.includes(id)),
+    ...addedScoreInsumos.filter((id) => !includedScoreInsumos.includes(id)),
+  ].filter((id) => !excludedInsumos.includes(id));
   const selectedPrimaryScoreId = selectedScoreIds[0] ??
     (requestData?.typeDocument === "CNPJ" ? "5229" : "5228");
   const primaryScores: Record<string, { label: string; value: unknown; probability?: unknown; riskClass?: unknown }> = {
@@ -491,9 +554,65 @@ function SpcMaxiResultadoContent({
   const [unavailableExtraInsumos, setUnavailableExtraInsumos] = useState<
     string[]
   >([]);
+  const [pendingInsumosAdicionais, setPendingInsumosAdicionais] = useState<
+    Insumo[] | null
+  >(null);
+  const [consultingInsumosAdicionais, setConsultingInsumosAdicionais] =
+    useState(false);
+  const [insumosAdicionaisError, setInsumosAdicionaisError] = useState<
+    string | null
+  >(null);
+  const [novasSecoes, setNovasSecoes] = useState<{
+    sections: PrintSection[];
+    insumosCount: number;
+  } | null>(null);
+  // Set right before the new data renders; read after the commit to find what changed.
+  const [pendingSectionReveal, setPendingSectionReveal] = useState<{
+    previousSectionIds: string[];
+    candidateSectionIds: string[];
+    insumosCount: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!pendingSectionReveal) return;
+
+    const { previousSectionIds, candidateSectionIds, insumosCount } =
+      pendingSectionReveal;
+    const renderedSectionIds = getRenderedReportSectionIds();
+    const changedSectionIds = new Set([
+      ...renderedSectionIds.filter((id) => !previousSectionIds.includes(id)),
+      ...candidateSectionIds.filter((id) => renderedSectionIds.includes(id)),
+    ]);
+    const sections = REPORT_SECTIONS.filter(({ id }) =>
+      changedSectionIds.has(id),
+    );
+
+    setPendingSectionReveal(null);
+    setNovasSecoes({ sections, insumosCount });
+
+    sections.forEach(({ id }) => {
+      const element = document.getElementById(id);
+      if (!element) return;
+
+      // Re-adding the attribute after a reflow restarts the highlight animation.
+      element.removeAttribute("data-new-section");
+      void element.offsetWidth;
+      element.setAttribute("data-new-section", "");
+
+      const handleAnimationEnd = (event: AnimationEvent) => {
+        if (event.target !== element) return;
+        element.removeAttribute("data-new-section");
+        element.removeEventListener("animationend", handleAnimationEnd);
+      };
+      element.addEventListener("animationend", handleAnimationEnd);
+    });
+  }, [pendingSectionReveal]);
   const extraInsumoErrorMessage = "Não há dados disponíveis.";
   const hasExtraInsumoInProgress = Boolean(
-    pendingExtraInsumo || consultingExtraInsumo,
+    pendingExtraInsumo ||
+      consultingExtraInsumo ||
+      pendingInsumosAdicionais ||
+      consultingInsumosAdicionais,
   );
   const isConsultingScore = consultingExtraInsumo?.id === selectedPrimaryScoreId;
 
@@ -1318,6 +1437,25 @@ function SpcMaxiResultadoContent({
     }
   };
 
+  /**
+   * Swaps the result in place: same query key (consultedAt is kept), so the page only
+   * re-renders with the new data, with no refetch, loading screen or remount.
+   * Nothing is invalidated, since that would send the whole (paid) consultation again.
+   */
+  const applyExtraConsultationResult = (
+    nextInsumos: string[],
+    nextSpcData: unknown,
+  ) => {
+    queryClient.setQueryData(
+      getSpcResultQueryKey(productKey, requestData),
+      nextSpcData,
+    );
+    queryClient.setQueryData<SpcMaxiRequest>([`${productKey}-request`], {
+      ...requestData,
+      insumos: nextInsumos,
+    });
+  };
+
   const handleConsultarInsumoExtra = async (item: {
     label: string;
     insumoId?: string;
@@ -1386,22 +1524,13 @@ function SpcMaxiResultadoContent({
         prev.filter((label) => label !== item.label),
       );
 
-      const nextRequest = {
-        ...requestData,
-        insumos: nextInsumos,
-      };
+      if (scoreOrder.includes(insumoId)) {
+        setAddedScoreInsumos((prev) =>
+          prev.includes(insumoId) ? prev : [...prev, insumoId],
+        );
+      }
 
-      queryClient.setQueryData([`${productKey}-request`], nextRequest);
-      queryClient.setQueryData(
-        [
-          productKey,
-          nextRequest.document,
-          nextRequest.typeDocument,
-          nextInsumos,
-        ],
-        nextSpcData,
-      );
-      queryClient.invalidateQueries({ queryKey: [productKey] });
+      applyExtraConsultationResult(nextInsumos, nextSpcData);
     } catch (error) {
       setUnavailableExtraInsumos((prev) =>
         prev.includes(item.label) ? prev : [...prev, item.label],
@@ -1411,6 +1540,145 @@ function SpcMaxiResultadoContent({
       setConsultingExtraInsumo(null);
 
       if (insumoId === selectedPrimaryScoreId) setScoreRevealed(true);
+    }
+  };
+
+  // Same groups the query screen offers for this product and document type.
+  const insumosAdicionaisGroups = (
+    requestData.typeDocument === "CPF"
+      ? CPF_INSUMO_GROUPS
+      : product
+        ? CNPJ_INSUMO_GROUPS
+        : SPC_MAXI_CNPJ_INSUMO_GROUPS
+  )
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => !excludedInsumos.includes(item.id)),
+    }))
+    .filter((group) => group.items.length > 0);
+
+  const consultedInsumoIds = new Set(
+    insumosAdicionaisGroups
+      .flatMap((group) => group.items.map((item) => item.id))
+      .filter(isInsumoRequested),
+  );
+
+  const openInsumosAdicionaisConfirmation = (insumoIds: string[]) => {
+    if (extraConsultationExpired) {
+      setShowExpiredDialog(true);
+      return;
+    }
+
+    if (hasExtraInsumoInProgress) return;
+
+    const insumos = insumosAdicionaisGroups
+      .flatMap((group) => group.items)
+      .filter(
+        (item, index, items) =>
+          insumoIds.includes(item.id) &&
+          canConsultInsumo(item.id) &&
+          !consultedInsumoIds.has(item.id) &&
+          items.findIndex(({ id }) => id === item.id) === index,
+      );
+
+    if (insumos.length > 0) setPendingInsumosAdicionais(insumos);
+  };
+
+  const handleConfirmInsumosAdicionais = () => {
+    if (!pendingInsumosAdicionais || extraConsultationExpired) return;
+
+    const insumoIds = pendingInsumosAdicionais.map((item) => item.id);
+    setPendingInsumosAdicionais(null);
+    void handleConsultarInsumosAdicionais(insumoIds);
+  };
+
+  // Re-sends the consultation with the new insumos and swaps the cached result in place:
+  // the page re-renders with the new data, without a reload or a remount.
+  const handleConsultarInsumosAdicionais = async (insumoIds: string[]) => {
+    if (!requestData || extraConsultationExpired) return;
+
+    const nextInsumos = getRequestedInsumos([
+      ...requestData.insumos,
+      ...insumoIds,
+    ]);
+
+    setConsultingInsumosAdicionais(true);
+    setInsumosAdicionaisError(null);
+
+    try {
+      const response = await apiFetch(`${API_URL}${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          companyId: getConsultationContext().companyId,
+          document: requestData.document,
+          typeDocument: requestData.typeDocument,
+          telefone: product ? undefined : requestData.telefone,
+          insumos: product ? nextInsumos.map(Number) : nextInsumos,
+        }),
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(payload?.message || INSUMOS_ADICIONAIS_ERROR_MESSAGE);
+      }
+
+      const nextSpcData = payload?.spc ?? payload;
+
+      if (!nextSpcData || typeof nextSpcData !== "object") {
+        throw new Error(INSUMOS_ADICIONAIS_ERROR_MESSAGE);
+      }
+
+      const consultedLabels = insumoIds
+        .map((id) => EXTRA_INSUMO_LABELS[id])
+        .filter(Boolean);
+      const unavailableLabels = consultedLabels.filter(
+        (label) => !hasUsableExtraInsumoResponse(label, nextSpcData),
+      );
+      const newScoreIds = scoreOrder.filter((id) => insumoIds.includes(id));
+      // With scores already on screen the main one stays, so new scores go to "Outros Scores".
+      const scoreSectionIds = selectedScoreIds.length > 0
+        ? ["section-additional-scores"]
+        : ["section-score-positivo", "section-additional-scores"];
+      const candidateSectionIds = insumoIds.flatMap((id) =>
+        scoreOrder.includes(id) ? scoreSectionIds : INSUMO_SECTION_IDS[id] ?? [],
+      );
+      const previousSectionIds = getRenderedReportSectionIds();
+
+      // Takes the user to the top first; the new data only renders once they get there.
+      setNovasSecoes(null);
+      await scrollToTopAndWait();
+
+      setUnavailableExtraInsumos((prev) => [
+        ...prev.filter((label) => !consultedLabels.includes(label)),
+        ...unavailableLabels,
+      ]);
+
+      if (newScoreIds.length > 0) {
+        setAddedScoreInsumos((prev) => [
+          ...prev,
+          ...newScoreIds.filter((id) => !prev.includes(id)),
+        ]);
+        setScoreRevealed(true);
+      }
+
+      applyExtraConsultationResult(nextInsumos, nextSpcData);
+      setPendingSectionReveal({
+        previousSectionIds,
+        candidateSectionIds,
+        insumosCount: insumoIds.length,
+      });
+    } catch (error) {
+      setInsumosAdicionaisError(
+        error instanceof Error && error.message
+          ? error.message
+          : INSUMOS_ADICIONAIS_ERROR_MESSAGE,
+      );
+    } finally {
+      setConsultingInsumosAdicionais(false);
     }
   };
 
@@ -1671,6 +1939,17 @@ function SpcMaxiResultadoContent({
         onConfirm={handleConfirmDocumentoConsulta}
       />
 
+      <ConsultarInsumosAdicionaisDialog
+        open={Boolean(pendingInsumosAdicionais)}
+        insumos={pendingInsumosAdicionais ?? []}
+        disabled={extraConsultationExpired}
+        onOpenChange={(open) => {
+          if (!open) setPendingInsumosAdicionais(null);
+        }}
+        onCancel={() => setPendingInsumosAdicionais(null)}
+        onConfirm={handleConfirmInsumosAdicionais}
+      />
+
       <ExtraConsultationExpiredDialog
         open={showExpiredDialog}
         onOpenChange={setShowExpiredDialog}
@@ -1710,6 +1989,14 @@ function SpcMaxiResultadoContent({
           onReload={handleOpenReloadModal}
           onNewQuery={() => navigate(searchPath)}
         />
+
+        {novasSecoes && (
+          <NovasSecoesBanner
+            sections={novasSecoes.sections}
+            insumosCount={novasSecoes.insumosCount}
+            onClose={() => setNovasSecoes(null)}
+          />
+        )}
 
 
         <div id="section-score-positivo" className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
@@ -2088,6 +2375,16 @@ function SpcMaxiResultadoContent({
             getScoreColor={getScoreColor}
           />
         )}
+
+        <InsumosAdicionaisSection
+          groups={insumosAdicionaisGroups}
+          consultedIds={consultedInsumoIds}
+          isConsulting={consultingInsumosAdicionais}
+          disabled={hasExtraInsumoInProgress}
+          blocked={extraConsultationExpired}
+          errorMessage={insumosAdicionaisError}
+          onSubmit={openInsumosAdicionaisConfirmation}
+        />
 
         <QuickNavigationSection
           showAdditionalScores={remainingScoreCandidates.length > 0}

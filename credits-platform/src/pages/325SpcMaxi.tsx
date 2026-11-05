@@ -8,10 +8,8 @@ import {
   InputComponent,
 } from "@/components";
 import { InsumoGroupCard } from "@/containers/SpcMaxi/components/InsumoGroupCard";
-import {
-  CNPJ_INSUMO_GROUPS,
-  CPF_INSUMO_GROUPS,
-} from "@/constants/insumo-groups";
+import { CPF_INSUMO_GROUPS } from "@/constants/insumo-groups";
+import { SPC_MAXI_CNPJ_INSUMO_GROUPS } from "@/constants/spc-maxi";
 import type { DocType } from "@/types/docType";
 import {
   detectDocTypeByInput,
@@ -23,15 +21,6 @@ import {
 } from "@/utils";
 
 const DEFAULT_SELECTED = new Set<string>([]);
-
-// Only offered by SPC MAXI, so it is not part of the shared CNPJ groups.
-const CNPJ_CADASTRAL_EXTRA_INSUMOS = [{ id: "5241", label: "Grupo econômico" }];
-
-const SPC_MAXI_CNPJ_INSUMO_GROUPS = CNPJ_INSUMO_GROUPS.map((group) =>
-  group.id === "cadastral"
-    ? { ...group, items: [...group.items, ...CNPJ_CADASTRAL_EXTRA_INSUMOS] }
-    : group,
-);
 
 export default function SpcMaxiPage() {
   const queryClient = useQueryClient();
