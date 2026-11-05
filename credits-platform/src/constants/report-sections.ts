@@ -6,6 +6,7 @@ export const REPORT_SECTIONS: PrintSection[] = [
   { id: "section-score-positivo", label: "Score" },
   { id: "section-additional-scores", label: "Outros Scores" },
   { id: "section-cadastrais", label: "Dados Cadastrais" },
+  { id: "section-quadro-social", label: "Quadro Social Mais Completo" },
   { id: "section-governanca", label: "Governança" },
   { id: "section-negativos", label: "Negativos Consolidados" },
   { id: "section-antifraude", label: "Antifraude" },
