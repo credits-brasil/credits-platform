@@ -11,6 +11,7 @@ import { GovernancaSection, hasGovernancaData } from "@/containers/SpcMaxiResult
 import { HeaderSection } from "@/containers/SpcMaxiResultado/components/HeaderSection";
 import { HistoricoOperacoesScrSection, hasHistoricoScrData } from "@/containers/SpcMaxiResultado/components/HistoricoOperacoesScrSection";
 import { InformacoesCadastraisSection } from "@/containers/SpcMaxiResultado/components/InformacoesCadastraisSection";
+import { QuadroSocialSection, hasQuadroSocialData } from "@/containers/SpcMaxiResultado/components/QuadroSocialSection";
 import { InformacoesPositivasSection } from "@/containers/SpcMaxiResultado/components/InformacoesPositivasSection";
 import { QuickNavigationSection } from "@/containers/SpcMaxiResultado/components/QuickNavigationSection";
 import { ReloadConfirmationDialog } from "@/containers/SpcMaxiResultado/components/ReloadConfirmationDialog";
@@ -291,7 +292,7 @@ const INSUMO_SECTION_IDS: Record<string, string[]> = {
   "24": ["section-governanca"],
   "49": ["section-governanca"],
   "23": ["section-governanca"],
-  "5186": ["section-governanca"],
+  "5186": ["section-quadro-social"],
   "5241": ["section-governanca"],
   "5224": ["section-cadastro-positivo", "section-informacoes-positivas"],
   "5227": ["section-cadastro-positivo", "section-informacoes-positivas"],
@@ -846,9 +847,6 @@ function SpcMaxiResultadoContent({
   const situacaoNormalizada = situacao.toUpperCase();
   const isPendenteRegularizacao = situacaoNormalizada === "PENDENTE DE REGULARIZACAO";
   const isRegular = ["REGULAR", "ATIVO", "ATIVA"].includes(situacaoNormalizada);
-
-  // Grupo econômico only applies to PJ consultations.
-  const showGrupoEconomico = requestData?.typeDocument === "CNPJ";
 
   const GROUPS = [
     {
@@ -2135,10 +2133,14 @@ function SpcMaxiResultadoContent({
           quantidadeFuncionarios={quantidadeFuncionarios}
         />
 
+        <QuadroSocialSection
+          spcData={spcData}
+          isInsumoRequested={isInsumoRequested}
+        />
+
         <GovernancaSection
           spcData={spcData}
-          showParticipacaoEmpresa={!excludedInsumos.includes("24")}
-          showGrupoEconomico={showGrupoEconomico}
+          isInsumoRequested={isInsumoRequested}
           onConsultarDocumento={setPendingDocumentoConsulta}
         />
 
@@ -2389,11 +2391,8 @@ function SpcMaxiResultadoContent({
         <QuickNavigationSection
           showAdditionalScores={remainingScoreCandidates.length > 0}
           showFinancialBehavior={showFinancialBehavior}
-          showGovernanca={hasGovernancaData(
-            spcData,
-            !excludedInsumos.includes("24"),
-            showGrupoEconomico,
-          )}
+          showQuadroSocial={hasQuadroSocialData(spcData, isInsumoRequested)}
+          showGovernanca={hasGovernancaData(spcData, isInsumoRequested)}
         />
       </div>
     </>

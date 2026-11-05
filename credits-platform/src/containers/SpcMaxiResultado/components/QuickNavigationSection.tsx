@@ -19,10 +19,12 @@ interface QuickNavigationItem {
 export function QuickNavigationSection({
   showAdditionalScores = false,
   showFinancialBehavior = false,
+  showQuadroSocial = false,
   showGovernanca = false,
 }: {
   showAdditionalScores?: boolean;
   showFinancialBehavior?: boolean;
+  showQuadroSocial?: boolean;
   showGovernanca?: boolean;
 }) {
   const [availableSectionIds, setAvailableSectionIds] = useState<string[]>([]);
@@ -43,6 +45,7 @@ export function QuickNavigationSection({
       icon: <ClipboardList size={16} />,
       label: "Dados Cadastrais",
     },
+    ...(showQuadroSocial ? [{ id: "section-quadro-social", icon: <ClipboardList size={16} />, label: "Quadro Social Mais Completo" }] : []),
     ...(showGovernanca ? [{ id: "section-governanca", icon: <ClipboardList size={16} />, label: "Governança" }] : []),
     {
       id: "section-negativos",
