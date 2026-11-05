@@ -7,12 +7,17 @@ type InsumoGroupCardProps = {
   group: InsumoGroup;
   selected: Set<string>;
   onToggleInsumo: (id: string) => void;
+  /** Shown checked and read-only, e.g. insumos already consulted. */
+  lockedIds?: Set<string>;
+  lockedTitle?: string;
 };
 
 export function InsumoGroupCard({
   group,
   selected,
   onToggleInsumo,
+  lockedIds,
+  lockedTitle,
 }: InsumoGroupCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const Icon = group.icon;
@@ -40,14 +45,19 @@ export function InsumoGroupCard({
 
         <div className="space-y-2">
           {group.items.map((item) => {
-            const checked = selected.has(item.id);
+            const locked = lockedIds?.has(item.id) ?? false;
+            const checked = locked || selected.has(item.id);
 
             return (
               <FilterCheckboxComponent
                 key={item.id}
                 checked={checked}
-                onChange={() => onToggleInsumo(item.id)}
+                onChange={() => {
+                  if (!locked) onToggleInsumo(item.id);
+                }}
                 label={item.label}
+                disabled={locked}
+                title={locked ? lockedTitle : undefined}
               />
             );
           })}

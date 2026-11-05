@@ -7,6 +7,8 @@ type FilterCheckboxProps = {
   className?: string;
   labelClassName?: string;
   labelFirst?: boolean;
+  disabled?: boolean;
+  title?: string;
 };
 
 export function FilterCheckboxComponent({
@@ -16,11 +18,14 @@ export function FilterCheckboxComponent({
   className,
   labelClassName,
   labelFirst = false,
+  disabled = false,
+  title,
 }: FilterCheckboxProps) {
   const labelNode = (
     <span
       className={cn(
-        "text-sm text-gray-600 group-hover:text-gray-800 transition-colors",
+        "text-sm text-gray-600 transition-colors",
+        !disabled && "group-hover:text-gray-800",
         labelClassName,
       )}
     >
@@ -30,9 +35,21 @@ export function FilterCheckboxComponent({
 
   return (
     <label
-      className={cn("flex items-center gap-2.5 cursor-pointer group", className)}
+      title={title}
+      aria-disabled={disabled || undefined}
+      className={cn(
+        "flex items-center gap-2.5 group",
+        disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
+        className,
+      )}
     >
-      <input type="checkbox" checked={checked} onChange={onChange} className="hidden" />
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        disabled={disabled}
+        className="hidden"
+      />
 
       {labelFirst && labelNode}
 
