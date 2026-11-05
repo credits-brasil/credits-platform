@@ -70,11 +70,35 @@ export default function Header({ sidebarCollapsed, onLogout }: HeaderProps) {
       <div className="flex items-center gap-4">
         <CompanySelector />
         <div className="h-8 w-px bg-gray-200 flex-shrink-0" />
-        <img
-          src="/partner-logos.png"
-          alt="CDL São Paulo / SPC Brasil"
-          style={{ height: "44px", width: "auto", objectFit: "contain" }}
-        />
+        <div
+          className="flex items-center justify-between flex-shrink-0"
+          style={{ width: "179px", height: "44px" }}
+        >
+          <img
+            src="/partner-logos/cdl-positivo.svg"
+            alt="CDL São Paulo"
+            className="object-contain dark:hidden"
+            style={{ width: "84px", height: "29px" }}
+          />
+          <img
+            src="/partner-logos/cdl-negativo.svg"
+            alt="CDL São Paulo"
+            className="hidden object-contain dark:block"
+            style={{ width: "84px", height: "29px" }}
+          />
+          <img
+            src="/partner-logos/spc-positivo.svg"
+            alt="SPC Brasil"
+            className="object-contain dark:hidden"
+            style={{ width: "84px", height: "29px" }}
+          />
+          <img
+            src="/partner-logos/spc-negativo.svg"
+            alt="SPC Brasil"
+            className="hidden object-contain dark:block"
+            style={{ width: "84px", height: "29px" }}
+          />
+        </div>
       </div>
 
       <div className="flex items-center gap-3">
