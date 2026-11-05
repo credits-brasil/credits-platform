@@ -372,7 +372,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
             <img
               src={cMonogram}
-              alt="Ícone Credits"
+              alt="C Icon"
               style={{ height: "35px", width: "auto", objectFit: "contain" }}
             />
           </div>
