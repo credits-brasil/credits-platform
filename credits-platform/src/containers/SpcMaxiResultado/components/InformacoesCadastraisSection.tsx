@@ -20,7 +20,6 @@ const ACCORDION_ITEMS = [
   "contato-endereco",
   "dados-adicionais-contato-spc-brasil",
   "atividades-economicas-secundarias-spc-brasil",
-  "administrador-spc-brasil",
 ];
 
 type InformacoesCadastraisSectionProps = {
@@ -167,11 +166,6 @@ export function InformacoesCadastraisSection({
   // Collapsed on screen, but every item is printed open.
   const [openItems, setOpenItems] = useState<string[]>([]);
   const isPrinting = useIsPrinting();
-
-  const administradorRaw = spcData?.administrador?.["detalhe-administrador"];
-  const administradores: any[] = (
-    Array.isArray(administradorRaw) ? administradorRaw : [administradorRaw]
-  ).filter(Boolean);
 
   const endereco = spcData?.consumidor?.endereco;
   const { data: viaCep } = useViaCep(endereco?.cep);
@@ -453,7 +447,7 @@ export function InformacoesCadastraisSection({
           <>
             <AccordionItem
               value="atividades-economicas-secundarias-spc-brasil"
-              className="border-gray-100"
+              className="border-gray-100 last:border-b-0"
             >
               <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
                 Atividades Econômicas Secundárias
@@ -504,79 +498,6 @@ export function InformacoesCadastraisSection({
                 </div>
               </AccordionContent>
             </AccordionItem>
-
-            {administradores.length > 0 && (
-              <AccordionItem
-                value="administrador-spc-brasil"
-                className="border-gray-100 last:border-b-0"
-              >
-                <AccordionTrigger className="text-sm font-medium text-gray-700 hover:no-underline py-3">
-                  Administrador
-                </AccordionTrigger>
-
-                <AccordionContent>
-                  <div className="mt-5 border-t border-gray-100 pt-4">
-                    <table className="w-full text-xs table-fixed">
-                      <thead>
-                        <tr className="border-b border-gray-100">
-                          {[
-                            "Nome",
-                            "Documento",
-                            "Cargo",
-                            "Tipo Relacionamento",
-                            "Data Entrada",
-                          ].map((h) => (
-                            <th
-                              key={h}
-                              className="text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide pb-2 pr-4 last:pr-0"
-                            >
-                              {h}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-
-                      <tbody>
-                        {administradores.map((row: any, index: number) => {
-                          const documento = String(row?.documento ?? "");
-                          const documentoFormatado =
-                            documento.length === 11
-                              ? formatCPF(documento)
-                              : documento || "-";
-
-                          return (
-                            <tr
-                              key={index}
-                              className="border-b border-gray-50 transition-colors hover:bg-gray-50"
-                            >
-                              <td className="py-2.5 pr-4 text-sm text-gray-800 break-words">
-                                {row?.nome ?? "-"}
-                              </td>
-
-                              <td className="py-2.5 pr-4 text-sm text-gray-800 whitespace-nowrap">
-                                {documentoFormatado}
-                              </td>
-
-                              <td className="py-2.5 pr-4 text-sm text-gray-800 whitespace-nowrap">
-                                {row?.["cargo-administracao"] ?? "-"}
-                              </td>
-
-                              <td className="py-2.5 pr-4 text-sm text-gray-800 whitespace-nowrap">
-                                {row?.["tipo-relacionamento"] ?? "-"}
-                              </td>
-
-                              <td className="py-2.5 pr-4 text-sm text-gray-800 whitespace-nowrap">
-                                {formatDate(row?.["data-entrada"]) || "-"}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            )}
           </>
         )}
       </Accordion>
