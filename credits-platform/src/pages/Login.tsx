@@ -13,7 +13,8 @@ import {
 
 const creditsLogo = "/login-assets/credits-mark.png";
 const cMonogram = "/login-assets/c-shape-blue.png";
-const cdlSpcLogos = "/login-assets/partners-spc.png";
+const cdlLogo = "/partner-logos/cdl-positivo.svg";
+const spcLogo = "/partner-logos/spc-positivo.svg";
 const cGlow = "/login-assets/c-shape-glow.png";
 const chatGPTImage = "/attached-assets/credits-brand-primary.png";
 const API_URL = import.meta.env.VITE_API_URL;
@@ -785,11 +786,20 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 Seus dados são tratados com segurança e privacidade.
               </div>
 
-              <img
-                src={cdlSpcLogos}
-                alt="CDL SPC BRASIL"
-                className="w-[200px] max-w-full h-auto object-contain opacity-80 transition-all duration-300 hover:opacity-100 m-[-60px] p-0"
-              />
+              <div className="flex h-[80px] w-[190px] max-w-full items-center justify-between opacity-80 transition-all duration-300 hover:opacity-100">
+                <img
+                  src={cdlLogo}
+                  alt="CDL São Paulo"
+                  className="object-contain"
+                  style={{ width: "90px", height: "31px" }}
+                />
+                <img
+                  src={spcLogo}
+                  alt="SPC Brasil"
+                  className="object-contain"
+                  style={{ width: "90px", height: "31px" }}
+                />
+              </div>
             </motion.div>
           </div>
         </div>
