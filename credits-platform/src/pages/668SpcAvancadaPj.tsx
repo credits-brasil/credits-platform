@@ -5,10 +5,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { FilterCheckboxComponent, InputComponent } from "@/components";
 import { InsumoGroupCard } from "@/containers/SpcMaxi/components/InsumoGroupCard";
 import { CNPJ_INSUMO_GROUPS } from "@/constants/insumo-groups";
+import { SPC_AVANCADA_PJ_EXCLUDED_INSUMOS } from "@/constants/spc-avancada-pj";
 import { formatCnpj, validateCNPJ } from "@/utils";
 
 const DEFAULT_SELECTED = new Set<string>([]);
-const EXCLUDED_INSUMOS = ["78", "5185"];
+const EXCLUDED_INSUMOS = SPC_AVANCADA_PJ_EXCLUDED_INSUMOS;
 
 export default function SpcAvancadaPage() {
   const queryClient = useQueryClient();

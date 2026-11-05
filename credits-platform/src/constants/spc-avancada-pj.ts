@@ -1,0 +1,1 @@
+export const SPC_AVANCADA_PJ_EXCLUDED_INSUMOS = ["78", "5185"];
