@@ -8,8 +8,7 @@ import {
   InputComponent,
 } from "@/components";
 import { InsumoGroupCard } from "@/containers/SpcMaxi/components/InsumoGroupCard";
-import { CPF_INSUMO_GROUPS } from "@/constants/insumo-groups";
-import { SPC_MAXI_CNPJ_INSUMO_GROUPS } from "@/constants/spc-maxi";
+import { CNPJ_INSUMO_GROUPS, CPF_INSUMO_GROUPS } from "@/constants/insumo-groups";
 import type { DocType } from "@/types/docType";
 import {
   detectDocTypeByInput,
@@ -36,7 +35,7 @@ export default function SpcMaxiPage() {
   );
 
   const insumoGroups = useMemo(
-    () => (docType === "CPF" ? CPF_INSUMO_GROUPS : SPC_MAXI_CNPJ_INSUMO_GROUPS),
+    () => (docType === "CPF" ? CPF_INSUMO_GROUPS : CNPJ_INSUMO_GROUPS),
     [docType],
   );
 
