@@ -3,6 +3,8 @@ import { ChevronDown } from "lucide-react";
 import { formatCEP } from "@/utils/formatCEP";
 import { formatDate } from "@/utils/formatDate";
 import { formatPhone } from "@/utils/formatPhone";
+import { ConsultarDocumentoButton } from "./ConsultarDocumentoButton";
+import type { DocumentoConsulta } from "./ConsultarDocumentoDialog";
 import { toArray } from "./GrupoEconomicoBlock";
 import {
   formatDocument,
@@ -21,6 +23,7 @@ interface QuadroSocialSectionProps {
   spcData: any;
   /** Only shows up when the Quadro Social Mais Completo PJ insumo was requested. */
   isInsumoRequested: IsInsumoRequested;
+  onConsultarDocumento?: (consulta: DocumentoConsulta) => void;
 }
 
 function getQuadroSocialData(spcData: any) {
@@ -90,6 +93,7 @@ const HEADER_CELL =
 export function QuadroSocialSection({
   spcData,
   isInsumoRequested,
+  onConsultarDocumento,
 }: QuadroSocialSectionProps) {
   const [selectedTab, setSelectedTab] = useState<QuadroSocialTabKey | null>(
     null,
@@ -141,7 +145,7 @@ export function QuadroSocialSection({
                 <col style={{ width: "110px" }} />
                 <col style={{ width: "70px" }} />
                 <col style={{ width: "70px" }} />
-                <col style={{ width: "30px" }} />
+                <col style={{ width: "70px" }} />
               </colgroup>
             ) : (
               <colgroup>
@@ -149,7 +153,7 @@ export function QuadroSocialSection({
                 <col style={{ width: "100%" }} />
                 <col style={{ width: "100px" }} />
                 <col style={{ width: "120px" }} />
-                <col style={{ width: "30px" }} />
+                <col style={{ width: "70px" }} />
               </colgroup>
             )}
 
@@ -194,23 +198,35 @@ export function QuadroSocialSection({
 
                 const expandButton = (
                   <td className="py-2.5 pr-4 text-left">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setExpandedRow((current) =>
-                          current === rowKey ? null : rowKey,
-                        )
-                      }
-                      className="cursor-pointer rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-                      aria-label={
-                        isExpanded ? "Recolher detalhes" : "Expandir detalhes"
-                      }
-                    >
-                      <ChevronDown
-                        size={13}
-                        className={`transition-transform ${isExpanded ? "rotate-180" : "rotate-0"}`}
+                    <div className="flex items-center justify-end gap-0.5">
+                      <ConsultarDocumentoButton
+                        documento={documentValue}
+                        nome={
+                          isControleSocietarioTab
+                            ? socio?.nome
+                            : administrativo?.nome
+                        }
+                        onConsultarDocumento={onConsultarDocumento}
                       />
-                    </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedRow((current) =>
+                            current === rowKey ? null : rowKey,
+                          )
+                        }
+                        className="cursor-pointer rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                        aria-label={
+                          isExpanded ? "Recolher detalhes" : "Expandir detalhes"
+                        }
+                      >
+                        <ChevronDown
+                          size={13}
+                          className={`transition-transform ${isExpanded ? "rotate-180" : "rotate-0"}`}
+                        />
+                      </button>
+                    </div>
                   </td>
                 );
 

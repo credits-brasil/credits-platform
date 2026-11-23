@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown } from "lucide-react";
+import { ConsultarDocumentoButton } from "./ConsultarDocumentoButton";
 import type { DocumentoConsulta } from "./ConsultarDocumentoDialog";
 
 interface GrupoEconomicoNode {
@@ -29,14 +30,6 @@ const COLUMNS = [
 export function toArray<T>(value: T | T[] | undefined | null): T[] {
   if (Array.isArray(value)) return value;
   return value ? [value] : [];
-}
-
-/** PF or PJ comes from the document itself: 11 digits is a CPF, 14 a CNPJ. */
-function getTypeDocument(documento?: string): DocumentoConsulta["typeDocument"] | null {
-  const digits = String(documento ?? "").replace(/\D/g, "");
-  if (digits.length === 11) return "CPF";
-  if (digits.length === 14) return "CNPJ";
-  return null;
 }
 
 function getChildren(node: GrupoEconomicoNode): GrupoEconomicoNode[] {
@@ -186,7 +179,6 @@ function GrupoEconomicoRow({
   const childNodes = getChildren(node);
   const hasChildren = childNodes.length > 0;
   const isOpen = expandedKeys.has(rowKey);
-  const typeDocument = getTypeDocument(node.documento);
 
   return (
     <>
@@ -204,23 +196,11 @@ function GrupoEconomicoRow({
         </td>
         <td className="py-2.5">
           <div data-print-hidden className="flex items-center justify-end gap-0.5">
-            {onConsultarDocumento && typeDocument && node.documento && (
-              <button
-                type="button"
-                onClick={() =>
-                  onConsultarDocumento({
-                    documento: node.documento!,
-                    nome: node.nome,
-                    typeDocument,
-                  })
-                }
-                className="text-primary hover:text-primary/80 transition-colors cursor-pointer p-1 rounded-full hover:bg-gray-100"
-                aria-label={`Consultar ${typeDocument} ${node.documento}`}
-                title={`Consultar ${typeDocument}`}
-              >
-                <Search size={13} />
-              </button>
-            )}
+            <ConsultarDocumentoButton
+              documento={node.documento}
+              nome={node.nome}
+              onConsultarDocumento={onConsultarDocumento}
+            />
 
             {hasChildren && (
               <button

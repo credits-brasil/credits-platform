@@ -24,6 +24,7 @@ export const CNPJ_INSUMO_GROUPS: InsumoGroup[] = [
       { id: "49", label: "Quadro administrativo" },
       { id: "23", label: "Controle Societário" },
       { id: "5186", label: "Quadro Social Mais Completo PJ" },
+      { id: "5241", label: "Grupo econômico" },
     ],
   },
   {
