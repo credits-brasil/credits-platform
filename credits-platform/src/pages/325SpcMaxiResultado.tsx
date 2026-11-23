@@ -25,7 +25,6 @@ import {
   CPF_INSUMO_GROUPS,
   type Insumo,
 } from "@/constants/insumo-groups";
-import { SPC_MAXI_CNPJ_INSUMO_GROUPS } from "@/constants/spc-maxi";
 import { REPORT_SECTIONS } from "@/constants/report-sections";
 import type { PrintSection } from "@/components/PrintSectionsDialog";
 import { NovasSecoesBanner } from "@/containers/SpcMaxiResultado/components/NovasSecoesBanner";
@@ -303,7 +302,7 @@ const INSUMO_SECTION_IDS: Record<string, string[]> = {
 const INSUMOS_ADICIONAIS_ERROR_MESSAGE =
   "Não foi possível consultar os insumos selecionados. Tente novamente.";
 
-/** Documents consulted from the grupo econômico always go to SPC MAXI. */
+/** Documents consulted from the report (grupo econômico, sócios, administradores) always go to SPC MAXI. */
 const DOCUMENTO_CONSULTA_PRODUCT_NAME = "325 SPC MAXI";
 const DOCUMENTO_CONSULTA_REQUEST_KEY = "325-spc-maxi-request";
 const DOCUMENTO_CONSULTA_RESULT_PATH = "/credito-risco/325-spc-maxi/resultado";
@@ -1543,11 +1542,7 @@ function SpcMaxiResultadoContent({
 
   // Same groups the query screen offers for this product and document type.
   const insumosAdicionaisGroups = (
-    requestData.typeDocument === "CPF"
-      ? CPF_INSUMO_GROUPS
-      : product
-        ? CNPJ_INSUMO_GROUPS
-        : SPC_MAXI_CNPJ_INSUMO_GROUPS
+    requestData.typeDocument === "CPF" ? CPF_INSUMO_GROUPS : CNPJ_INSUMO_GROUPS
   )
     .map((group) => ({
       ...group,
@@ -2136,6 +2131,7 @@ function SpcMaxiResultadoContent({
         <QuadroSocialSection
           spcData={spcData}
           isInsumoRequested={isInsumoRequested}
+          onConsultarDocumento={setPendingDocumentoConsulta}
         />
 
         <GovernancaSection

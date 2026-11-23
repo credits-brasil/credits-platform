@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { formatDate } from "@/utils/formatDate";
+import { ConsultarDocumentoButton } from "./ConsultarDocumentoButton";
 import type { DocumentoConsulta } from "./ConsultarDocumentoDialog";
 import {
   countGrupoEconomicoSocios,
@@ -183,6 +184,8 @@ const LAST_CELL = "whitespace-nowrap py-2.5 pr-0 text-gray-600";
 const renderDocumento = (documento: unknown) =>
   formatDocument(documento ? String(documento) : undefined);
 
+const getSocioDocumento = (row: any) => row?.documento ?? row?.cpf ?? row?.cnpj;
+
 const ADMINISTRADOR_COLUMNS: PessoaColumn[] = [
   { label: "Nome", className: NOME_CELL, render: (row) => row?.nome ?? "-" },
   {
@@ -212,7 +215,7 @@ const SOCIO_COLUMNS: PessoaColumn[] = [
   {
     label: "Documento",
     className: DOCUMENTO_CELL,
-    render: (row) => renderDocumento(row?.documento ?? row?.cpf ?? row?.cnpj),
+    render: (row) => renderDocumento(getSocioDocumento(row)),
   },
   {
     label: "Tipo Relacionamento",
@@ -239,10 +242,15 @@ function PessoasTable({
   rows,
   columns,
   rowKeyPrefix,
+  getDocumento = (row) => row?.documento,
+  onConsultarDocumento,
 }: {
   rows: any[];
   columns: PessoaColumn[];
   rowKeyPrefix: string;
+  getDocumento?: (row: any) => unknown;
+  /** Adds the same magnifier as the grupo econômico; left out of the print copies. */
+  onConsultarDocumento?: (consulta: DocumentoConsulta) => void;
 }) {
   return (
     <table className="w-full table-fixed text-xs">
@@ -253,6 +261,9 @@ function PessoasTable({
               {label}
             </th>
           ))}
+          {onConsultarDocumento && (
+            <th data-print-hidden className={`w-[40px] ${HEADER_CELL}`} />
+          )}
         </tr>
       </thead>
 
@@ -267,6 +278,15 @@ function PessoasTable({
                 {render(row)}
               </td>
             ))}
+            {onConsultarDocumento && (
+              <td data-print-hidden className="py-2.5 text-right">
+                <ConsultarDocumentoButton
+                  documento={getDocumento(row)}
+                  nome={row?.nome}
+                  onConsultarDocumento={onConsultarDocumento}
+                />
+              </td>
+            )}
           </tr>
         ))}
       </tbody>
@@ -281,12 +301,14 @@ const PESSOA_BLOCKS = [
     label: "Sócio",
     columns: SOCIO_COLUMNS,
     getRows: getSocios,
+    getDocumento: getSocioDocumento,
   },
   {
     key: "administrador" as const,
     label: "Administrador",
     columns: ADMINISTRADOR_COLUMNS,
     getRows: getAdministradores,
+    getDocumento: (row: any) => row?.documento,
   },
 ];
 
@@ -336,6 +358,8 @@ export function GovernancaSection({
               rows={activePessoaBlock.getRows(spcData)}
               columns={activePessoaBlock.columns}
               rowKeyPrefix={activePessoaBlock.key}
+              getDocumento={activePessoaBlock.getDocumento}
+              onConsultarDocumento={onConsultarDocumento}
             />
           ) : (
             <ParticipacaoEmpresaTable rows={getParticipacaoEmpresa(spcData)} />
