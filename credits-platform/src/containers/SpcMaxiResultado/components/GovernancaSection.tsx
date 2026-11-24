@@ -99,7 +99,14 @@ function getSituacaoBadgeStyle(situacao: string) {
   }
 }
 
-function ParticipacaoEmpresaTable({ rows }: { rows: any[] }) {
+function ParticipacaoEmpresaTable({
+  rows,
+  onConsultarDocumento,
+}: {
+  rows: any[];
+  /** Adds the same magnifier as the grupo econômico; left out of the print copies. */
+  onConsultarDocumento?: (consulta: DocumentoConsulta) => void;
+}) {
   return (
     <table className="w-full table-fixed text-xs">
       <colgroup>
@@ -110,6 +117,7 @@ function ParticipacaoEmpresaTable({ rows }: { rows: any[] }) {
         <col style={{ width: "100px" }} />
         <col style={{ width: "100px" }} />
         <col style={{ width: "70px" }} />
+        {onConsultarDocumento && <col data-print-hidden style={{ width: "40px" }} />}
       </colgroup>
 
       <thead>
@@ -121,6 +129,9 @@ function ParticipacaoEmpresaTable({ rows }: { rows: any[] }) {
           <th className={`w-[90px] ${HEADER_CELL} pr-4`}>Entrada</th>
           <th className={`w-[120px] ${HEADER_CELL} pr-4`}>Participação</th>
           <th className={`w-[90px] ${HEADER_CELL} pr-0`}>Situação</th>
+          {onConsultarDocumento && (
+            <th data-print-hidden className={`w-[40px] ${HEADER_CELL}`} />
+          )}
         </tr>
       </thead>
 
@@ -162,6 +173,15 @@ function ParticipacaoEmpresaTable({ rows }: { rows: any[] }) {
                   {situacao}
                 </span>
               </td>
+              {onConsultarDocumento && (
+                <td data-print-hidden className="py-2.5 text-right">
+                  <ConsultarDocumentoButton
+                    documento={participacao?.documento}
+                    nome={participacao?.nome}
+                    onConsultarDocumento={onConsultarDocumento}
+                  />
+                </td>
+              )}
             </tr>
           );
         })}
@@ -362,7 +382,10 @@ export function GovernancaSection({
               onConsultarDocumento={onConsultarDocumento}
             />
           ) : (
-            <ParticipacaoEmpresaTable rows={getParticipacaoEmpresa(spcData)} />
+            <ParticipacaoEmpresaTable
+              rows={getParticipacaoEmpresa(spcData)}
+              onConsultarDocumento={onConsultarDocumento}
+            />
           )}
         </div>
       )}
