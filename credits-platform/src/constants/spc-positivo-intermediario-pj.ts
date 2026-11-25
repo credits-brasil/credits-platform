@@ -5,4 +5,5 @@ export const SPC_POSITIVO_INTERMEDIARIO_PJ_DEFAULT_INSUMOS = [
   "5224",
   "5227",
   "5256",
+  "5185",
 ];
