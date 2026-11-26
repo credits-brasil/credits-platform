@@ -9,5 +9,6 @@ export { formatPhone } from "./formatPhone";
 export { getCompanyAge } from "./getCompanyAge";
 export { getGoogleMapsUrl } from "./getGoogleMapsUrl";
 export { detectDocTypeByInput } from "./detectDocTypeByInput";
+export { findResultProductCode } from "./findResultProductCode";
 export { validateCPF } from "./validateCPF";
 export { validateCNPJ } from "./validateCNPJ";
