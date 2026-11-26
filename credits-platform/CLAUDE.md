@@ -40,6 +40,14 @@ The session lives in `localStorage` under `credits-platform-*` keys (token, refr
 - **Cache rules:** the global `QueryClient` uses `staleTime: 0, gcTime: 0`. The result page keeps entries alive with `gcTime: Infinity` observers and keys the result by the **consultation** (`documento + tipo + consultedAt`), not by its insumos. Extra insumos bought later go through `applyExtraConsultationResult`, which updates the same cache entry. Never `invalidateQueries` the result: it refetches, shows the loading screen, and sends a second, possibly **billed**, POST.
 - **Report sections** live in `src/containers/SpcMaxiResultado/components/`. Their DOM ids and order are listed in `constants/report-sections.ts`, which drives quick navigation (`QuickNavigationSection`) and the print-section picker.
 
+**Read-only viewer for the manager (`/visualizar-consulta`, `pages/ConsultationViewer.tsx`).**
+- **Route:** registered in `App.tsx` before the login gate, without `Layout`. It is only meant to be embedded by credits-platform-manager in an iframe.
+- **Protocol** (`lib/consultationViewer.ts`, mirrored in the manager): the page receives a stored order over `postMessage`. It only accepts origins in `VITE_MANAGER_ORIGINS` (any localhost in dev).
+- **Framing:** `vercel.json` sends `Content-Security-Policy: frame-ancestors https://controle-sistema.creditsbrasil.com.br` on `/visualizar-consulta`, so browsers only let the manager embed it. A new manager domain (homol, previews) must be added there **and** to `VITE_MANAGER_ORIGINS`. Local `pnpm dev` ignores `vercel.json`.
+- **Product:** resolved from the order's `product_name` with `utils/findResultProductCode`, mapped through `constants/result-products.ts` (`RESULT_PRODUCTS`, also used by the `*Resultado.tsx` routes).
+- **Rendering:** the result page gets `snapshot={ request, spc }`. In that mode it never queries the API and provides `ReportReadOnlyContext`. That hides "Nova Consulta", "Insumos Opcionais", the magnifier lookups and the paid dialogs. `ExtraInsumoButton` shows "Não consultado". "Ver Score" only reveals a score already in the data.
+- **New paid actions:** any new paid or navigating action on the result page must also be hidden when `readOnly`.
+
 **Extra (paid) consultations on the result page.**
 - **Single insumo:** the "Consultar" buttons (`ExtraInsumoButton`, `ConsultarInsumoDialog`). "Ver Score" uses the same flow: scores are not default in 325.
 - **Bulk:** the "Insumos Opcionais" block (`InsumosAdicionaisSection` + `ConsultarInsumosAdicionaisDialog`). Insumos already consulted show as checked and locked. When the request finishes, the page scrolls to the top without a reload, then `NovasSecoesBanner` lists and highlights the new sections.

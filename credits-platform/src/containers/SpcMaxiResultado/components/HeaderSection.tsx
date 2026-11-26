@@ -18,8 +18,9 @@ type HeaderSectionProps = {
   isRegular: boolean;
   isPendenteRegularizacao: boolean;
   metadataText: string;
-  onReload: () => void;
-  onNewQuery: () => void;
+  onReload?: () => void;
+  /** Without it (read-only report) the "Nova Consulta" button is hidden. */
+  onNewQuery?: () => void;
 };
 
 export function HeaderSection({
@@ -98,15 +99,17 @@ export function HeaderSection({
         <div className="flex items-center gap-2" data-print-hidden>
           <PrintButton sections={REPORT_SECTIONS} />
 
-          <button
-            type="button"
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-colors cursor-pointer"
-            style={{ backgroundColor: "#243871" }}
-            onClick={onNewQuery}
-          >
-            <Search size={12} />
-            Nova Consulta
-          </button>
+          {onNewQuery && (
+            <button
+              type="button"
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-colors cursor-pointer"
+              style={{ backgroundColor: "#243871" }}
+              onClick={onNewQuery}
+            >
+              <Search size={12} />
+              Nova Consulta
+            </button>
+          )}
         </div>
       </div>
 

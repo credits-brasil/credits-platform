@@ -22,6 +22,8 @@ import SpcMaisResultadoPage from "@/pages/695SpcMaisResultado";
 import SpcPositivoIntermediarioPjPage from "@/pages/629SpcPositivoIntermediarioPj";
 import SpcPositivoIntermediarioPjResultadoPage from "@/pages/629SpcPositivoIntermediarioPjResultado";
 import NotFound from "@/pages/not-found";
+import ConsultationViewerPage from "@/pages/ConsultationViewer";
+import { CONSULTATION_VIEWER_PATH } from "@/lib/consultationViewer";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -455,13 +457,19 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router
-            isAuthenticated={isAuthenticated}
-            hasAcceptedTerms={hasAcceptedTerms}
-            onLogin={handleLogin}
-            onLogout={handleLogout}
-            onAcceptTerms={handleAcceptTerms}
-          />
+          <Switch>
+            {/* Embedded by the manager: outside the login gate and the app layout. */}
+            <Route path={CONSULTATION_VIEWER_PATH} component={ConsultationViewerPage} />
+            <Route>
+              <Router
+                isAuthenticated={isAuthenticated}
+                hasAcceptedTerms={hasAcceptedTerms}
+                onLogin={handleLogin}
+                onLogout={handleLogout}
+                onAcceptTerms={handleAcceptTerms}
+              />
+            </Route>
+          </Switch>
         </WouterRouter>
         
         <Toaster />
