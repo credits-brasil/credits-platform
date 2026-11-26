@@ -41,6 +41,11 @@ import { formatCurrency } from "@/utils/formatCurrency";
 import { formatDate } from "@/utils/formatDate";
 import { getCompanyAge } from "@/utils/getCompanyAge";
 import { apiFetch } from "@/lib/auth";
+import type { SpcResultProduct } from "@/constants/result-products";
+import {
+  ReportReadOnlyContext,
+  useReportReadOnly,
+} from "@/containers/SpcMaxiResultado/ReportReadOnlyContext";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -160,12 +165,19 @@ function normalizeContactValues(values: unknown, fallback: string): string[] {
   return values.map((value) => (hasContactContent(value) ? value : "-"));
 }
 
-interface SpcMaxiRequest {
+export interface SpcMaxiRequest {
   document: string;
   typeDocument: "CPF" | "CNPJ";
   telefone?: string;
   insumos: string[];
   consultedAt?: string;
+}
+
+/** A consultation that already happened: rendered as-is, read-only, without calling the API. */
+export interface ConsultationSnapshot {
+  request: SpcMaxiRequest;
+  /** The `spc` object of the consultation response. */
+  spc: unknown;
 }
 
 function getSpcResultQueryKey(productKey: string, request?: SpcMaxiRequest) {
@@ -232,7 +244,16 @@ function ExtraInsumoButton({
   blocked?: boolean;
   onConsultar: () => void;
 }) {
+  const readOnly = useReportReadOnly();
   const isConsulting = consultingLabel === label;
+
+  if (readOnly) {
+    return (
+      <span className="self-start rounded-md bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-500">
+        Não consultado
+      </span>
+    );
+  }
 
   return (
     <button
@@ -256,14 +277,9 @@ function ExtraInsumoButton({
 }
 
 interface SpcMaxiResultadoPageProps {
-  product?: {
-    slug: string;
-    name: string;
-    endpoint: string;
-    excludedInsumos?: string[];
-    excludedInsumosByDocType?: Partial<Record<"CPF" | "CNPJ", string[]>>;
-    defaultInsumos?: string[];
-  };
+  product?: SpcResultProduct;
+  /** Renders this stored consultation read-only instead of consulting the API. */
+  snapshot?: ConsultationSnapshot;
 }
 
 /** Labels the result sections use to flag an extra insumo that came back without data. */
@@ -318,17 +334,23 @@ export default function SpcMaxiResultadoPage(
       queryClient.getQueryData<SpcMaxiRequest>([`${productKey}-request`]),
     staleTime: Infinity,
     gcTime: Infinity,
+    enabled: !props.snapshot,
   });
 
   // A new consultation started from this page keeps the same route, so remount to reset its state.
+  const consultedAt = props.snapshot?.request.consultedAt ?? requestData?.consultedAt;
   return (
-    <SpcMaxiResultadoContent key={requestData?.consultedAt ?? ""} {...props} />
+    <ReportReadOnlyContext.Provider value={Boolean(props.snapshot)}>
+      <SpcMaxiResultadoContent key={consultedAt ?? ""} {...props} />
+    </ReportReadOnlyContext.Provider>
   );
 }
 
 function SpcMaxiResultadoContent({
   product,
+  snapshot,
 }: SpcMaxiResultadoPageProps) {
+  const readOnly = Boolean(snapshot);
   const productKey = product?.slug ?? "325-spc-maxi";
   const productName = product?.name ?? "325 SPC MAXI";
   const endpoint = product?.endpoint ?? "/api/325-spc-maxi";
@@ -341,13 +363,15 @@ function SpcMaxiResultadoContent({
   // Subscribes to the cache entry so it isn't garbage-collected (default gcTime)
   // while this page is mounted without any other active observer, which was
   // causing an unwanted redirect back to the query screen after a few minutes.
-  const { data: requestData } = useQuery<SpcMaxiRequest | undefined>({
+  const { data: cachedRequestData } = useQuery<SpcMaxiRequest | undefined>({
     queryKey: [`${productKey}-request`],
     queryFn: () =>
       queryClient.getQueryData<SpcMaxiRequest>([`${productKey}-request`]),
     staleTime: Infinity,
     gcTime: Infinity,
+    enabled: !readOnly,
   });
+  const requestData = snapshot?.request ?? cachedRequestData;
   const excludedInsumos = [
     ...(!product && requestData?.typeDocument === "CNPJ" ? ["5228"] : []),
     ...(product?.excludedInsumos ?? []),
@@ -361,12 +385,13 @@ function SpcMaxiResultadoContent({
     Array.from(new Set(insumos.filter(canConsultInsumo)));
 
   const [extraConsultationExpired, setExtraConsultationExpired] = useState(() =>
-    isExtraConsultationExpired(requestData?.consultedAt),
+    !readOnly && isExtraConsultationExpired(requestData?.consultedAt),
   );
   const [showExpiredDialog, setShowExpiredDialog] = useState(false);
 
   useEffect(() => {
-    if (!requestData?.consultedAt) {
+    // A stored consultation offers no extra consultations, so there is no window to track.
+    if (readOnly || !requestData?.consultedAt) {
       setExtraConsultationExpired(false);
       return;
     }
@@ -394,7 +419,7 @@ function SpcMaxiResultadoContent({
     const timeoutId = window.setTimeout(expireExtraConsultation, remainingTime);
 
     return () => window.clearTimeout(timeoutId);
-  }, [requestData?.consultedAt]);
+  }, [readOnly, requestData?.consultedAt]);
 
   const {
     data: spcData,
@@ -442,7 +467,9 @@ function SpcMaxiResultadoContent({
       return data?.spc;
     },
 
-    enabled: Boolean(requestData),
+    // A snapshot is never sent to the API: each consultation is billed.
+    enabled: Boolean(requestData) && !readOnly,
+    initialData: snapshot?.spc,
     retry: false,
     staleTime: Infinity,
   });
@@ -450,6 +477,9 @@ function SpcMaxiResultadoContent({
   const isKeyboardReloadRef = useRef(false);
 
   useEffect(() => {
+    // Reloading the viewer only re-renders the same snapshot; no warning needed.
+    if (readOnly) return;
+
     const handleKeyDown = (event: KeyboardEvent) => {
       const isReloadShortcut =
         event.key === "F5" ||
@@ -468,7 +498,7 @@ function SpcMaxiResultadoContent({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [navigate]);
+  }, [navigate, readOnly]);
 
   const initialScoreInsumos = useRef(
     (requestData?.insumos ?? []).map(String),
@@ -1903,6 +1933,8 @@ function SpcMaxiResultadoContent({
 
   return (
     <>
+      {!readOnly && (
+      <>
       <ReloadConfirmationDialog
         open={showRedirectModal}
         onOpenChange={setShowRedirectModal}
@@ -1949,6 +1981,8 @@ function SpcMaxiResultadoContent({
         windowMs={EXTRA_CONSULTATION_WINDOW_MS}
         onNewConsultation={() => navigate(searchPath)}
       />
+      </>
+      )}
 
       <div className="w-full" data-print-document>
         <PrintCover />
@@ -1979,8 +2013,8 @@ function SpcMaxiResultadoContent({
           isRegular={isRegular}
           isPendenteRegularizacao={isPendenteRegularizacao}
           metadataText={metadataText}
-          onReload={handleOpenReloadModal}
-          onNewQuery={() => navigate(searchPath)}
+          onReload={readOnly ? undefined : handleOpenReloadModal}
+          onNewQuery={readOnly ? undefined : () => navigate(searchPath)}
         />
 
         {novasSecoes && (
@@ -1999,7 +2033,14 @@ function SpcMaxiResultadoContent({
 
           <div className="grid grid-cols-[2fr_3fr_5fr] items-center gap-8">
             <div className="relative isolate col-span-2">
-              {!scoreRevealed && (
+              {!scoreRevealed && readOnly && !hasPositiveScore && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center">
+                  <span className="rounded-md bg-slate-50 px-3 py-2 text-xs font-semibold text-gray-600">
+                    Score não consultado
+                  </span>
+                </div>
+              )}
+              {!scoreRevealed && !(readOnly && !hasPositiveScore) && (
                 <div className="absolute inset-0 z-10 flex items-center justify-center">
                   <button
                     type="button"
@@ -2131,13 +2172,13 @@ function SpcMaxiResultadoContent({
         <QuadroSocialSection
           spcData={spcData}
           isInsumoRequested={isInsumoRequested}
-          onConsultarDocumento={setPendingDocumentoConsulta}
+          onConsultarDocumento={readOnly ? undefined : setPendingDocumentoConsulta}
         />
 
         <GovernancaSection
           spcData={spcData}
           isInsumoRequested={isInsumoRequested}
-          onConsultarDocumento={setPendingDocumentoConsulta}
+          onConsultarDocumento={readOnly ? undefined : setPendingDocumentoConsulta}
         />
 
         <NegativosConsolidadosSection
@@ -2374,15 +2415,17 @@ function SpcMaxiResultadoContent({
           />
         )}
 
-        <InsumosAdicionaisSection
-          groups={insumosAdicionaisGroups}
-          consultedIds={consultedInsumoIds}
-          isConsulting={consultingInsumosAdicionais}
-          disabled={hasExtraInsumoInProgress}
-          blocked={extraConsultationExpired}
-          errorMessage={insumosAdicionaisError}
-          onSubmit={openInsumosAdicionaisConfirmation}
-        />
+        {!readOnly && (
+          <InsumosAdicionaisSection
+            groups={insumosAdicionaisGroups}
+            consultedIds={consultedInsumoIds}
+            isConsulting={consultingInsumosAdicionais}
+            disabled={hasExtraInsumoInProgress}
+            blocked={extraConsultationExpired}
+            errorMessage={insumosAdicionaisError}
+            onSubmit={openInsumosAdicionaisConfirmation}
+          />
+        )}
 
         <QuickNavigationSection
           showAdditionalScores={remainingScoreCandidates.length > 0}
